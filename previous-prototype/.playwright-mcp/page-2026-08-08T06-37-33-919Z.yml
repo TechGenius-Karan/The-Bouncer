@@ -1,0 +1,30 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "The Bouncer" [level=1] [ref=e5]
+    - generic [ref=e6]: "#1"
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - heading "Study the evidence" [level=2] [ref=e10]
+        - paragraph [ref=e11]: These guests are already sorted. Figure out the rule, then sort the next batch.
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - generic [ref=e15]: IN
+            - generic [ref=e16]: (examples)
+          - generic [ref=e17]:
+            - generic [ref=e18]: BUBBLE
+            - generic [ref=e19]: LETTER
+            - generic [ref=e20]: SPOON
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: OUT
+            - generic [ref=e24]: (examples)
+          - generic [ref=e25]:
+            - generic [ref=e26]: STONE
+            - generic [ref=e27]: BRAVE
+            - generic [ref=e28]: PLANT
+      - generic [ref=e29]:
+        - strong [ref=e30]: "Remember:"
+        - text: you have 3 lives. A wrong swipe costs one — and 3 wrong swipes ends the round early.
+      - button "I'm ready — show me the pool" [ref=e31] [cursor=pointer]

@@ -1,0 +1,54 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - heading "The Bouncer" [level=1] [ref=f1e5]
+    - generic [ref=f1e6]: "#1"
+  - main [ref=f1e7]:
+    - generic [ref=f1e32]:
+      - generic [ref=f1e33]:
+        - generic [ref=f1e34]:
+          - generic [ref=f1e35]: IN
+          - generic [ref=f1e37]:
+            - generic [ref=f1e38]: BUBBLE
+            - generic [ref=f1e39]: LETTER
+            - generic [ref=f1e40]: SPOON
+        - generic [ref=f1e41]:
+          - generic [ref=f1e42]: OUT
+          - generic [ref=f1e44]:
+            - generic [ref=f1e45]: STONE
+            - generic [ref=f1e46]: BRAVE
+            - generic [ref=f1e47]: PLANT
+      - generic [ref=f1e48]:
+        - generic [ref=f1e49]: Lives
+        - generic [ref=f1e54]: 1/6 sorted
+      - generic [ref=f1e55]:
+        - paragraph [ref=f1e56]: Sort each guest — swipe or tap
+        - generic [ref=f1e57]:
+          - generic [ref=f1e101]:
+            - generic [ref=f1e102]: ✓
+            - generic [ref=f1e104]: COFFEE
+          - generic [ref=f1e66]:
+            - generic [ref=f1e67]: ARROW
+            - generic [ref=f1e68]:
+              - button "OUT" [ref=f1e69] [cursor=pointer]
+              - button "IN" [ref=f1e71] [cursor=pointer]
+          - generic [ref=f1e73]:
+            - generic [ref=f1e74]: GROSS
+            - generic [ref=f1e75]:
+              - button "OUT" [ref=f1e76] [cursor=pointer]
+              - button "IN" [ref=f1e78] [cursor=pointer]
+          - generic [ref=f1e80]:
+            - generic [ref=f1e81]: BEAUTIFUL
+            - generic [ref=f1e82]:
+              - button "OUT" [ref=f1e83] [cursor=pointer]
+              - button "IN" [ref=f1e85] [cursor=pointer]
+          - generic [ref=f1e87]:
+            - generic [ref=f1e88]: BRIDGE
+            - generic [ref=f1e89]:
+              - button "OUT" [ref=f1e90] [cursor=pointer]
+              - button "IN" [ref=f1e92] [cursor=pointer]
+          - generic [ref=f1e94]:
+            - generic [ref=f1e95]: MOTION
+            - generic [ref=f1e96]:
+              - button "OUT" [ref=f1e97] [cursor=pointer]
+              - button "IN" [ref=f1e99] [cursor=pointer]
+      - paragraph [ref=f1e100]: Drag left for OUT · drag right for IN

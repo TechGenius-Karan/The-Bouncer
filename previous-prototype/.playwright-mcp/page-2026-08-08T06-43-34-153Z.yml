@@ -1,0 +1,54 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - heading "The Bouncer" [level=1] [ref=f2e5]
+    - generic [ref=f2e6]: "#1"
+  - main [ref=f2e7]:
+    - generic [ref=f2e32]:
+      - generic [ref=f2e33]:
+        - generic [ref=f2e34]:
+          - generic [ref=f2e35]: IN
+          - generic [ref=f2e37]:
+            - generic [ref=f2e38]: BUBBLE
+            - generic [ref=f2e39]: LETTER
+            - generic [ref=f2e40]: SPOON
+        - generic [ref=f2e41]:
+          - generic [ref=f2e42]: OUT
+          - generic [ref=f2e44]:
+            - generic [ref=f2e45]: STONE
+            - generic [ref=f2e46]: BRAVE
+            - generic [ref=f2e47]: PLANT
+      - generic [ref=f2e48]:
+        - generic [ref=f2e49]: Lives
+        - generic [ref=f2e54]: 3/6 sorted
+      - generic [ref=f2e55]:
+        - paragraph [ref=f2e56]: Sort each guest — swipe or tap
+        - generic [ref=f2e57]:
+          - generic [ref=f2e105]:
+            - generic [ref=f2e106]: ✗
+            - generic [ref=f2e108]:
+              - text: COFFEE
+              - generic [ref=f2e109]: → IN
+          - generic [ref=f2e110]:
+            - generic [ref=f2e111]: ✗
+            - generic [ref=f2e113]:
+              - text: ARROW
+              - generic [ref=f2e114]: → IN
+          - generic [ref=f2e73]:
+            - generic [ref=f2e74]: GROSS
+            - generic [ref=f2e75]:
+              - button "OUT" [active] [ref=f2e76] [cursor=pointer]
+              - button "IN" [ref=f2e78] [cursor=pointer]
+          - generic [ref=f2e101]:
+            - generic [ref=f2e102]: ✓
+            - generic [ref=f2e104]: BEAUTIFUL
+          - generic [ref=f2e87]:
+            - generic [ref=f2e88]: BRIDGE
+            - generic [ref=f2e89]:
+              - button "OUT" [ref=f2e90] [cursor=pointer]
+              - button "IN" [ref=f2e92] [cursor=pointer]
+          - generic [ref=f2e94]:
+            - generic [ref=f2e95]: MOTION
+            - generic [ref=f2e96]:
+              - button "OUT" [ref=f2e97] [cursor=pointer]
+              - button "IN" [ref=f2e99] [cursor=pointer]
+      - paragraph [ref=f2e100]: Drag left for OUT · drag right for IN
