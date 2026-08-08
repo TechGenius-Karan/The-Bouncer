@@ -11,7 +11,7 @@
 3. [Game Loop & Rules](#3-game-loop--rules)
 4. [Difficulty Model & Weekly Calendar](#4-difficulty-model--weekly-calendar)
 5. [UI/UX Theme & Screen Flow](#5-uiux-theme--screen-by-screen-flow)
-6. [Scoring, Streaks, Sharing, Leaderboards](#6-scoring-streaks-sharing-leaderboards-aggregate-stats)
+6. [Scoring, Sharing, Aggregate Stats](#6-scoring-sharing-aggregate-stats)
 7. [Rules & Word-Selection Engine](#7-rules--word-selection-engine)
 8. [Tech Stack & Architecture](#8-tech-stack--architecture)
 9. [Content Operations](#9-content-operations)
@@ -84,7 +84,7 @@ On completion, all at once:
 - Every guest in the pool is shown in one of three states against the true rule: **correct on the player's swipe**, **wrong then auto-corrected**, or — if the round ended early via lives-out — **not reached** (still shown with its true label, for learning, but not counted toward score).
 - Score is shown (e.g., **5/6** — see §6.1 for exactly how this is counted under the new mechanic).
 - 🔒 No bonus, badge, or scoring credit for having *named* the rule — that mechanic is fully cut. The game never asks the player to state the rule; it only ever asks them to sort.
-- Spoiler-safe share card is generated (see §6.2) and streak is updated.
+- Spoiler-safe share card is generated (see §6.2).
 
 ### 3.6 Non-negotiables recap
 - Immediate feedback on every swipe, one swipe per guest with no retry, auto-correction on a wrong swipe, a 3-life cap that ends the round early on the 3rd mistake, automatic completion (no manual submit), no rule-naming credit, one puzzle per day.
@@ -139,9 +139,9 @@ This moment now carries more weight under the live-feedback loop (§3.2–3.3): 
 💡 Suggested default flow (structure, not final copy/visuals):
 
 1. **Start / Home screen**
-   - Today's date, puzzle number (e.g., "#142"), current streak, a single primary CTA ("Play today's puzzle").
+   - Today's date, puzzle number (e.g., "#142"), a single primary CTA ("Play today's puzzle").
    - If already played today: shows today's result summary + share card instead of replay (standard daily-game pattern — prevents retry-farming for a better score).
-   - Secondary entries: streak/stats, leaderboard, settings, how-to-play.
+   - Secondary entries: personal stats, settings, how-to-play.
 
 2. **How to play (first-time / on-demand)**
    - Short, visual, 3–4 steps: "Some guests are already sorted," "Figure out why," "Swipe each new guest IN or OUT — you'll find out right away," "3 wrong swipes and the day ends, so make them count."
@@ -161,20 +161,21 @@ This moment now carries more weight under the live-feedback loop (§3.2–3.3): 
 5. **Reveal screen**
    - Rule stated in plain text at the top.
    - Guest pool re-shown with each guest in one of three states: correct-on-swipe, wrong-then-corrected, or (if the round ended early via lives-out) not-reached — each showing its true IN/OUT status so the player can see *why*.
-   - Score (e.g., 5/6), streak update, and the share card generation.
+   - Score (e.g., 5/6) and the share card generation.
    - If the round ended via lives-out, the tone should read calm and matter-of-fact ("Out of guesses for today — here's how it went"), not punishing, per pillar 5 (§2).
    - CTA to share, and a soft nudge toward tomorrow ("Come back tomorrow for puzzle #143").
 
 6. **Share card (generated, spoiler-safe)**
    - See §6.2 for exact content rules.
 
-7. **Stats / Leaderboard screens**
-   - Personal stats: streak, average score, score distribution history, puzzles played.
-   - Leaderboard: see §6.4 for what's actually rankable given the score-not-pass/fail model.
+7. **Stats screen**
+   - Personal stats: average score, score distribution history, puzzles played, % of puzzles cracked (perfect first-swipe runs) — see §6.3.
 
 ---
 
-## 6. Scoring, Streaks, Sharing, Leaderboards, Aggregate Stats
+## 6. Scoring, Sharing, Aggregate Stats
+
+> **Revised 2026-08-08:** streaks and leaderboards were cut entirely — sharing results for fun is enough social loop for now, and tracking a leaderboard properly would need more user data/infra than it's worth at this stage. Aggregate stats were trimmed to just the "% cracked it" figure.
 
 ### 6.1 Scoring
 
@@ -185,21 +186,12 @@ This moment now carries more weight under the live-feedback loop (§3.2–3.3): 
 🔒 Spoiler-safe share card, locked requirements:
 - Squares representing each guest's outcome, in guest order, now with **three states**: correct-on-swipe (green), wrong-then-corrected (red), and not-reached-due-to-lives-out (grey/neutral, only appears on an early-ended round) — colorblind-safe equivalents per the §5.1 palette note.
 - Score (e.g., "5/6").
-- Streak.
 - 🔒 The actual rule text must **never** appear on the share card — friends who haven't played yet must still be able to play unspoiled.
 - 💡 Suggested additions: puzzle number/date, and a link back to the game. Format as a compact text block (Wordle-style emoji grid) for easy paste into chat apps, plus an image-card version for platforms that render images (stories, etc.) — 💡 build the text version first since it's far cheaper and covers most sharing surfaces (iMessage, WhatsApp, Twitter/X text).
 
-### 6.3 Streaks
+### 6.3 Aggregate stats
 
-💡 Suggested default: a streak increments on any day played (regardless of score, and regardless of whether the round completed the full pool or ended early via lives-out per §3.3–3.4 — "did you play" is the only sensible streak condition), and resets on a missed day. 💡 Consider a "streak freeze"/grace mechanic later (common in this genre) — flag as a post-launch retention lever, not core.
-
-### 6.4 Leaderboards
-
-🔒 Backend must support a leaderboard (locked in spec as a required light-backend feature). 💡 Suggested shape, since raw score alone (out of 6) will have huge ties: a **friends/social leaderboard** (compare with people you know, ranked by streak length + cumulative or rolling-average score) is likely more meaningful than a global leaderboard, where a 6-guest score range creates massive ties among potentially millions of players. 💡 Suggested default: ship a friends-code/share-based leaderboard first (low infra cost, high relevance), consider global leaderboard only as a future nice-to-have, likely ranked by streak with score-average as tiebreaker.
-
-### 6.5 Aggregate stats
-
-🔒 Backend must support anonymized aggregate stats (e.g., "X% of players cracked today's rule"). 💡 Suggested default definition of "cracked": a perfect run — 6/6 correct on first swipe, i.e., never lost a life (§3.3, §6.1) — shown as a daily percentage once the player has finished their own puzzle (avoids leaking difficulty signal before they've committed). This is a meaningful, non-trivial bar under the live-feedback model: it specifically means a true zero-mistake clear, not just "eventually got everything right" (which the auto-correct mechanic makes true of nearly every completed round). Additional 💡 aggregate stat ideas: average score today, per-guest "% who got this one right" (this is a nice piece of retrospective texture on the reveal screen — shows which specific guest was the most-missed "gotcha").
+🔒 Backend must support one anonymized aggregate stat: "X% of players cracked today's rule." 💡 Suggested default definition of "cracked": a perfect run — 6/6 correct on first swipe, i.e., never lost a life (§3.3, §6.1) — shown as a daily percentage once the player has finished their own puzzle (avoids leaking difficulty signal before they've committed). This is a meaningful, non-trivial bar under the live-feedback model: it specifically means a true zero-mistake clear, not just "eventually got everything right" (which the auto-correct mechanic makes true of nearly every completed round). Deliberately kept to just this one figure — no per-guest miss-rate breakdown, no other stats, to keep this simple.
 
 ---
 
@@ -319,7 +311,7 @@ To generate candidates and run the §7.3 validator, every word in the bank needs
 
 ### 8.1 Overview & rationale
 
-The core constraint shaping this stack: **small team, Wordle-style daily game, needs streaks + leaderboards, and needs a genuinely separate offline content pipeline (generator + validator + human approval tool) that isn't part of the live player-facing app.** That last part matters — this is not a simple static daily-word-reveal site; it has real backend needs (accounts optional, streak state, leaderboards, aggregate stats) *and* a real content-authoring tool need, so it's worth being honest that this is a bit more than a single static site, but still doesn't need enterprise infrastructure.
+The core constraint shaping this stack: **small team, Wordle-style daily game, needs a genuinely separate offline content pipeline (generator + validator + human approval tool) that isn't part of the live player-facing app.** That matters — this is not a simple static daily-word-reveal site; it has real backend needs (server-authoritative per-swipe checking, results storage, one aggregate stat) *and* a real content-authoring tool need, so it's worth being honest that this is a bit more than a single static site, but still doesn't need enterprise infrastructure. (Streaks and leaderboards were cut from scope — see the revision note at the top of §6 — which meaningfully lightens what the backend needs to do.)
 
 **Recommended stack:**
 
@@ -328,10 +320,10 @@ The core constraint shaping this stack: **small team, Wordle-style daily game, n
 | Frontend framework | **Vite + React** | The game loop (§3, §5) is a client-heavy, drag-and-drop, animation-driven single-page app with almost no SEO/content-marketing surface — Next.js's headline advantages (SSR/SSG, image optimization tuned for content pages) don't buy much here. A Vite SPA is simpler to reason about, faster to iterate in, and this is the team's existing comfort zone. A PWA wrapper (installable, works offline for the day's puzzle) still covers "app-like" needs without a native app build. |
 | Styling | **Tailwind CSS** + a small custom design-token layer | Fast to hit the "light, colorful, simple, rounded, roomy" brief (§5.1) without fighting a heavy component library's opinions; a thin token layer (colors, radii, spacing scale) keeps the "signature moment" (card-snap animation, IN/OUT bins) consistent as a small design system rather than one-off CSS. |
 | Animation | **Framer Motion** (or CSS transitions for the simplest cases) | Needed for the card-snap/drag-and-drop feel that's explicitly called out as the new signature moment (§5.1) — Framer Motion pairs well with React and handles both the drag gesture and the settle animation. |
-| Backend API | **A thin Node/Express-shaped API, deployed as Netlify Functions** | The client can't talk to the database directly: §8.4's per-guest check flow means a guest's true label must never reach the browser until the player actually swipes it, and the 3-life count (§3.3) must be tracked server-side so it can't be bypassed — something server-side has to serve the puzzle (labels stripped), check each swipe, enforce the life count, and update streaks. Netlify Functions (Lambda-based) cover this without standing up or managing a dedicated always-on server. |
+| Backend API | **A thin Node/Express-shaped API, deployed as Netlify Functions** | The client can't talk to the database directly: §8.4's per-guest check flow means a guest's true label must never reach the browser until the player actually swipes it, and the 3-life count (§3.3) must be tracked server-side so it can't be bypassed — something server-side has to serve the puzzle (labels stripped), check each swipe, enforce the life count, and record the result. Netlify Functions (Lambda-based) cover this without standing up or managing a dedicated always-on server. |
 | Hosting / serverless | **Netlify** | Deploys the Vite static build and the Netlify Functions API together from one repo with zero-ops git-push deploys and preview builds per branch — the same workflow the team already uses for other projects. Vercel's edge over Netlify is mostly Next.js-specific integration (ISR, Next-tuned image optimization), which is moot once Next.js is out of the picture; there's no material technical gap left, so defaulting to the already-familiar platform is the pragmatic call. 💡 If the admin approval tool (§8.5) or generator ever outgrow short-lived serverless functions (e.g., need a long-running process), Render or Railway are reasonable alternatives for a small persistent Express server — but start with Netlify Functions to keep infra minimal and on one platform. |
-| Database | **MongoDB** (💡 via MongoDB Atlas's managed free/small-team tier) | The puzzle data model (§8.2) is naturally document-shaped, not relationally normalized: a puzzle *owns* its clue set and guest pool outright, never shared or joined across puzzles — a natural fit for embedding clues/guests as arrays in one `puzzles` document. Leaderboard ranking (streak, tiebreak by score) is well within Mongo's aggregation pipeline. Atlas is also simple to stand up for a small team, and matches the team's existing familiarity. |
-| Auth | **Anonymous-first, optional accounts** (💡 Clerk, or a simple email-magic-link + JWT flow) | See §8.3 — most players should never need to sign up; auth exists only to sync streaks across devices and enable the social leaderboard. Picked to be DB-agnostic rather than coupled to a specific database vendor. |
+| Database | **MongoDB** (💡 via MongoDB Atlas's managed free/small-team tier) | The puzzle data model (§8.2) is naturally document-shaped, not relationally normalized: a puzzle *owns* its clue set and guest pool outright, never shared or joined across puzzles — a natural fit for embedding clues/guests as arrays in one `puzzles` document. Atlas is also simple to stand up for a small team, and matches the team's existing familiarity. |
+| Auth | **Anonymous-first, accounts now optional/low-priority** (💡 if built at all: Clerk, or a simple email-magic-link + JWT flow) | See §8.3 — most players never need to sign up. Now that streaks and leaderboards are cut (§6), accounts have lost their two original driving reasons; what's left is just optionally syncing personal history across devices, which may not be worth building for an initial launch. Flagged for a scope call, not decided here. |
 | Admin/approval tool | **A protected route/section inside the same Vite React app**, calling the same backend API with an internal-auth check | See §8.5 — doesn't need its own framework or separate app; an auth-gated `/admin` section is enough at this team size. |
 | Offline generator/validator | **A standalone Node/TypeScript script (or small CLI)**, sharing the rule-taxonomy/word-bank code as a library with the main app where practical | See §8.5 — runs offline/on a schedule, writes candidate puzzles into MongoDB for the approval queue; does not need to be a deployed service, just a script a human (or a cron job) runs. |
 
@@ -351,17 +343,16 @@ The core constraint shaping this stack: **small team, Wordle-style daily game, n
   
   Because `guests[].trueLabel` lives inside the same document the client needs the rest of, the API layer (§8.4) must explicitly strip `trueLabel` (and `isTrap`) from every unresolved guest before sending puzzle data to the client, only ever revealing a given guest's true label in the response to that specific guest's swipe — this is the one field in the whole schema that needs deliberate, careful handling to avoid an accidental leak.
 - **`results`** — `_id`, userId (nullable for anon), puzzleId, placements (embedded doc: guestId → player's attempted label, populated incrementally as the player swipes — see §8.4 — rather than written all at once), score, livesRemaining, endedEarly (bool, true if the round ended via lives-out per §3.3 rather than full completion), submittedAt.
-- **`users`** — `_id`, optional auth identity (email/provider id), and embedded streak fields (currentStreak, longestStreak, lastPlayedDate) directly on the user document — combined into one collection rather than a separate `streaks` collection, since the anonymous-first model (§8.3) means most "users" are just anonymous device records and a streak is inherently 1:1 with a user, not a separate owned entity.
-- **Leaderboard entries** — not a stored collection by default; computed on read via an aggregation pipeline over `users` (+ `results` if score-based tiebreaks need it), scoped to friend groups (see §6.4). 💡 If read load ever makes on-the-fly aggregation too slow, introduce a periodically-materialized `leaderboardCache` collection later — don't build it upfront.
+- **`users`** — `_id`, optional auth identity (email/provider id). 💡 Given accounts are now optional/low-priority (§8.1, §8.3), this collection may not be needed for an initial launch at all — most players are just anonymous device records tracked client-side, with no server-stored user state required unless account sync ends up being built.
 
 **"Daily puzzle delivery via a shared seed"** (locked requirement from spec): 💡 suggested interpretation — each `puzzles` document has a deterministic `seed`/`puzzleNumber` tied to a calendar date (UTC-normalized, 💡 or normalized to a configurable "puzzle day" cutoff if the team wants a non-UTC reset time, common in this genre). The frontend requests "today's puzzle" by date, the backend resolves date → puzzle via the seed, and this same seed can be used to guarantee every player worldwide gets the *same* puzzle content, which is what makes shared results comparable (core to the share-card/social loop in §6.2). This mechanism is DB-agnostic and unaffected by the Mongo/Postgres choice.
 
 ### 8.3 Anonymous play + optional accounts
 
 💡 Suggested default flow:
-- **No login required to play.** A device-local identifier (e.g., a UUID in local storage, or a signed anonymous session cookie) tracks streak + history for that device/browser, so the core loop works with zero signup friction — this matters a lot for a daily game where the whole point is a frictionless every-day habit.
-- **Optional account creation** (💡 simplest: email magic link, or a plug-and-play provider like Clerk) is offered specifically to (a) sync streak/history across devices, and (b) enable the social/friends leaderboard (§6.4), which inherently needs a persistent identity to compare against friends over time.
-- On account creation, merge the anonymous device history into the new account (standard pattern — don't lose the player's existing streak when they "upgrade" to an account).
+- **No login required to play.** A device-local identifier (e.g., a UUID in local storage) tracks play history for that device/browser (past scores, puzzles played), so the core loop works with zero signup friction.
+- **Accounts are now optional and low-priority**, not a core requirement. With streaks and leaderboards cut (§6), the two original reasons for building account sync are gone — the only remaining case is syncing personal history across devices, which is a nice-to-have, not something players need to actually play. 💡 Worth a scope call: it may be reasonable to skip accounts entirely for an initial launch and only build them later if players actually ask for cross-device history.
+- If accounts are built: merge the anonymous device's local history into the new account on creation (standard pattern — don't lose the player's existing history when they "upgrade").
 
 ### 8.4 How daily puzzles are stored and served
 
@@ -401,7 +392,7 @@ These are two genuinely separate concerns from the live app, and should be built
 
 ### 9.3 Feedback loop (post-launch tuning)
 
-💡 Suggested addition, not in the original spec but a natural extension of §7.3's "coverage caveat" and §7.4's knob logging: once puzzles go live, actual player score distributions (average score, % perfect, per-guest miss rate — all already needed for aggregate stats per §6.5) should feed back into content ops:
+💡 Suggested addition, not in the original spec but a natural extension of §7.3's "coverage caveat" and §7.4's knob logging: once puzzles go live, actual player score distributions should feed back into content ops. Note this needs its own internal tracking, separate from the single public "% cracked" stat in §6.3 — average score and per-guest miss rate are useful for calibration but are no longer player-facing, so they need to be logged for content ops even though they're not shown in the app:
 - If a puzzle's actual average score is far from the ~4–5/6 target, that's a signal about whether its assigned difficulty tier and knob values were well-calibrated — useful for tuning future generation runs.
 - If players' *wrong* placements cluster heavily around one specific decoy rule the validator didn't know about (visible from aggregate miss patterns, or from qualitative feedback/complaints), that's a signal to **add that rule to the taxonomy** (§7.1) so the validator can check against it going forward — this is how the taxonomy grows and the "coverage caveat" limitation in §7.3 gets steadily narrowed over time, rather than staying a fixed blind spot.
 
@@ -414,8 +405,7 @@ Not locked, not yet default — flagged for future discussion.
 - **Naming:** "The Bouncer" is explicitly provisional, and the spec asks that visual/copy design not lean on nightclub/bouncer theming. Worth revisiting once the actual signature moment (§5.1, "card snaps into a bin") is prototyped — a rename might follow naturally from whatever metaphor wins (e.g., something sorting/tray/inbox-flavored) rather than being decided in the abstract.
 - **Image-based themed weeks:** spec explicitly calls this a future option, not core. Would need a parallel "image bank" with analogous structured metadata to §7.5 (visual properties instead of letter properties) — worth a dedicated planning pass later rather than folding into the word-based engine now.
 - **Sunday difficulty:** should Sunday be plain medium, or a deliberately "gentle medium" cooldown day after Spicy Saturday? Currently defaulted to plain medium (§4) — open to a softer treatment if early player data suggests fatigue.
-- **Streak grace/freeze mechanic:** flagged in §6.3 as a likely post-launch retention feature, not core to launch.
-- **Global vs. friends-only leaderboard:** §6.4 defaults to friends-first due to tie-density concerns with a max score of 6; revisit if the pool size knob (§7.4) ever changes in a way that widens the score range, or if global leaderboard demand shows up post-launch.
+- **Streaks/leaderboards revisited:** both were explicitly cut (§6) to keep scope and backend complexity down for launch — worth revisiting only if there's real post-launch signal that players want them enough to justify the added infra and user-data handling.
 - **Puzzle pool size beyond launch:** the 3+3 clues / 6 guests defaults are explicitly tunable (§3.1, §3.2) — once real difficulty data comes in (§9.3), consider whether a slightly larger pool (e.g., 7–8 guests) better supports the "genuinely challenging" target without overloading the "roomy, uncluttered" UI pillar (§2, §5.1). Any change here has a UI cost, so treat it as a joint design+content decision, not content-only.
 - **Non-English localization:** not addressed anywhere above; lexical rules in particular (letter-based) are English-specific by nature. Flag as a significant future scope item if localization is ever considered — likely requires largely separate rule taxonomies per language, not a translation layer.
 - **Puzzle-day reset time:** defaulted to UTC in §8.2 with a note that a configurable non-UTC cutoff is common in this genre (e.g., local midnight) — worth deciding deliberately once the target audience's geographic spread is clearer, since it affects both "same puzzle for everyone" fairness and daily-habit timing.

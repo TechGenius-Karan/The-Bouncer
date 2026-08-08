@@ -17,15 +17,14 @@
   - [Phase 4: Backend API & MongoDB integration](#phase-4-backend-api--mongodb-integration)
   - [Phase 5: Daily puzzle delivery](#phase-5-daily-puzzle-delivery)
   - [Phase 6: Human approval admin tool](#phase-6-human-approval-admin-tool)
-- [Stage D — Player identity & social](#stage-d--player-identity--social)
-  - [Phase 7: Anonymous play, accounts, streaks](#phase-7-anonymous-play-accounts-streaks)
-  - [Phase 8: Sharing, leaderboards, aggregate stats](#phase-8-sharing-leaderboards-aggregate-stats)
+- [Stage D — Local history & sharing](#stage-d--local-history--sharing)
+  - [Phase 7: Local play history & sharing](#phase-7-local-play-history--sharing)
 - [Stage E — Operational readiness](#stage-e--operational-readiness)
-  - [Phase 9: Content operations buffer](#phase-9-content-operations-buffer)
+  - [Phase 8: Content operations buffer](#phase-8-content-operations-buffer)
 - [Stage F — Polish & launch](#stage-f--polish--launch)
-  - [Phase 10: Visual polish, theming, accessibility, PWA](#phase-10-visual-polish-theming-accessibility-pwa)
-  - [Phase 11: QA, playtesting, difficulty calibration](#phase-11-qa-playtesting-difficulty-calibration)
-  - [Phase 12: Launch prep & deployment](#phase-12-launch-prep--deployment)
+  - [Phase 9: Visual polish, theming, accessibility, PWA](#phase-9-visual-polish-theming-accessibility-pwa)
+  - [Phase 10: QA, playtesting, difficulty calibration](#phase-10-qa-playtesting-difficulty-calibration)
+  - [Phase 11: Launch prep & deployment](#phase-11-launch-prep--deployment)
 - [Open tooling decisions not yet locked](#open-tooling-decisions-not-yet-locked)
 
 ---
@@ -34,7 +33,7 @@
 
 Six stages, each containing one or more phases. The guiding sequencing principle: **de-risk the least-proven part of the game first, cheaply, before investing in the surrounding machinery.**
 
-The core swipe/live-feedback/3-lives loop (planning.md [§3](planning.md#3-game-loop--rules)) is a genuinely new mechanic with no reference implementation to copy — how it *feels* to play is the single biggest unknown in this whole project. So Stage A builds a throwaway-quality, hardcoded, front-end-only prototype of just that loop before anything else exists. Everything after Stage A (the content engine, the backend, accounts, sharing) is comparatively well-specified, lower-risk engineering — worth sequencing *after* we've confirmed the core loop is actually fun, not before.
+The core swipe/live-feedback/3-lives loop (planning.md [§3](planning.md#3-game-loop--rules)) is a genuinely new mechanic with no reference implementation to copy — how it *feels* to play is the single biggest unknown in this whole project. So Stage A builds a throwaway-quality, hardcoded, front-end-only prototype of just that loop before anything else exists. Everything after Stage A (the content engine, the backend, sharing) is comparatively well-specified, lower-risk engineering — worth sequencing *after* we've confirmed the core loop is actually fun, not before.
 
 Each phase lists a **Review checkpoint** — treat this as a natural pause point to actually play/inspect what's been built together before starting the next phase, rather than plan mode-ing through all twelve phases back to back.
 
@@ -47,7 +46,7 @@ Each phase lists a **Review checkpoint** — treat this as a natural pause point
 **Goal:** an empty-but-deployable skeleton, nothing game-specific yet.
 
 - Initialize the repo: Vite + React (💡 with TypeScript — the rule-evaluator/data-model work in Stage B benefits a lot from typed word/rule/puzzle shapes; flag this as a default to confirm, not yet locked in planning.md).
-- Install and configure Tailwind CSS, plus a minimal design-token layer (colors, radii, spacing) per planning.md [§5.1](planning.md#51-theme-direction) — placeholder values are fine here, real palette comes in Phase 10.
+- Install and configure Tailwind CSS, plus a minimal design-token layer (colors, radii, spacing) per planning.md [§5.1](planning.md#51-theme-direction) — placeholder values are fine here, real palette comes in Phase 9.
 - Install Framer Motion (used starting Phase 1 for the card-snap interaction).
 - Basic repo hygiene: linting/formatting config, a `.gitignore`, folder structure (e.g., `src/game`, `src/content`, `src/api` as placeholders for where Stage B/C work will land).
 - Connect the repo to Netlify and confirm a static deploy works end to end (just the Vite default page is fine) — proves the deploy pipeline before we depend on it later.
@@ -66,7 +65,7 @@ This is the highest-priority phase in the whole plan: everything else assumes th
 - 🔒 Implement the 3-life system exactly as specified in planning.md [§3.3](planning.md#33-lives): wrong swipe costs a life, 3rd wrong swipe ends the round immediately regardless of remaining guests. (Client-side only for now — server-authoritative enforcement isn't needed until Phase 4, but the *rule* must be right here since we're judging feel.)
 - Build the reveal screen: rule text, three-state guest breakdown (correct / wrong-then-corrected / not-reached), score (planning.md [§3.5](planning.md#35-reveal-phase)).
 - Implement the signature "card snaps into a bin" moment (planning.md [§5.1](planning.md#51-theme-direction)) — this is worth real iteration time here since it's the game's core tactile identity.
-- Skip for this phase (deliberately deferred, not forgotten): streaks, sharing, leaderboards, accounts, real content generation, backend calls of any kind.
+- Skip for this phase (deliberately deferred, not forgotten): sharing, accounts, real content generation, backend calls of any kind.
 
 **Review checkpoint:** play both hardcoded puzzles start to finish, including deliberately losing all 3 lives on one of them, and confirm: the swipe interaction feels good, the wrong-answer auto-correct reads clearly (not confusing), the lives-out ending feels calm rather than punishing (planning.md pillar 5, [§2](planning.md#2-design-pillars--core-philosophy)), and the reveal is satisfying even on an incomplete round. Don't move to Stage B until this genuinely feels right — this is the one phase worth being slow about.
 
@@ -138,34 +137,28 @@ Suggested build order *within* this phase (each step should work and be testable
 
 ---
 
-## Stage D — Player identity & social
+## Stage D — Local history & sharing
 
-### Phase 7: Anonymous play, accounts, streaks
+> **Revised 2026-08-08:** planning.md cut streaks and leaderboards entirely, and demoted accounts to optional/low-priority (§6, §8.3) — sharing results for fun replaces the social loop leaderboards would have provided. This collapses what was two phases into one, much lighter phase.
 
-- Device-local anonymous identifier (planning.md [§8.3](planning.md#83-anonymous-play--optional-accounts)) tracking streak/history with zero signup.
-- Streak increment/reset logic per [§6.3](planning.md#63-streaks) (increments on any day played, including an early lives-out ending).
-- Optional account creation (💡 Clerk or email magic link, per [§8.1](planning.md#81-overview--rationale)) with anonymous-history merge on upgrade.
+### Phase 7: Local play history & sharing
 
-**Review checkpoint:** play several days in a row (can fast-forward by adjusting the resolved "today" in a dev environment) and confirm streaks increment and survive an account upgrade without loss.
-
-### Phase 8: Sharing, leaderboards, aggregate stats
-
+- Device-local play history (planning.md [§8.3](planning.md#83-anonymous-play--optional-accounts)) — past scores/puzzles played, stored client-side, zero signup. No account system, no server-side user state, unless a real need for cross-device sync shows up later (flagged as an open scope call in [§8.3](planning.md#83-anonymous-play--optional-accounts), not built by default).
 - Spoiler-safe share card per [§6.2](planning.md#62-sharing) — build the text/emoji-grid version first (three-state squares: correct/wrong-then-corrected/not-reached), image-card version later.
-- Friends/social leaderboard per [§6.4](planning.md#64-leaderboards).
-- Aggregate stats per [§6.5](planning.md#65-aggregate-stats) — "% cracked" (redefined as a perfect zero-mistake run) and per-guest miss rate.
+- The single aggregate stat per [§6.3](planning.md#63-aggregate-stats) — "% of players who cracked it" (perfect, zero-mistake run) — server-computed and shown after the player finishes their own puzzle.
 
-**Review checkpoint:** share a real result to a chat app and confirm it renders correctly and reveals nothing about the rule; check that a friend's leaderboard entry updates after they play.
+**Review checkpoint:** play a few days in a row and confirm local history persists across sessions; share a real result to a chat app and confirm it renders correctly and reveals nothing about the rule; confirm the "% cracked" figure only appears after finishing today's puzzle.
 
 ---
 
 ## Stage E — Operational readiness
 
-### Phase 9: Content operations buffer
+### Phase 8: Content operations buffer
 
 **Goal:** turn the Stage B/C pipeline into an actual sustained operational habit, not just a one-off test run.
 
 - Establish a real generation cadence (batch-generate on a schedule) and track buffer health per [§9.2](planning.md#92-buffer-health) (target 2–4 weeks of approved puzzles ahead at all times, per [§9.1](planning.md#91-pipeline-stages)).
-- Expand the rule taxonomy and word bank tag coverage based on real reviewer feedback (the [§9.3](planning.md#93-feedback-loop-post-launch-tuning) feedback loop) — this phase never really "ends," it's the first cycle of an ongoing process.
+- Expand the rule taxonomy and word bank tag coverage based on real reviewer feedback (the [§9.3](planning.md#93-feedback-loop-post-launch-tuning) feedback loop) — this phase never really "ends," it's the first cycle of an ongoing process. Note this loop now tracks average score and per-guest miss rate purely as internal calibration signals, separate from the single public "% cracked" stat (§6.3).
 
 **Review checkpoint:** confirm the buffer dashboard shows a healthy multi-week runway for both medium and Spicy Saturday puzzles before considering a real launch.
 
@@ -173,18 +166,18 @@ Suggested build order *within* this phase (each step should work and be testable
 
 ## Stage F — Polish & launch
 
-### Phase 10: Visual polish, theming, accessibility, PWA
+### Phase 9: Visual polish, theming, accessibility, PWA
 
 - Full palette/typography/motion pass per [§5.1](planning.md#51-theme-direction) (replacing Phase 0's placeholder tokens), colorblind-safe IN/OUT color validation.
 - Responsive/mobile pass across the full screen flow ([§5.2](planning.md#52-screen-by-screen-flow)).
 - PWA manifest + offline caching for the current day's puzzle.
 
-### Phase 11: QA, playtesting, difficulty calibration
+### Phase 10: QA, playtesting, difficulty calibration
 
 - Internal playtesting against the ~4–5/6 target ([§4](planning.md#4-difficulty-model--weekly-calendar)), tune generator knobs based on real first-swipe accuracy data.
 - Specifically sanity-check the 3-life cap doesn't feel punishing at the intended difficulty (per pillar 5) and rarely triggers for genuinely engaged play, per the note added to [§4](planning.md#4-difficulty-model--weekly-calendar).
 
-### Phase 12: Launch prep & deployment
+### Phase 11: Launch prep & deployment
 
 - Production Netlify deploy, environment/secrets audit, domain setup, basic error monitoring.
 - Final launch checklist against every 🔒 locked requirement in planning.md, to confirm nothing was dropped along the way.
