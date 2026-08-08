@@ -5,6 +5,9 @@ node_modules/
 dist/
 dist-ssr/
 
+# Generated puzzle candidates (regenerable scratch output, not source)
+content-engine/output/
+
 # Local env
 .env
 .env.local

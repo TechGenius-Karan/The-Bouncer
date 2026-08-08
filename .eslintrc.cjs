@@ -15,4 +15,13 @@ module.exports = {
       { allowConstantExport: true },
     ],
   },
+  overrides: [
+    {
+      files: ['content-engine/**/*.ts'],
+      env: { node: true, browser: false, es2020: true },
+      rules: {
+        'react-refresh/only-export-components': 'off',
+      },
+    },
+  ],
 }
