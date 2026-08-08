@@ -37,6 +37,16 @@ The core swipe/live-feedback/3-lives loop (planning.md [§3](planning.md#3-game-
 
 Each phase lists a **Review checkpoint** — treat this as a natural pause point to actually play/inspect what's been built together before starting the next phase, rather than plan mode-ing through all twelve phases back to back.
 
+### Where things will live
+
+The repo root is organized to mirror the stages above, so each stage's code lands in its own top-level folder rather than getting mixed into the player-facing app:
+
+- **`src/`** — the player-facing web app (Stage A). Exists today.
+- **`content-engine/`** — Stage B's word bank, rule taxonomy, puzzle generator, and uniqueness validator (planning.md [§7](planning.md#7-rules--word-selection-engine)). This is offline/headless tooling a human runs to produce puzzles, not code that ships to players, so it lives as a sibling to `src/` rather than inside it. Doesn't exist yet — created when Phase 2 starts.
+- **`netlify/functions/`** — Stage C's backend (today's-puzzle fetch, per-guest check endpoint, per planning.md [§8.4](planning.md#84-how-daily-puzzles-are-stored-and-served)), matching Netlify's own convention for serverless functions. `netlify.toml` will need a `functions = "netlify/functions"` line added at that point. Doesn't exist yet — created when Phase 4 starts.
+
+No placeholder folders are scaffolded ahead of time for `content-engine/` or `netlify/functions/` — they get created when their phase actually begins.
+
 ---
 
 ## Stage A — Prove the core loop
