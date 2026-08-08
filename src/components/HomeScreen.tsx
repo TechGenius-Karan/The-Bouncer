@@ -1,13 +1,17 @@
 import type { ReactNode } from 'react'
-import type { Puzzle } from '../game/types'
 
 interface Props {
-  puzzle: Puzzle
   onPlay: () => void
   onHowToPlay: () => void
 }
 
-export function HomeScreen({ puzzle, onPlay, onHowToPlay }: Props) {
+const todayLabel = new Date().toLocaleDateString(undefined, {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+})
+
+export function HomeScreen({ onPlay, onHowToPlay }: Props) {
   return (
     <div className="flex h-full flex-col justify-between px-7 pb-10 pt-11">
       <div className="flex flex-col items-start gap-2.5">
@@ -38,8 +42,7 @@ export function HomeScreen({ puzzle, onPlay, onHowToPlay }: Props) {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-baseline gap-2.5">
-          <div className="font-display text-lg font-bold">No. {puzzle.number}</div>
-          <div className="text-[15px] text-ink-soft">{puzzle.dateLabel}</div>
+          <div className="text-[15px] text-ink-soft">{todayLabel}</div>
         </div>
         <button
           onClick={onPlay}

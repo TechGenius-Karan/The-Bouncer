@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import type { CardState, Puzzle } from '../game/types'
+import type { CardState } from '../game/types'
 
 interface Props {
-  puzzle: Puzzle
+  puzzleNumber: number
   cards: CardState[]
   score: number
   onClose: () => void
@@ -10,7 +10,7 @@ interface Props {
 
 function squareFor(card: CardState) {
   if (card.result === 'correct') {
-    return card.isIn
+    return card.trueLabel === 'in'
       ? { bg: 'bg-bin-in', emoji: '🟩' }
       : { bg: 'bg-bin-out', emoji: '🟧' }
   }
@@ -18,10 +18,10 @@ function squareFor(card: CardState) {
   return { bg: 'bg-skip-chip', emoji: '⬜' }
 }
 
-export function ShareCardModal({ puzzle, cards, score, onClose }: Props) {
+export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
   const [copied, setCopied] = useState(false)
 
-  const shareText = `THE BOUNCER No. ${puzzle.number} · ${score}/6\n${cards.map((c) => squareFor(c).emoji).join('')}`
+  const shareText = `THE BOUNCER No. ${puzzleNumber} · ${score}/6\n${cards.map((c) => squareFor(c).emoji).join('')}`
 
   const copy = async () => {
     try {
@@ -48,7 +48,7 @@ export function ShareCardModal({ puzzle, cards, score, onClose }: Props) {
               THE BOUNCER
             </div>
             <div className="font-display text-3xl font-extrabold tracking-tight">
-              No. {puzzle.number} &nbsp;·&nbsp; {score}/6
+              No. {puzzleNumber} &nbsp;·&nbsp; {score}/6
             </div>
           </div>
           <button
@@ -63,7 +63,7 @@ export function ShareCardModal({ puzzle, cards, score, onClose }: Props) {
           {cards.map((card) => {
             const sq = squareFor(card)
             const mark =
-              card.result === 'correct' ? (card.isIn ? '●' : '▲') : card.result === 'wrong' ? '✕' : '·'
+              card.result === 'correct' ? (card.trueLabel === 'in' ? '●' : '▲') : card.result === 'wrong' ? '✕' : '·'
             return (
               <div
                 key={card.id}

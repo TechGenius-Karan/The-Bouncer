@@ -1,30 +1,28 @@
 import { useState } from 'react'
-import type { CardState, Puzzle } from '../game/types'
-import type { RoundResult } from './PlayScreen'
+import type { CardState, RoundResult } from '../game/types'
 import { ShareCardModal } from './ShareCardModal'
 
 interface Props {
-  puzzle: Puzzle
   result: RoundResult
-  onPlayAgain: () => void
   onHome: () => void
 }
 
 function recapFor(card: CardState) {
   const status = card.result === 'correct' ? 'correct' : card.result === 'wrong' ? 'wrong' : 'missed'
-  const mark = status === 'correct' ? (card.isIn ? '●' : '▲') : status === 'wrong' ? '✕' : '·'
+  const isIn = card.trueLabel === 'in'
+  const mark = status === 'correct' ? (isIn ? '●' : '▲') : status === 'wrong' ? '✕' : '·'
   const note =
     status === 'correct'
-      ? `first try · ${card.isIn ? 'in' : 'out'}`
+      ? `first try · ${isIn ? 'in' : 'out'}`
       : status === 'wrong'
-        ? `missed · was ${card.isIn ? 'in' : 'out'}`
-        : `not reached · was ${card.isIn ? 'in' : 'out'}`
+        ? `missed · was ${isIn ? 'in' : 'out'}`
+        : `not reached · was ${isIn ? 'in' : 'out'}`
   return { status, mark, note }
 }
 
-export function RevealScreen({ puzzle, result, onPlayAgain, onHome }: Props) {
+export function RevealScreen({ result, onHome }: Props) {
   const [sharing, setSharing] = useState(false)
-  const { cards, score } = result
+  const { cards, score, puzzleNumber, ruleText } = result
   const endedEarly = cards.some((c) => c.result === 'missed')
   const verdict = endedEarly
     ? 'Out of guesses for today — here’s how it went.'
@@ -38,10 +36,10 @@ export function RevealScreen({ puzzle, result, onPlayAgain, onHome }: Props) {
     <div className="flex h-full flex-col">
       <div className="flex flex-col gap-4 px-6 pt-7">
         <div className="font-sans text-xs font-semibold tracking-wider text-ink-soft">
-          PUZZLE No. {puzzle.number} — THE RULE WAS
+          PUZZLE No. {puzzleNumber} — THE RULE WAS
         </div>
         <div className="rounded-[24px] border-[1.5px] border-ink bg-slip p-5 font-display text-[22px] font-bold leading-tight tracking-tight">
-          {puzzle.ruleText}
+          {ruleText}
         </div>
         <div className="flex items-end gap-3">
           <div className="font-display text-5xl font-extrabold leading-none">
@@ -57,7 +55,7 @@ export function RevealScreen({ puzzle, result, onPlayAgain, onHome }: Props) {
             const rowBg =
               status === 'wrong' ? 'bg-miss-tint border-miss-border' : status === 'missed' ? 'bg-skip-bg border-skip border-dashed' : 'bg-slip border-line'
             const markBg =
-              status === 'correct' ? (card.isIn ? 'bg-bin-in' : 'bg-bin-out') : status === 'wrong' ? 'bg-miss' : 'bg-skip'
+              status === 'correct' ? (card.trueLabel === 'in' ? 'bg-bin-in' : 'bg-bin-out') : status === 'wrong' ? 'bg-miss' : 'bg-skip'
             const textColor = status === 'wrong' ? 'text-miss-text' : status === 'missed' ? 'text-skip-faint' : 'text-ink'
             const noteColor = status === 'wrong' ? 'text-miss-text/80' : status === 'missed' ? 'text-skip-faint' : 'text-ink-soft'
             return (
@@ -87,18 +85,15 @@ export function RevealScreen({ puzzle, result, onPlayAgain, onHome }: Props) {
         >
           Share result
         </button>
-        <div className="flex justify-center gap-4 font-sans text-sm text-ink-soft">
-          <button onClick={onPlayAgain} className="underline decoration-line underline-offset-2">
-            Play again (demo)
-          </button>
-          <button onClick={onHome} className="underline decoration-line underline-offset-2">
+        <div className="flex justify-center">
+          <button onClick={onHome} className="font-sans text-sm text-ink-soft underline decoration-line underline-offset-2">
             Back to home
           </button>
         </div>
       </div>
 
       {sharing && (
-        <ShareCardModal puzzle={puzzle} cards={cards} score={score} onClose={() => setSharing(false)} />
+        <ShareCardModal puzzleNumber={puzzleNumber} cards={cards} score={score} onClose={() => setSharing(false)} />
       )}
     </div>
   )

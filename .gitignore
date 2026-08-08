@@ -34,3 +34,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Netlify folder
+.netlify
+deno.lock

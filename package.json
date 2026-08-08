@@ -10,17 +10,22 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "typecheck:content-engine": "tsc -p tsconfig.content-engine.json --noEmit",
+    "typecheck:netlify-functions": "tsc -p tsconfig.netlify-functions.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "content:print-rules": "tsx content-engine/scripts/printRuleSplits.ts",
-    "content:generate": "tsx content-engine/scripts/generateBatch.ts"
+    "content:generate": "tsx content-engine/scripts/generateBatch.ts",
+    "content:seed-db": "tsx content-engine/scripts/seedDatabase.ts",
+    "dev:functions": "netlify dev"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
+    "mongodb": "^7.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.3.0",
     "@types/node": "^26.2.0",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
@@ -28,9 +33,11 @@
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.0",
+    "dotenv": "^17.4.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "netlify-cli": "^27.1.1",
     "postcss": "^8.4.0",
     "prettier": "^3.3.0",
     "tailwindcss": "^3.4.0",
