@@ -16,6 +16,7 @@
     "content:print-rules": "tsx content-engine/scripts/printRuleSplits.ts",
     "content:generate": "tsx content-engine/scripts/generateBatch.ts",
     "content:seed-db": "tsx content-engine/scripts/seedDatabase.ts",
+    "content:queue-puzzles": "tsx content-engine/scripts/queuePuzzles.ts",
     "content:schedule": "tsx content-engine/scripts/schedulePuzzles.ts",
     "dev:functions": "netlify dev"
   },

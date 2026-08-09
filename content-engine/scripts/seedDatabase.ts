@@ -1,20 +1,23 @@
-// Phase 4 (build-plan.md): one-time migration/seed script — loads the word
-// bank and rule taxonomy into MongoDB, and writes a handful of Phase
-// 3-generated candidate puzzles in as "approved" (bypassing the
-// not-yet-built admin tool from Phase 6) so there's real data for the
-// Netlify Functions to serve. Run with: npm run content:seed-db [count]
+// One-time-ish migration script — loads the word bank and rule taxonomy
+// into MongoDB. Run this whenever the taxonomy changes, not routinely.
+//
+// This used to also generate and insert puzzle candidates directly as
+// "approved," bypassing review entirely — that shortcut existed only
+// because the real admin tool (Phase 6) didn't exist yet. Now that it does,
+// bootstrapping a fresh environment is a four-step chain instead of one
+// command: this script (words/rules) -> `content:queue-puzzles` (generates
+// a pending_approval batch) -> approve through the /admin review screen ->
+// `content:schedule` (assigns real dates to approved puzzles, unchanged).
+// Run with: npm run content:seed-db
 
 import 'dotenv/config'
 import { getCollections } from '../../netlify/functions/_shared/db'
-import type { PuzzleDoc, RuleDoc, WordDoc } from '../../netlify/functions/_shared/types'
-import { generateBatchCore } from '../generator/batch'
+import type { RuleDoc, WordDoc } from '../../netlify/functions/_shared/types'
 import { RULES } from '../rules'
 import { buildWordBank } from '../words/wordBank'
 
-const PUZZLE_COUNT = Number(process.argv[2]) || 5
-
 async function main() {
-  const { words, rules, puzzles } = await getCollections()
+  const { words, rules } = await getCollections()
 
   const wordBank = buildWordBank()
   const wordDocs: WordDoc[] = wordBank.map((w) => ({
@@ -49,31 +52,7 @@ async function main() {
     })),
   )
 
-  console.log(`Generating ${PUZZLE_COUNT} candidate puzzles...`)
-  const batch = generateBatchCore(PUZZLE_COUNT, ['medium', 'spicy'])
-  if (batch.length < PUZZLE_COUNT) {
-    console.warn(`Only generated ${batch.length}/${PUZZLE_COUNT} candidates.`)
-  }
-
-  const existingCount = await puzzles.countDocuments()
-  const puzzleDocs: PuzzleDoc[] = batch.map((candidate, i) => ({
-    number: existingCount + i + 1,
-    difficultyTier: candidate.difficultyTier,
-    ruleId: candidate.ruleId,
-    status: 'approved',
-    date: null,
-    clues: candidate.clues,
-    guests: candidate.guests,
-    createdAt: new Date(),
-  }))
-
-  if (puzzleDocs.length > 0) {
-    console.log(`Inserting ${puzzleDocs.length} puzzles as "approved"...`)
-    await puzzles.insertMany(puzzleDocs)
-  }
-
-  const totalApproved = await puzzles.countDocuments({ status: 'approved' })
-  console.log(`Done. ${totalApproved} approved puzzles now available in total.`)
+  console.log('Done. Run "npm run content:queue-puzzles" next to generate puzzles for review.')
   process.exit(0)
 }
 

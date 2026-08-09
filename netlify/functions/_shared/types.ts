@@ -5,7 +5,7 @@ import type { ObjectId } from 'mongodb'
 // so seeding is a near-direct copy, not a reshape.
 
 export type Label = 'IN' | 'OUT'
-export type PuzzleStatus = 'draft' | 'pending_approval' | 'approved' | 'scheduled' | 'live'
+export type PuzzleStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'live'
 
 export interface WordDoc {
   _id: string // spelling
@@ -39,6 +39,21 @@ export interface PuzzleGuestDoc {
   trapType: 'decoy' | 't-but-looks-wrong' | null
 }
 
+/** A rule the validator found still fit the clue set alone, but the pool broke — informational, not a defect (planning.md §7.2). */
+export interface DecoyResult {
+  ruleId: string
+  subtlety: number
+}
+
+export interface KnobValues {
+  tier: 'medium' | 'spicy'
+  clueCountIn: number
+  clueCountOut: number
+  poolSize: number
+  trapGuestCount: number
+  targetSurvivingDecoyRange: [number, number]
+}
+
 export interface PuzzleDoc {
   _id?: ObjectId
   number: number
@@ -49,6 +64,10 @@ export interface PuzzleDoc {
   date: string | null
   clues: PuzzleClueDoc[]
   guests: PuzzleGuestDoc[]
+  liveDecoys: DecoyResult[]
+  knobValues: KnobValues
+  /** Set only when status is 'rejected' — a reviewer's reason, kept for future generator tuning (planning.md §9.3). */
+  rejectionReason?: string
   createdAt: Date
 }
 
