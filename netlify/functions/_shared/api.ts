@@ -18,6 +18,8 @@ export interface GetRoundResponse {
   resultId: string
   puzzleId: string
   number: number
+  /** The puzzle's UTC calendar date ("YYYY-MM-DD") — lets the client record local play history per day. */
+  date: string
   clues: { in: string[]; out: string[] }
   pool: PoolItem[]
   livesRemaining: number
@@ -45,6 +47,12 @@ export interface CheckSwipeResponse {
    * get sent, since up to this point they were never revealed to the client.
    */
   poolReveal?: PoolItem[]
+}
+
+export interface GetCrackRateResponse {
+  /** null when totalFinishers is 0 — distinguishes "no data yet" from a genuine 0%. */
+  crackedPercent: number | null
+  totalFinishers: number
 }
 
 export interface ApiErrorResponse {

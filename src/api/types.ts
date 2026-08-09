@@ -17,6 +17,7 @@ export interface GetRoundResponse {
   resultId: string
   puzzleId: string
   number: number
+  date: string
   clues: { in: string[]; out: string[] }
   pool: PoolItem[]
   livesRemaining: number
@@ -31,4 +32,9 @@ export interface CheckSwipeResponse {
   roundComplete: boolean
   ruleText: string | null
   poolReveal?: PoolItem[]
+}
+
+export interface GetCrackRateResponse {
+  crackedPercent: number | null
+  totalFinishers: number
 }

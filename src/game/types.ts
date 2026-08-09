@@ -20,7 +20,10 @@ export interface GameState {
   phase: Phase
   error: string | null
   resultId: string | null
+  puzzleId: string
   puzzleNumber: number
+  /** The puzzle's UTC calendar date ("YYYY-MM-DD") — set once at fetch, never mutated. */
+  date: string
   /** Only known once the round is complete. */
   ruleText: string | null
   clues: { in: string[]; out: string[] }
@@ -32,8 +35,15 @@ export interface GameState {
 }
 
 export interface RoundResult {
+  puzzleId: string
   puzzleNumber: number
+  date: string
   ruleText: string
   cards: CardState[]
   score: number
+}
+
+/** Shared by RevealScreen (display) and PlayScreen (local history) so this fact is computed exactly once. */
+export function derivedEndedEarly(cards: CardState[]): boolean {
+  return cards.some((c) => c.result === 'missed')
 }

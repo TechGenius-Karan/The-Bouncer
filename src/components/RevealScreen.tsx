@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import type { CardState, RoundResult } from '../game/types'
+import { useEffect, useState } from 'react'
+import { getCrackRate } from '../api/client'
+import { derivedEndedEarly, type CardState, type RoundResult } from '../game/types'
 import { ShareCardModal } from './ShareCardModal'
 
 interface Props {
@@ -22,8 +23,23 @@ function recapFor(card: CardState) {
 
 export function RevealScreen({ result, onHome }: Props) {
   const [sharing, setSharing] = useState(false)
-  const { cards, score, puzzleNumber, ruleText } = result
-  const endedEarly = cards.some((c) => c.result === 'missed')
+  const [crackedPercent, setCrackedPercent] = useState<number | null>(null)
+  const { cards, score, puzzleNumber, puzzleId, ruleText } = result
+  const endedEarly = derivedEndedEarly(cards)
+
+  useEffect(() => {
+    let cancelled = false
+    getCrackRate(puzzleId)
+      .then((res) => {
+        if (!cancelled) setCrackedPercent(res.crackedPercent)
+      })
+      .catch(() => {
+        // Non-essential — the reveal is still complete and correct without this line.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [puzzleId])
   const verdict = endedEarly
     ? 'Out of guesses for today — here’s how it went.'
     : score === 6
@@ -48,6 +64,12 @@ export function RevealScreen({ result, onHome }: Props) {
           </div>
           <div className="pb-1.5 font-sans text-[15px] text-ink-soft">{verdict}</div>
         </div>
+
+        {crackedPercent !== null && (
+          <div className="font-sans text-[13px] text-ink-soft">
+            {crackedPercent}% of players cracked today&rsquo;s puzzle.
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           {cards.map((card) => {

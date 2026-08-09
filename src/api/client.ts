@@ -1,4 +1,4 @@
-import type { ApiLabel, CheckSwipeResponse, GetRoundResponse } from './types'
+import type { ApiLabel, CheckSwipeResponse, GetCrackRateResponse, GetRoundResponse } from './types'
 
 async function parseOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -10,7 +10,15 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
 }
 
 export function getRound(resultId: string | null): Promise<GetRoundResponse> {
-  const query = resultId ? `?resultId=${encodeURIComponent(resultId)}` : ''
+  const params = new URLSearchParams()
+  if (resultId) params.set('resultId', resultId)
+  // Forwards a manually-appended ?asOf= on the page's own URL, so a
+  // simulated day (Phase 5's dev/preview-only override, see get-round.ts)
+  // can actually be played through the real UI, not just queried directly.
+  // Inert anywhere the server doesn't honor it, including production.
+  const asOf = new URLSearchParams(window.location.search).get('asOf')
+  if (asOf) params.set('asOf', asOf)
+  const query = params.size > 0 ? `?${params.toString()}` : ''
   return fetch(`/api/get-round${query}`).then(parseOrThrow<GetRoundResponse>)
 }
 
@@ -24,4 +32,10 @@ export function checkSwipe(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ resultId, wordId, attemptedLabel }),
   }).then(parseOrThrow<CheckSwipeResponse>)
+}
+
+export function getCrackRate(puzzleId: string): Promise<GetCrackRateResponse> {
+  return fetch(`/api/get-crack-rate?puzzleId=${encodeURIComponent(puzzleId)}`).then(
+    parseOrThrow<GetCrackRateResponse>,
+  )
 }

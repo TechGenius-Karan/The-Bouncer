@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useGame } from '../game/useGame'
-import type { RoundResult } from '../game/types'
+import { derivedEndedEarly, type RoundResult } from '../game/types'
+import { recordResult } from '../game/playHistory'
 import { ClueDeck } from './ClueDeck'
 import { LivesDots } from './LivesDots'
 import { SlipCard } from './SlipCard'
@@ -18,7 +19,21 @@ export function PlayScreen({ onDone }: Props) {
 
   useEffect(() => {
     if (state.phase === 'done' && state.ruleText) {
-      onDone({ puzzleNumber: state.puzzleNumber, ruleText: state.ruleText, cards: state.cards, score })
+      recordResult({
+        date: state.date,
+        puzzleNumber: state.puzzleNumber,
+        score,
+        poolSize: state.cards.length,
+        endedEarly: derivedEndedEarly(state.cards),
+      })
+      onDone({
+        puzzleId: state.puzzleId,
+        puzzleNumber: state.puzzleNumber,
+        date: state.date,
+        ruleText: state.ruleText,
+        cards: state.cards,
+        score,
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase])

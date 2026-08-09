@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 interface Props {
   onPlay: () => void
   onHowToPlay: () => void
+  onShowStats: () => void
 }
 
 const todayLabel = new Date().toLocaleDateString(undefined, {
@@ -11,7 +12,7 @@ const todayLabel = new Date().toLocaleDateString(undefined, {
   day: 'numeric',
 })
 
-export function HomeScreen({ onPlay, onHowToPlay }: Props) {
+export function HomeScreen({ onPlay, onHowToPlay, onShowStats }: Props) {
   return (
     <div className="flex h-full flex-col justify-between px-7 pb-10 pt-11">
       <div className="flex flex-col items-start gap-2.5">
@@ -50,12 +51,18 @@ export function HomeScreen({ onPlay, onHowToPlay }: Props) {
         >
           Play today&rsquo;s puzzle
         </button>
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-5">
           <button
             onClick={onHowToPlay}
             className="border-b-[1.5px] border-line pb-0.5 text-[15px] font-semibold text-ink-soft"
           >
             How to play
+          </button>
+          <button
+            onClick={onShowStats}
+            className="border-b-[1.5px] border-line pb-0.5 text-[15px] font-semibold text-ink-soft"
+          >
+            Your stats
           </button>
         </div>
       </div>

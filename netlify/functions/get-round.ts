@@ -90,6 +90,7 @@ export default async (req: Request): Promise<Response> => {
     resultId: result._id!.toString(),
     puzzleId: puzzle._id!.toString(),
     number: puzzle.number,
+    date: result.date,
     clues,
     pool,
     livesRemaining: result.livesRemaining,
