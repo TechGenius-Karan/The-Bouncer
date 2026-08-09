@@ -1,6 +1,8 @@
-// Phase 4 has exactly one active puzzle in the whole system, so a single
-// fixed key is enough — Phase 5's real per-date scheduling will need this
-// keyed by puzzle/date instead.
+// A single fixed key is enough even with real per-date scheduling (Phase 5):
+// the server checks that a resumed result's date matches today before
+// trusting it (see get-round.ts), so a stale id from a previous day just
+// falls through to a fresh fetch, and saveResultId below overwrites this
+// key with the new one — no per-date key needed on the client.
 const KEY = 'bouncer:resultId'
 
 export function loadResultId(): string | null {

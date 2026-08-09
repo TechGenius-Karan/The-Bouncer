@@ -61,6 +61,7 @@ async function main() {
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
     status: 'approved',
+    date: null,
     clues: candidate.clues,
     guests: candidate.guests,
     createdAt: new Date(),

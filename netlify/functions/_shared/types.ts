@@ -5,7 +5,7 @@ import type { ObjectId } from 'mongodb'
 // so seeding is a near-direct copy, not a reshape.
 
 export type Label = 'IN' | 'OUT'
-export type PuzzleStatus = 'pending_approval' | 'approved' | 'scheduled' | 'live'
+export type PuzzleStatus = 'draft' | 'pending_approval' | 'approved' | 'scheduled' | 'live'
 
 export interface WordDoc {
   _id: string // spelling
@@ -45,6 +45,8 @@ export interface PuzzleDoc {
   difficultyTier: 'medium' | 'spicy'
   ruleId: string
   status: PuzzleStatus
+  /** UTC calendar date ("YYYY-MM-DD") this puzzle is scheduled for, or null if not yet scheduled. */
+  date: string | null
   clues: PuzzleClueDoc[]
   guests: PuzzleGuestDoc[]
   createdAt: Date
@@ -59,6 +61,8 @@ export interface ResultPlacementDoc {
 export interface ResultDoc {
   _id?: ObjectId
   puzzleId: string
+  /** Copied from the puzzle's date at creation time — lets a resumed round be checked for staleness with no join. */
+  date: string
   userId: string | null
   placements: ResultPlacementDoc[]
   livesRemaining: number

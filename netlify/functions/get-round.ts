@@ -1,15 +1,36 @@
-// Phase 4 (build-plan.md / planning.md §8.4): serves the current puzzle with
-// every guest's true label stripped out, and either starts a fresh round or
-// resumes an in-progress one (via ?resultId=) so refreshing the page can't
-// reset a player's lives. Real date-based "today's puzzle" scheduling is
-// Phase 5 — for now this always serves the lowest-numbered approved puzzle.
+// Phase 5 (build-plan.md / planning.md §8.2, §8.4, §10): serves the puzzle
+// scheduled for today (UTC), with every guest's true label stripped out, and
+// either starts a fresh round or resumes an in-progress one (via
+// ?resultId=) so refreshing the page can't reset a player's lives. A
+// resumed round is only trusted if it's actually dated today — otherwise a
+// returning player's stale, already-finished round from a previous day
+// would be served forever instead of today's puzzle.
 
 import { ObjectId } from 'mongodb'
 import type { GetRoundResponse } from './_shared/api'
 import { getCollections } from './_shared/db'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from './_shared/puzzleDate'
 import { jsonResponse } from './_shared/respond'
 import { buildPool, resolveClueWords } from './_shared/roundView'
 import type { PuzzleDoc, ResultDoc } from './_shared/types'
+
+// Lets us simulate a different "today" to manually walk through a
+// multi-day schedule without touching the system clock. Fails closed: only
+// local `netlify dev` (NETLIFY_DEV, set reliably by the CLI itself — unlike
+// CONTEXT, which isn't guaranteed to be populated for local dev) or a
+// deploy-preview/branch-deploy context can honor it, so a real production
+// deploy never can.
+const OVERRIDE_ALLOWED_CONTEXTS = new Set(['branch-deploy', 'deploy-preview'])
+
+function resolveToday(url: URL): string {
+  const allowOverride =
+    process.env.NETLIFY_DEV === 'true' || OVERRIDE_ALLOWED_CONTEXTS.has(process.env.CONTEXT ?? '')
+  const asOf = allowOverride ? url.searchParams.get('asOf') : null
+  if (asOf && isValidPuzzleDateString(asOf)) {
+    return resolvePuzzleDateString(new Date(`${asOf}T00:00:00.000Z`))
+  }
+  return resolvePuzzleDateString()
+}
 
 export default async (req: Request): Promise<Response> => {
   if (req.method !== 'GET') {
@@ -18,6 +39,7 @@ export default async (req: Request): Promise<Response> => {
 
   const url = new URL(req.url)
   const resultId = url.searchParams.get('resultId')
+  const today = resolveToday(url)
 
   const { puzzles, results, rules } = await getCollections()
 
@@ -25,20 +47,25 @@ export default async (req: Request): Promise<Response> => {
   let puzzle: PuzzleDoc | null = null
 
   if (resultId && ObjectId.isValid(resultId)) {
-    result = await results.findOne({ _id: new ObjectId(resultId) })
-    if (result) {
-      puzzle = await puzzles.findOne({ _id: new ObjectId(result.puzzleId) })
+    const candidate = await results.findOne({ _id: new ObjectId(resultId) })
+    if (candidate && candidate.date === today) {
+      const candidatePuzzle = await puzzles.findOne({ _id: new ObjectId(candidate.puzzleId) })
+      if (candidatePuzzle) {
+        result = candidate
+        puzzle = candidatePuzzle
+      }
     }
   }
 
   if (!result || !puzzle) {
-    puzzle = await puzzles.findOne({ status: 'approved' }, { sort: { number: 1 } })
+    puzzle = await puzzles.findOne({ date: today, status: { $in: ['scheduled', 'live'] } })
     if (!puzzle) {
-      return jsonResponse({ error: 'No approved puzzle is available yet.' }, 404)
+      return jsonResponse({ error: `No puzzle is scheduled for ${today} yet.` }, 404)
     }
 
     const fresh: ResultDoc = {
       puzzleId: puzzle._id!.toString(),
+      date: today,
       userId: null,
       placements: [],
       livesRemaining: 3,
