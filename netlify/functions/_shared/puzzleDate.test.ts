@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDaysToDateString, isValidPuzzleDateString, resolvePuzzleDateString } from './puzzleDate'
+import { addDaysToDateString, isSaturday, isValidPuzzleDateString, resolvePuzzleDateString } from './puzzleDate'
 
 describe('resolvePuzzleDateString', () => {
   it('resolves the exact UTC midnight boundary correctly', () => {
@@ -41,5 +41,16 @@ describe('isValidPuzzleDateString', () => {
     expect(isValidPuzzleDateString('not-a-date')).toBe(false)
     expect(isValidPuzzleDateString('2026-13-45')).toBe(false)
     expect(isValidPuzzleDateString('')).toBe(false)
+  })
+})
+
+describe('isSaturday', () => {
+  it('identifies a known Saturday as true', () => {
+    expect(isSaturday('2026-08-08')).toBe(true)
+  })
+
+  it('identifies the surrounding days as false', () => {
+    expect(isSaturday('2026-08-07')).toBe(false)
+    expect(isSaturday('2026-08-09')).toBe(false)
   })
 })

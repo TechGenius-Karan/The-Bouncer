@@ -23,3 +23,7 @@ export function isValidPuzzleDateString(value: string): boolean {
   const parsed = new Date(`${value}T00:00:00.000Z`)
   return !Number.isNaN(parsed.getTime())
 }
+
+export function isSaturday(dateString: string): boolean {
+  return new Date(`${dateString}T00:00:00.000Z`).getUTCDay() === 6
+}

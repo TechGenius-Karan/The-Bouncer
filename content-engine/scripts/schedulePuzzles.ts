@@ -1,38 +1,54 @@
 // Phase 5 (build-plan.md): manually assigns real UTC calendar dates to a
 // batch of already-approved puzzles and flips their status to "scheduled".
-// No admin UI exists yet for this (that's Phase 6) — a direct script/DB
-// write is exactly what build-plan's Phase 5 goal calls for.
+// Phase 8: rewritten to respect the locked weekly calendar (planning.md §4)
+// — Saturdays pull from the spicy-approved pool, every other day pulls from
+// the medium-approved pool. If the correct-tier pool is empty for a given
+// day, that date is skipped (left unscheduled) with a loud warning rather
+// than silently placed with the wrong tier or crashed on.
 // Run with: npm run content:schedule -- [count] [startDate]
 
 import 'dotenv/config'
 import { getCollections } from '../../netlify/functions/_shared/db'
-import { addDaysToDateString, resolvePuzzleDateString } from '../../netlify/functions/_shared/puzzleDate'
+import { addDaysToDateString, isSaturday, resolvePuzzleDateString } from '../../netlify/functions/_shared/puzzleDate'
+import type { PuzzleDoc } from '../../netlify/functions/_shared/types'
 
 const COUNT = Number(process.argv[2]) || 5
 const START_DATE = process.argv[3] || resolvePuzzleDateString()
 
+// Safety valve: with either tier's pool exhausted, walking forward to find
+// enough correctly-tiered days for the other tier is still bounded (at most
+// ~7 days per remaining spicy slot), but this caps runaway iteration if
+// something is misconfigured rather than looping indefinitely.
+const MAX_DAYS_WALKED = 3650
+
 async function main() {
   const { puzzles } = await getCollections()
 
-  // Idempotent to (re-)create — fails loudly on a scheduling bug instead of
-  // two puzzles silently colliding on the same date.
   await puzzles.createIndex(
     { date: 1 },
     { unique: true, partialFilterExpression: { date: { $type: 'string' } } },
   )
 
-  const candidates = await puzzles
-    .find({ status: 'approved', date: null })
+  const mediumQueue = await puzzles
+    .find({ status: 'approved', date: null, difficultyTier: 'medium' })
     .sort({ number: 1 })
-    .limit(COUNT)
+    .toArray()
+  const spicyQueue = await puzzles
+    .find({ status: 'approved', date: null, difficultyTier: 'spicy' })
+    .sort({ number: 1 })
     .toArray()
 
-  if (candidates.length < COUNT) {
-    console.warn(`Only ${candidates.length}/${COUNT} approved-and-unscheduled puzzles available.`)
-  }
-  if (candidates.length === 0) {
-    console.log('Nothing to schedule.')
+  const totalAvailable = mediumQueue.length + spicyQueue.length
+  if (totalAvailable === 0) {
+    console.log('Nothing to schedule — no approved-and-unscheduled puzzles of either tier.')
     process.exit(0)
+  }
+
+  const target = Math.min(COUNT, totalAvailable)
+  if (target < COUNT) {
+    console.warn(
+      `Only ${totalAvailable} approved-and-unscheduled puzzles available (${mediumQueue.length} medium, ${spicyQueue.length} spicy) — requested ${COUNT}.`,
+    )
   }
 
   const takenDocs = await puzzles
@@ -44,10 +60,29 @@ async function main() {
   const taken = new Set(takenDocs.map((doc) => doc.date as string))
 
   let cursor = START_DATE
-  for (const candidate of candidates) {
-    while (taken.has(cursor)) {
+  let scheduled = 0
+  let daysWalked = 0
+
+  while (scheduled < target && daysWalked < MAX_DAYS_WALKED) {
+    daysWalked += 1
+
+    if (taken.has(cursor)) {
       cursor = addDaysToDateString(cursor, 1)
+      continue
     }
+
+    const tier: PuzzleDoc['difficultyTier'] = isSaturday(cursor) ? 'spicy' : 'medium'
+    const queue = tier === 'spicy' ? spicyQueue : mediumQueue
+    const candidate = queue.shift()
+
+    if (!candidate) {
+      console.warn(
+        `No approved ${tier} puzzle available for ${cursor}${tier === 'spicy' ? ' (Spicy Saturday)' : ''} — skipping, left unscheduled.`,
+      )
+      cursor = addDaysToDateString(cursor, 1)
+      continue
+    }
+
     const date = cursor
     taken.add(date)
     cursor = addDaysToDateString(cursor, 1)
@@ -61,10 +96,16 @@ async function main() {
       console.warn(`Skipped puzzle #${candidate.number} — it changed before this could apply.`)
       continue
     }
+
+    scheduled += 1
     console.log(`Puzzle #${candidate.number} (${candidate.difficultyTier}) -> ${date}`)
   }
 
-  console.log('Done.')
+  if (daysWalked >= MAX_DAYS_WALKED) {
+    console.warn(`Stopped after walking ${MAX_DAYS_WALKED} days without reaching the requested count.`)
+  }
+
+  console.log(`Done. Scheduled ${scheduled}/${COUNT}.`)
   process.exit(0)
 }
 

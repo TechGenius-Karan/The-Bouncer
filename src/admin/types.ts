@@ -51,3 +51,30 @@ export interface AdminPuzzleDetail {
 export interface AdminListPendingResponse {
   puzzles: AdminPuzzleDetail[]
 }
+
+export interface AdminBufferHealthResponse {
+  mediumBufferDays: number
+  spicyBufferWeeks: number
+  gapDates: string[]
+}
+
+export interface AdminGuestMissRate {
+  wordId: string
+  word: string
+  trueLabel: Label
+  isTrap: boolean
+  trapType: 'decoy' | 't-but-looks-wrong' | null
+  attempts: number
+  misses: number
+  missRate: number
+}
+
+export interface AdminPuzzleStatsResponse {
+  puzzleId: string
+  number: number
+  difficultyTier: 'medium' | 'spicy'
+  status: string
+  completedCount: number
+  avgScore: number | null
+  guestMissRates: AdminGuestMissRate[]
+}

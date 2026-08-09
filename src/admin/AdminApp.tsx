@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { approve, clearStoredCode, listPending, loadStoredCode, login, reject, storeCode } from './adminClient'
+import {
+  approve,
+  clearStoredCode,
+  getBufferHealth,
+  listPending,
+  loadStoredCode,
+  login,
+  reject,
+  storeCode,
+} from './adminClient'
+import { BufferHealthPanel } from './BufferHealthPanel'
+import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
-import type { AdminPuzzleDetail } from './types'
+import type { AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -15,14 +26,16 @@ export function AdminApp() {
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
   const [puzzles, setPuzzles] = useState<AdminPuzzleDetail[]>([])
+  const [bufferHealth, setBufferHealth] = useState<AdminBufferHealthResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
 
   const loadQueue = async (activeCode: string) => {
     setStatus('loading')
     try {
-      const data = await listPending(activeCode)
-      setPuzzles(data.puzzles)
+      const [pending, health] = await Promise.all([listPending(activeCode), getBufferHealth(activeCode)])
+      setPuzzles(pending.puzzles)
+      setBufferHealth(health)
       setStatus('ready')
     } catch (err) {
       setError(errorMessage(err))
@@ -116,6 +129,9 @@ export function AdminApp() {
 
         {status === 'loading' && <div className="font-sans text-ink-soft">Loading queue…</div>}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
+
+        {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
+
         {status === 'ready' && puzzles.length === 0 && (
           <div className="font-sans text-ink-soft">Nothing waiting for review.</div>
         )}
@@ -128,6 +144,8 @@ export function AdminApp() {
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
           />
         ))}
+
+        {status === 'ready' && code && <LivePuzzleStats code={code} />}
       </div>
     </div>
   )

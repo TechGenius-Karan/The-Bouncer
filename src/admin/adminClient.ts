@@ -1,4 +1,4 @@
-import type { AdminListPendingResponse } from './types'
+import type { AdminBufferHealthResponse, AdminListPendingResponse, AdminPuzzleStatsResponse } from './types'
 
 const CODE_KEY = 'bouncer-admin-code'
 
@@ -60,4 +60,16 @@ export async function reject(code: string, puzzleId: string, reason: string): Pr
     body: JSON.stringify({ puzzleId, reason }),
   })
   if (!res.ok) throw new Error(`Failed to reject (${res.status})`)
+}
+
+export async function getBufferHealth(code: string): Promise<AdminBufferHealthResponse> {
+  const res = await adminFetch('/api/admin-buffer-health', code)
+  if (!res.ok) throw new Error(`Failed to load buffer health (${res.status})`)
+  return res.json() as Promise<AdminBufferHealthResponse>
+}
+
+export async function getPuzzleStats(code: string, number: number): Promise<AdminPuzzleStatsResponse> {
+  const res = await adminFetch(`/api/admin-puzzle-stats?number=${encodeURIComponent(number)}`, code)
+  if (!res.ok) throw new Error(`Failed to load puzzle stats (${res.status})`)
+  return res.json() as Promise<AdminPuzzleStatsResponse>
 }

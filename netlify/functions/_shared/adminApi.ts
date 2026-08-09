@@ -53,6 +53,33 @@ export interface AdminRejectRequest {
   reason: string
 }
 
+export interface AdminBufferHealthResponse {
+  mediumBufferDays: number
+  spicyBufferWeeks: number
+  gapDates: string[]
+}
+
+export interface AdminGuestMissRate {
+  wordId: string
+  word: string
+  trueLabel: Label
+  isTrap: boolean
+  trapType: 'decoy' | 't-but-looks-wrong' | null
+  attempts: number
+  misses: number
+  missRate: number
+}
+
+export interface AdminPuzzleStatsResponse {
+  puzzleId: string
+  number: number
+  difficultyTier: 'medium' | 'spicy'
+  status: PuzzleStatus
+  completedCount: number
+  avgScore: number | null
+  guestMissRates: AdminGuestMissRate[]
+}
+
 export interface ApiErrorResponse {
   error: string
 }
