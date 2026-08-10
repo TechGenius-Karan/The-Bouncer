@@ -78,6 +78,7 @@ export function RevealScreen({ result, onHome }: Props) {
               status === 'wrong' ? 'bg-miss-tint border-miss-border' : status === 'missed' ? 'bg-skip-bg border-skip border-dashed' : 'bg-slip border-line'
             const markBg =
               status === 'correct' ? (card.trueLabel === 'in' ? 'bg-bin-in' : 'bg-bin-out') : status === 'wrong' ? 'bg-miss' : 'bg-skip'
+            const markText = status === 'correct' ? 'text-ink' : status === 'wrong' ? 'text-white' : 'text-ink-soft'
             const textColor = status === 'wrong' ? 'text-miss-text' : status === 'missed' ? 'text-skip-faint' : 'text-ink'
             const noteColor = status === 'wrong' ? 'text-miss-text/80' : status === 'missed' ? 'text-skip-faint' : 'text-ink-soft'
             return (
@@ -86,7 +87,7 @@ export function RevealScreen({ result, onHome }: Props) {
                 className={`flex items-center gap-3 rounded-2xl border p-3 ${rowBg}`}
               >
                 <div
-                  className={`flex h-7 w-7 flex-none items-center justify-center rounded-[9px] font-sans text-sm ${markBg} ${status === 'missed' ? 'text-ink-soft' : 'text-white'}`}
+                  className={`flex h-7 w-7 flex-none items-center justify-center rounded-[9px] font-sans text-sm ${markBg} ${markText}`}
                 >
                   {mark}
                 </div>

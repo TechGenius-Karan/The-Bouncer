@@ -24,6 +24,13 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong. Please try again.'
 }
 
+const OFFLINE_MESSAGE = "You're offline — reconnect to keep playing."
+
+/** fetch() throws a bare TypeError specifically for network-level failures (no connection, DNS, CORS) — a reliable signal distinct from a real HTTP error response. */
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError
+}
+
 /** Reconstructs a card's state from the server's pool item — handles a fresh
  * guest, one already resolved (round resumed mid-play), and one revealed as
  * "not reached" once the round is over. */
@@ -60,6 +67,7 @@ function initialState(): GameState {
     lives: LIVES_START,
     selected: null,
     pendingIds: [],
+    offlineNotice: null,
   }
 }
 
@@ -99,6 +107,7 @@ export function useGame() {
           lives: round.livesRemaining,
           selected: null,
           pendingIds: [],
+          offlineNotice: null,
         })
       })
       .catch((err: unknown) => {
@@ -111,13 +120,48 @@ export function useGame() {
     }
   }, [])
 
+  // A returning connection can arrive mid-round with a stale cached
+  // get-round response still sitting in the service worker's cache (its
+  // NetworkFirst strategy falls back to that cache if the network doesn't
+  // answer within a few seconds) — re-fetch immediately so lives/attempted
+  // state can't stay stale for a full round-trip once we're back online.
+  useEffect(() => {
+    const onOnline = () => {
+      const current = stateRef.current
+      if (!current.resultId) return
+      setState((s) => ({ ...s, offlineNotice: null }))
+      getRound(current.resultId)
+        .then((round) => {
+          setState((s) => ({
+            ...s,
+            phase: round.roundComplete ? 'done' : 'play',
+            ruleText: round.ruleText,
+            cards: round.pool.map(cardFromPoolItem),
+            lives: round.livesRemaining,
+          }))
+        })
+        .catch(() => {
+          // Best-effort refresh — the player can keep going with whatever
+          // state they already had, and the next swipe attempt will surface
+          // any real problem on its own.
+        })
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [])
+
   const commit = useCallback((id: string, side: Label) => {
     const current = stateRef.current
     if (current.phase !== 'play' || !current.resultId || current.pendingIds.includes(id)) return
     const card = current.cards.find((c) => c.id === id)
     if (!card || card.place !== 'pool' || card.result !== null) return
 
-    setState((s) => ({ ...s, pendingIds: [...s.pendingIds, id], selected: null }))
+    if (!navigator.onLine) {
+      setState((s) => ({ ...s, selected: null, offlineNotice: OFFLINE_MESSAGE }))
+      return
+    }
+
+    setState((s) => ({ ...s, pendingIds: [...s.pendingIds, id], selected: null, offlineNotice: null }))
 
     checkSwipe(current.resultId, id, toApiLabel(side))
       .then((response) => {
@@ -163,7 +207,8 @@ export function useGame() {
         setState((s) => ({
           ...s,
           pendingIds: s.pendingIds.filter((pendingId) => pendingId !== id),
-          error: errorMessage(err),
+          error: isNetworkError(err) ? null : errorMessage(err),
+          offlineNotice: isNetworkError(err) ? OFFLINE_MESSAGE : s.offlineNotice,
         }))
       })
   }, [])

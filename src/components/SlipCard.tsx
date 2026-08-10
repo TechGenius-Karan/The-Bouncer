@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useReducedMotion } from 'framer-motion'
 import type { CardState } from '../game/types'
 
 const DRAG_THRESHOLD = 64
@@ -26,6 +27,7 @@ export function SlipCard({
   const [drag, setDrag] = useState<{ x0: number; y0: number; dx: number; dy: number } | null>(
     null,
   )
+  const prefersReducedMotion = useReducedMotion()
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (!interactive) return
@@ -90,7 +92,7 @@ export function SlipCard({
     bg = 'bg-miss-tint'
     color = 'text-miss-text'
     transform = 'rotate(-4deg)'
-    extraAnim = 'animate-nudge'
+    extraAnim = 'motion-safe:animate-nudge'
   }
 
   return (
@@ -98,10 +100,10 @@ export function SlipCard({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      className={`relative flex h-[66px] flex-[0_0_calc(50%-5px)] cursor-grab items-center justify-center rounded-card font-display text-[22px] font-bold tracking-wide ${border} ${bg} ${color} ${shadow} ${extraAnim} select-none touch-none`}
+      className={`relative flex h-[66px] w-full cursor-grab items-center justify-center rounded-card px-1 font-display text-[22px] font-bold tracking-wide max-[380px]:text-[18px] ${border} ${bg} ${color} ${shadow} ${extraAnim} select-none touch-none`}
       style={{
         transform,
-        transition: dragging ? 'none' : 'transform .28s cubic-bezier(.2,1.5,.4,1), box-shadow .2s',
+        transition: dragging || prefersReducedMotion ? 'none' : 'transform .28s cubic-bezier(.2,1.5,.4,1), box-shadow .2s',
         zIndex: dragging ? 30 : 1,
       }}
     >

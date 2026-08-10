@@ -9,13 +9,12 @@ body,
 }
 
 body {
+  @apply bg-canvas text-ink;
   margin: 0;
-  background: #f1e7d5;
   font-family:
     'Instrument Sans',
     system-ui,
     sans-serif;
-  color: #241f19;
   -webkit-font-smoothing: antialiased;
 }
 

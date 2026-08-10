@@ -89,18 +89,25 @@ export function PlayScreen({ onDone }: Props) {
 
       <div className="flex flex-1 flex-wrap content-start gap-2.5 px-5">
         {pool.map((card, index) => (
-          <SlipCard
-            key={card.id}
-            card={card}
-            tilt={TILT[index % TILT.length]}
-            selected={state.selected === card.id}
-            interactive={card.result === null && !state.pendingIds.includes(card.id)}
-            onSelect={() => select(card.id)}
-            onCommit={(side) => commit(card.id, side)}
-            onDragChange={setLiveDragDx}
-          />
+          <div key={card.id} className="flex-[0_0_calc(50%-5px)] motion-safe:animate-slipIn">
+            <SlipCard
+              card={card}
+              tilt={TILT[index % TILT.length]}
+              selected={state.selected === card.id}
+              interactive={card.result === null && !state.pendingIds.includes(card.id)}
+              onSelect={() => select(card.id)}
+              onCommit={(side) => commit(card.id, side)}
+              onDragChange={setLiveDragDx}
+            />
+          </div>
         ))}
       </div>
+
+      {state.offlineNotice && (
+        <div className="mx-5 mb-1 rounded-card border border-skip bg-skip-bg px-3 py-2 text-center font-sans text-[13px] text-skip-faint">
+          {state.offlineNotice}
+        </div>
+      )}
 
       <div className="flex gap-3 px-5 pb-8 pt-3">
         <TrayBin

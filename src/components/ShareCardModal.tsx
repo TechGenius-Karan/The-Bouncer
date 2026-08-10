@@ -11,11 +11,11 @@ interface Props {
 function squareFor(card: CardState) {
   if (card.result === 'correct') {
     return card.trueLabel === 'in'
-      ? { bg: 'bg-bin-in', emoji: '🟩' }
-      : { bg: 'bg-bin-out', emoji: '🟧' }
+      ? { bg: 'bg-bin-in', text: 'text-ink', emoji: '🟩' }
+      : { bg: 'bg-bin-out', text: 'text-ink', emoji: '🟧' }
   }
-  if (card.result === 'wrong') return { bg: 'bg-miss', emoji: '🟥' }
-  return { bg: 'bg-skip-chip', emoji: '⬜' }
+  if (card.result === 'wrong') return { bg: 'bg-miss', text: 'text-white', emoji: '🟥' }
+  return { bg: 'bg-skip-chip', text: 'text-ink', emoji: '⬜' }
 }
 
 export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
@@ -67,7 +67,7 @@ export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
             return (
               <div
                 key={card.id}
-                className={`flex h-[52px] w-[52px] items-center justify-center rounded-2xl text-xl text-white ${sq.bg}`}
+                className={`flex h-[52px] w-[52px] items-center justify-center rounded-2xl text-xl ${sq.bg} ${sq.text}`}
               >
                 {mark}
               </div>

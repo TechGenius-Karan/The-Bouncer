@@ -32,6 +32,8 @@ export interface GameState {
   selected: string | null
   /** Guest ids with a swipe currently in flight to the server. */
   pendingIds: string[]
+  /** Transient, non-fatal — shown as a small banner rather than replacing the whole screen (unlike `error`). */
+  offlineNotice: string | null
 }
 
 export interface RoundResult {
