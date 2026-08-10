@@ -80,6 +80,26 @@ export interface AdminPuzzleStatsResponse {
   guestMissRates: AdminGuestMissRate[]
 }
 
+export interface AdminBatchPuzzleSummary {
+  number: number
+  difficultyTier: 'medium' | 'spicy'
+  avgScore: number | null
+  completedCount: number
+  /** null until the puzzle has at least one completed attempt to judge. */
+  inTargetBand: boolean | null
+}
+
+export interface AdminBatchStatsResponse {
+  from: number
+  to: number
+  /** A true pooled per-attempt mean across every puzzle in range — not an average of each puzzle's own average. */
+  pooledAvgScore: number | null
+  pooledCompletedCount: number
+  /** Requested numbers with no matching puzzle document at all. */
+  missingNumbers: number[]
+  puzzles: AdminBatchPuzzleSummary[]
+}
+
 export interface ApiErrorResponse {
   error: string
 }

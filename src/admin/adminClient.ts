@@ -1,4 +1,9 @@
-import type { AdminBufferHealthResponse, AdminListPendingResponse, AdminPuzzleStatsResponse } from './types'
+import type {
+  AdminBatchStatsResponse,
+  AdminBufferHealthResponse,
+  AdminListPendingResponse,
+  AdminPuzzleStatsResponse,
+} from './types'
 
 const CODE_KEY = 'bouncer-admin-code'
 
@@ -72,4 +77,10 @@ export async function getPuzzleStats(code: string, number: number): Promise<Admi
   const res = await adminFetch(`/api/admin-puzzle-stats?number=${encodeURIComponent(number)}`, code)
   if (!res.ok) throw new Error(`Failed to load puzzle stats (${res.status})`)
   return res.json() as Promise<AdminPuzzleStatsResponse>
+}
+
+export async function getBatchStats(code: string, from: number, to: number): Promise<AdminBatchStatsResponse> {
+  const res = await adminFetch(`/api/admin-batch-stats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, code)
+  if (!res.ok) throw new Error(`Failed to load batch stats (${res.status})`)
+  return res.json() as Promise<AdminBatchStatsResponse>
 }

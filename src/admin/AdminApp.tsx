@@ -10,6 +10,7 @@ import {
   reject,
   storeCode,
 } from './adminClient'
+import { BatchStats } from './BatchStats'
 import { BufferHealthPanel } from './BufferHealthPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
@@ -146,6 +147,7 @@ export function AdminApp() {
         ))}
 
         {status === 'ready' && code && <LivePuzzleStats code={code} />}
+        {status === 'ready' && code && <BatchStats code={code} />}
       </div>
     </div>
   )

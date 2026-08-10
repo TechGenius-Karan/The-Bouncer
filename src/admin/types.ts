@@ -78,3 +78,20 @@ export interface AdminPuzzleStatsResponse {
   avgScore: number | null
   guestMissRates: AdminGuestMissRate[]
 }
+
+export interface AdminBatchPuzzleSummary {
+  number: number
+  difficultyTier: 'medium' | 'spicy'
+  avgScore: number | null
+  completedCount: number
+  inTargetBand: boolean | null
+}
+
+export interface AdminBatchStatsResponse {
+  from: number
+  to: number
+  pooledAvgScore: number | null
+  pooledCompletedCount: number
+  missingNumbers: number[]
+  puzzles: AdminBatchPuzzleSummary[]
+}
