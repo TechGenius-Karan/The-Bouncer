@@ -52,6 +52,15 @@ export interface AdminListPendingResponse {
   puzzles: AdminPuzzleDetail[]
 }
 
+export interface AdminScheduledPuzzle extends AdminPuzzleDetail {
+  date: string
+}
+
+export interface AdminListScheduledResponse {
+  today: string
+  puzzles: AdminScheduledPuzzle[]
+}
+
 export interface AdminBufferHealthResponse {
   mediumBufferDays: number
   spicyBufferWeeks: number

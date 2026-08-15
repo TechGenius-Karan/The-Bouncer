@@ -24,6 +24,7 @@
 - [Stage F — Polish & launch](#stage-f--polish--launch)
   - [Phase 9: Visual polish, theming, accessibility, PWA](#phase-9-visual-polish-theming-accessibility-pwa)
   - [Phase 10: QA, playtesting, difficulty calibration](#phase-10-qa-playtesting-difficulty-calibration)
+  - [Phase 10.5: Pre-launch refinement](#phase-105-pre-launch-refinement)
   - [Phase 11: Launch prep & deployment](#phase-11-launch-prep--deployment)
 - [Open tooling decisions not yet locked](#open-tooling-decisions-not-yet-locked)
 
@@ -186,6 +187,32 @@ Suggested build order *within* this phase (each step should work and be testable
 
 - Internal playtesting against the ~4–5/6 target ([§4](planning.md#4-difficulty-model--weekly-calendar)), tune generator knobs based on real first-swipe accuracy data.
 - Specifically sanity-check the 3-life cap doesn't feel punishing at the intended difficulty (per pillar 5) and rarely triggers for genuinely engaged play, per the note added to [§4](planning.md#4-difficulty-model--weekly-calendar).
+
+### Phase 10.5: Pre-launch refinement
+
+> **Added 2026-08-12**, after playing the real content produced in Phase 10. Four gaps surfaced from actual use that are worth addressing before Phase 11 — none of these are built yet; this section is the plan for each, to be picked up and executed as its own mini-phase.
+
+**1. UI/UX refresh (front page + "you are the bouncer" copy)**
+
+Two skills are installed for this (`skills-lock.json`): `.claude/skills/ui-ux-pro-max/SKILL.md` (a research/recommendation tool — run `python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system` for palette/typography/motion recommendations against the detected stack) and `.claude/skills/ui-styling/SKILL.md` (a build-focused companion that assumes shadcn/ui + Tailwind — this project has no shadcn, so treat its shadcn-specific guidance as non-applicable and lean on its general Tailwind/visual guidance instead).
+
+🔒 [§5.1](planning.md#51-theme-direction)'s "light, colorful, simple, chill, friendly" mood and its rejection of the old dark/velvet-rope aesthetic **stays locked** — the refresh explores multiple visual directions via `ui-ux-pro-max` but must land within that mood, not outside it. What *is* being knowingly revisited: the **copy/conceptual layer**. "The Bouncer" currently doesn't make the player's role clear (reads like something that bounces, not someone who judges). The fix is primarily textual — reinforce that the player *is* the bouncer, deciding what's let in vs. turned away (e.g. reveal-screen phrasing like "You bounced WALNUT" / "You let CHINA in") — not a return to literal club/velvet-rope visuals. Recommended order: (a) copy pass on `HomeScreen.tsx`/`RevealScreen.tsx` first, needs no design tool; (b) visual pass via `ui-ux-pro-max` scoped to `HomeScreen.tsx`'s hero treatment and `tailwind.config.ts` token refinement, not a `PlayScreen`/`SlipCard`/`TrayBin` interaction rebuild. Claude Design (`mcp__claude-design`) is optional and lower-leverage here since layout structure isn't changing much — worth it only if comparing several hero directions side by side before writing real code.
+
+**2. Semantic/meaning-based puzzle rules + external dictionary sourcing**
+
+The `Rule`/`Word` interfaces are already family-agnostic (`RuleFamily = 'lexical-structural' | 'semantic-knowledge'` in `content-engine/rules/types.ts`), and the generator pipeline (`decoyScan.ts`/`trapSelection.ts`/`validator.ts`) iterates generically over `Rule[]` — a working semantic rule needs **zero changes** to that pipeline. The real gap is data: every word's `tags: []` is empty, and no dictionary/API is wired in, exactly matching what [§7.1.2](planning.md#712-semantic--knowledge-rules)/[§7.5](planning.md#75-word-bank-requirements) already anticipated ("bootstrap category/property tags from an existing lexical database... then let human approval flag/backfill... rather than hand-tagging upfront").
+
+Plan: (a) a one-time `content-engine/scripts/tagWords.ts` script that fetches category/property candidates per word from an external source (e.g. Datamuse's relation queries, or a WordNet-backed package) and writes them as *suggested* tags, not ground truth; (b) review suggested tags through the same generate-then-human-review rhythm already used for puzzles, not auto-applied blindly; (c) once enough of the bank is tagged, add `content-engine/rules/semanticRules.ts` with a first batch of rules using the same interface/subtlety-rating shape as `lexicalRules.ts`; (d) use this to directly address the "prime number of letters"-style complaint — once semantic rules exist, `difficulty.ts`'s existing knob pattern controls the lexical/semantic mix (starting at [§7.1](planning.md#71-starter-rule-taxonomy)'s own suggested ~70/30 split) and lets specific lexical rules be deprioritized if playtesting keeps flagging them as too obscure or too easy to pass by chance.
+
+**3. Admin: un-schedule a puzzle without deleting it**
+
+`PuzzleStatus` is `'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'live'`; `get-round.ts` serves any puzzle whose status is `scheduled` or `live` for today. Decision: only `scheduled` puzzles can be pulled — `live` (today's, already being played) is out of scope, to avoid stranding a player mid-round.
+
+Plan: (a) `netlify/functions/admin-unschedule.ts` — same shape as `admin-approve.ts`/`admin-reject.ts` (`requireAdmin` → `updateOne({_id, status:'scheduled'}, {$set:{status:'pending_approval', date:null}})`, 409 if not matched). Goes back to `pending_approval`, not `approved` — pulling a puzzle usually means something needs a fresh look, so it re-enters the real review queue rather than silently rejoining the next auto-schedule run. (b) `netlify/functions/admin-list-scheduled.ts` — `requireAdmin`-gated GET listing `status:{$in:['scheduled','live']}` sorted by date (includes `live` in the view only, not as an actionable row). (c) shared types in `_shared/adminApi.ts` + `src/admin/types.ts` mirror. (d) frontend `src/admin/SchedulePanel.tsx` — upcoming-puzzle rows with a "Pull from schedule" action on `scheduled` rows only, wired into `AdminApp.tsx` alongside the existing stacked sections (`BufferHealthPanel`/`LivePuzzleStats`/`BatchStats`), same no-router convention.
+
+**4. Deployment/performance discussion + real loading states**
+
+Current stack (Netlify static hosting + Netlify Functions + MongoDB, Mongo client cached across warm invocations in `_shared/db.ts`) shows nothing that structurally requires switching platforms. The slowness noticed during development is most likely `netlify dev`'s local proxy/cold-start overhead, not representative of Netlify's production Function infra. Options to weigh at Phase 11, cheapest first: (a) cache/edge-ify `get-round` specifically (puzzle content is static all day, very cache-friendly) while keeping `check-swipe` exactly `NetworkOnly` per the server-authoritative-lives lock; (b) confirm the MongoDB Atlas region is colocated with the Netlify Functions region — often the single biggest latency lever in this kind of setup; (c) only consider switching hosting platforms (Vercel/Cloudflare/Render) if (a)/(b) don't resolve *production* latency, since that's a much bigger lift (different function runtime, redirect/SPA config rebuilt from scratch). Separately, add a lightweight skeleton for the currently plain-text loading states (`PlayScreen.tsx`'s `phase:'loading'`, `AdminApp.tsx`'s initial fetch) — small, interstitial-only, doesn't conflict with keeping the rest of the interface stable.
 
 ### Phase 11: Launch prep & deployment
 

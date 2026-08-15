@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import {
-  approve,
-  clearStoredCode,
-  getBufferHealth,
-  listPending,
-  loadStoredCode,
-  login,
-  reject,
-  storeCode,
-} from './adminClient'
-import { BatchStats } from './BatchStats'
-import { BufferHealthPanel } from './BufferHealthPanel'
-import { LivePuzzleStats } from './LivePuzzleStats'
-import { PuzzleReviewCard } from './PuzzleReviewCard'
-import type { AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
+import { clearStoredCode, listScheduled, loadStoredCode, login, storeCode, unschedule } from './adminClient'
+import { SchedulePanel } from './SchedulePanel'
+import type { AdminListScheduledResponse } from './types'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -22,21 +10,19 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong.'
 }
 
-export function AdminApp() {
+export function AdminSchedulePage() {
   const [code, setCode] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
-  const [puzzles, setPuzzles] = useState<AdminPuzzleDetail[]>([])
-  const [bufferHealth, setBufferHealth] = useState<AdminBufferHealthResponse | null>(null)
+  const [scheduled, setScheduled] = useState<AdminListScheduledResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
 
-  const loadQueue = async (activeCode: string) => {
+  const loadSchedule = async (activeCode: string) => {
     setStatus('loading')
     try {
-      const [pending, health] = await Promise.all([listPending(activeCode), getBufferHealth(activeCode)])
-      setPuzzles(pending.puzzles)
-      setBufferHealth(health)
+      const schedule = await listScheduled(activeCode)
+      setScheduled(schedule)
       setStatus('ready')
     } catch (err) {
       setError(errorMessage(err))
@@ -51,7 +37,7 @@ export function AdminApp() {
       return
     }
     setCode(stored)
-    void loadQueue(stored)
+    void loadSchedule(stored)
   }, [])
 
   const handleLogin = async (e: FormEvent) => {
@@ -64,25 +50,19 @@ export function AdminApp() {
     }
     storeCode(codeInput)
     setCode(codeInput)
-    await loadQueue(codeInput)
+    await loadSchedule(codeInput)
   }
 
-  const handleApprove = async (puzzleId: string) => {
+  const handleUnschedule = async (puzzleId: string) => {
     if (!code) return
-    await approve(code, puzzleId)
-    setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
-  }
-
-  const handleReject = async (puzzleId: string, reason: string) => {
-    if (!code) return
-    await reject(code, puzzleId, reason)
-    setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
+    await unschedule(code, puzzleId)
+    await loadSchedule(code)
   }
 
   const handleLogout = () => {
     clearStoredCode()
     setCode(null)
-    setPuzzles([])
+    setScheduled(null)
     setStatus('gate')
   }
 
@@ -122,10 +102,10 @@ export function AdminApp() {
     <div className="min-h-screen bg-canvas px-6 py-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-5">
         <div className="flex items-center justify-between">
-          <div className="font-display text-2xl font-bold">Pending review ({puzzles.length})</div>
+          <div className="font-display text-2xl font-bold">Schedule</div>
           <div className="flex items-center gap-4">
-            <a href="/admin/schedule" className="font-sans text-sm text-ink-soft underline">
-              Schedule
+            <a href="/admin" className="font-sans text-sm text-ink-soft underline">
+              Back to review queue
             </a>
             <button onClick={handleLogout} className="font-sans text-sm text-ink-soft underline">
               Log out
@@ -133,26 +113,10 @@ export function AdminApp() {
           </div>
         </div>
 
-        {status === 'loading' && <div className="font-sans text-ink-soft">Loading queue…</div>}
+        {status === 'loading' && <div className="font-sans text-ink-soft">Loading schedule…</div>}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
 
-        {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
-
-        {status === 'ready' && puzzles.length === 0 && (
-          <div className="font-sans text-ink-soft">Nothing waiting for review.</div>
-        )}
-
-        {puzzles.map((puzzle) => (
-          <PuzzleReviewCard
-            key={puzzle.puzzleId}
-            puzzle={puzzle}
-            onApprove={() => handleApprove(puzzle.puzzleId)}
-            onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
-          />
-        ))}
-
-        {status === 'ready' && code && <LivePuzzleStats code={code} />}
-        {status === 'ready' && code && <BatchStats code={code} />}
+        {status === 'ready' && scheduled && <SchedulePanel data={scheduled} onPull={handleUnschedule} />}
       </div>
     </div>
   )

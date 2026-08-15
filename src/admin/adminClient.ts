@@ -2,6 +2,7 @@ import type {
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
   AdminListPendingResponse,
+  AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
 } from './types'
 
@@ -65,6 +66,21 @@ export async function reject(code: string, puzzleId: string, reason: string): Pr
     body: JSON.stringify({ puzzleId, reason }),
   })
   if (!res.ok) throw new Error(`Failed to reject (${res.status})`)
+}
+
+export async function listScheduled(code: string): Promise<AdminListScheduledResponse> {
+  const res = await adminFetch('/api/admin-list-scheduled', code)
+  if (!res.ok) throw new Error(`Failed to load the schedule (${res.status})`)
+  return res.json() as Promise<AdminListScheduledResponse>
+}
+
+export async function unschedule(code: string, puzzleId: string): Promise<void> {
+  const res = await adminFetch('/api/admin-unschedule', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId }),
+  })
+  if (!res.ok) throw new Error(`Failed to pull puzzle from schedule (${res.status})`)
 }
 
 export async function getBufferHealth(code: string): Promise<AdminBufferHealthResponse> {
