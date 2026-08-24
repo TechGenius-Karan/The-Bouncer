@@ -42,4 +42,6 @@ export interface SeedWord {
   spelling: string
   frequencyScore: number
   partOfSpeech: PartOfSpeech
+  /** Human-reviewed semantic tags (build-plan.md Phase 10.5 §2, Step 4) — e.g. "category:animal". */
+  tags?: string[]
 }

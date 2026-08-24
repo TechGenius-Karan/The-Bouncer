@@ -10,7 +10,7 @@ export function buildWordBank(): Word[] {
     features: buildLetterFeatures(seed.spelling),
     frequencyScore: seed.frequencyScore,
     partOfSpeech: seed.partOfSpeech,
-    tags: [],
+    tags: seed.tags ?? [],
     safety: { blocked: false, needsReview: false },
   }))
 }

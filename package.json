@@ -18,6 +18,7 @@
     "content:seed-db": "tsx content-engine/scripts/seedDatabase.ts",
     "content:queue-puzzles": "tsx content-engine/scripts/queuePuzzles.ts",
     "content:schedule": "tsx content-engine/scripts/schedulePuzzles.ts",
+    "content:tag-words": "tsx content-engine/scripts/tagWords.ts",
     "dev:functions": "netlify dev",
     "pwa:generate-icons": "pwa-assets-generator"
   },
@@ -41,6 +42,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "natural": "^8.1.1",
     "netlify-cli": "^27.1.1",
     "postcss": "^8.4.0",
     "prettier": "^3.3.0",
