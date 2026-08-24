@@ -29,6 +29,8 @@ export interface KnobValues {
   trapGuestCount: number
   /** How many other rules should still fit after only the clues are shown (§7.4). */
   targetSurvivingDecoyRange: [number, number]
+  /** Probability of drafting a semantic-family true rule over a lexical one, when both are eligible (§7.1's ~70/30 mix). */
+  semanticRuleWeight: number
 }
 
 export interface DecoyResult {

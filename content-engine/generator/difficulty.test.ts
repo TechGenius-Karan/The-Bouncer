@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { MEDIUM_KNOBS, SPICY_KNOBS, resolveKnobs, subtletyRangeFor, trapAllocation } from './difficulty'
+import {
+  MEDIUM_KNOBS,
+  SPICY_KNOBS,
+  resolveKnobs,
+  subtletyRangeFor,
+  trapAllocation,
+} from './difficulty'
 
 describe('resolveKnobs', () => {
   it('returns the medium defaults', () => {
@@ -12,6 +18,13 @@ describe('resolveKnobs', () => {
 
   it('applies overrides on top of the tier defaults', () => {
     expect(resolveKnobs('medium', { poolSize: 7 })).toEqual({ ...MEDIUM_KNOBS, poolSize: 7 })
+  })
+})
+
+describe('semanticRuleWeight', () => {
+  it("defaults to 0.3 (§7.1's ~70/30 lexical/semantic mix) for both tiers", () => {
+    expect(MEDIUM_KNOBS.semanticRuleWeight).toBe(0.3)
+    expect(SPICY_KNOBS.semanticRuleWeight).toBe(0.3)
   })
 })
 

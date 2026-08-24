@@ -30,10 +30,14 @@ function ruleById(id: string) {
 }
 
 describe('registry sanity', () => {
-  it('has exactly 10 rules with unique ids and valid subtlety ratings', () => {
-    expect(RULES).toHaveLength(10)
+  // Whole-taxonomy check (lexical + semantic combined) — per-family rule
+  // content is covered by lexicalRules's own describe.each below and by
+  // semanticRules.test.ts; this just guards against cross-family id
+  // collisions and other registry-level regressions.
+  it('has exactly 17 rules with unique ids and valid subtlety ratings', () => {
+    expect(RULES).toHaveLength(17)
     const ids = new Set(RULES.map((r) => r.id))
-    expect(ids.size).toBe(10)
+    expect(ids.size).toBe(17)
     for (const rule of RULES) {
       expect(rule.subtlety).toBeGreaterThanOrEqual(1)
       expect(rule.subtlety).toBeLessThanOrEqual(5)
@@ -49,13 +53,13 @@ describe.each([
   ['starts-with-vowel', ['apple', 'otter', 'umbrella'], ['cat', 'dog', 'plan']],
   ['exactly-two-vowels', ['apple', 'hello'], ['dog', 'beautiful']],
   ['no-adjacent-vowels', ['cat', 'plan', 'dog'], ['quiet', 'bead', 'ocean']],
-  [
-    'hidden-number',
-    ['money', 'honest', 'network', 'canine', 'often'],
-    ['cat', 'plan', 'bubble'],
-  ],
+  ['hidden-number', ['money', 'honest', 'network', 'canine', 'often'], ['cat', 'plan', 'bubble']],
   ['third-letter-vowel', ['piano', 'poetic', 'react'], ['cabin', 'table', 'basket']],
-  ['subsequence-ace', ['space', 'advice', 'distance', 'peace', 'trace'], ['cafe', 'ceramic', 'cat', 'plan']],
+  [
+    'subsequence-ace',
+    ['space', 'advice', 'distance', 'peace', 'trace'],
+    ['cafe', 'ceramic', 'cat', 'plan'],
+  ],
 ])('rule: %s', (id, inWords, outWords) => {
   const rule = ruleById(id as string)
 

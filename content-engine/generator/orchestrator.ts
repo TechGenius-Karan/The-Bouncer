@@ -5,7 +5,7 @@ import { resolveKnobs, subtletyRangeFor } from './difficulty'
 import { draftClueSet } from './draftClueSet'
 import { scanDecoys } from './decoyScan'
 import { buildRuleIndex } from './lookup'
-import { pickRandom } from './random'
+import { eligibleRulesByFamily, pickTrueRule } from './ruleSelection'
 import { selectGuestPool } from './trapSelection'
 import type { CandidatePuzzle, DifficultyTier } from './types'
 import { validateAndRepair } from './validator'
@@ -23,17 +23,32 @@ const MAX_RULE_ATTEMPTS = 10
 export function generateCandidate(
   tier: DifficultyTier,
   wordBank: Word[],
-  rules: Rule[] = RULES,
+  rules: Rule[] = RULES
 ): CandidatePuzzle | null {
   const knobs = resolveKnobs(tier)
   const [minSubtlety, maxSubtlety] = subtletyRangeFor(tier)
   const ruleIndex = buildRuleIndex(rules)
 
-  const eligibleRules = rules.filter((r) => r.subtlety >= minSubtlety && r.subtlety <= maxSubtlety)
-  const rulePool = eligibleRules.length > 0 ? eligibleRules : rules
+  const eligibleLexical = eligibleRulesByFamily(
+    rules,
+    'lexical-structural',
+    minSubtlety,
+    maxSubtlety
+  )
+  const eligibleSemantic = eligibleRulesByFamily(
+    rules,
+    'semantic-knowledge',
+    minSubtlety,
+    maxSubtlety
+  )
 
   for (let ruleAttempt = 0; ruleAttempt < MAX_RULE_ATTEMPTS; ruleAttempt++) {
-    const trueRule = pickRandom(rulePool)
+    const trueRule = pickTrueRule(
+      eligibleLexical,
+      eligibleSemantic,
+      knobs.semanticRuleWeight,
+      rules
+    )
 
     let clues
     try {
