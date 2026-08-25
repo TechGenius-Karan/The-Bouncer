@@ -1,4 +1,10 @@
-import type { ApiLabel, CheckSwipeResponse, GetCrackRateResponse, GetRoundResponse } from './types'
+import type {
+  ApiLabel,
+  CheckSwipeResponse,
+  GetCrackRateResponse,
+  GetPuzzleMetaResponse,
+  GetRoundResponse,
+} from './types'
 
 async function parseOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -38,4 +44,8 @@ export function getCrackRate(puzzleId: string): Promise<GetCrackRateResponse> {
   return fetch(`/api/get-crack-rate?puzzleId=${encodeURIComponent(puzzleId)}`).then(
     parseOrThrow<GetCrackRateResponse>,
   )
+}
+
+export function getPuzzleMeta(): Promise<GetPuzzleMetaResponse> {
+  return fetch('/api/get-puzzle-meta').then(parseOrThrow<GetPuzzleMetaResponse>)
 }

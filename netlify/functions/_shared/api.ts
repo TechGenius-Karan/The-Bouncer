@@ -55,6 +55,12 @@ export interface GetCrackRateResponse {
   totalFinishers: number
 }
 
+export interface GetPuzzleMetaResponse {
+  number: number
+  /** The puzzle's UTC calendar date ("YYYY-MM-DD"). */
+  date: string
+}
+
 export interface ApiErrorResponse {
   error: string
 }

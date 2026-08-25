@@ -38,3 +38,8 @@ export interface GetCrackRateResponse {
   crackedPercent: number | null
   totalFinishers: number
 }
+
+export interface GetPuzzleMetaResponse {
+  number: number
+  date: string
+}
