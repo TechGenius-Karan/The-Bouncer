@@ -32,11 +32,11 @@ export function HowToPlayModal({ onClose }: Props) {
             </div>
           </Step>
           <Step n={3} title="File all six slips">
-            Flick a slip left for OUT, right for IN, in any order. No submit button — the round
-            ends when the last slip lands.
+            Swipe a word left for OUT, right for IN, in any order. No submit button — the round
+            ends when the last word lands.
           </Step>
           <Step n={4} title="You get three misses" danger>
-            A wrong slip corrects itself and costs a life. Lose all three and the round stops
+            A wrong word corrects itself and costs a life. Lose all three and the round stops
             there.
             <div className="mt-1.5 flex gap-2">
               <div className="h-5 w-5 rounded-full bg-miss" />

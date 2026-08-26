@@ -7,6 +7,7 @@ interface Props {
   onPlay: () => void
   onHowToPlay: () => void
   onShowStats: () => void
+  onShowSettings: () => void
 }
 
 const todayLabel = new Date().toLocaleDateString(undefined, {
@@ -15,7 +16,7 @@ const todayLabel = new Date().toLocaleDateString(undefined, {
   day: 'numeric',
 })
 
-export function HomeScreen({ onPlay, onHowToPlay, onShowStats }: Props) {
+export function HomeScreen({ onPlay, onHowToPlay, onShowStats, onShowSettings }: Props) {
   const [puzzleNumber, setPuzzleNumber] = useState<number | null>(null)
 
   useEffect(() => {
@@ -52,8 +53,8 @@ export function HomeScreen({ onPlay, onHowToPlay, onShowStats }: Props) {
             >
               <BarChart size={28} />
             </button>
-            {/* No settings screen exists yet — icon-only placeholder for now. */}
             <button
+              onClick={onShowSettings}
               aria-label="Settings"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-skip-bg text-ink"
             >

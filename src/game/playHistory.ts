@@ -35,3 +35,11 @@ export function recordResult(entry: PlayHistoryEntry): void {
     // played fine, it just won't show up in local history.
   }
 }
+
+export function clearHistory(): void {
+  try {
+    localStorage.removeItem(KEY)
+  } catch {
+    // Storage unavailable — nothing to clear.
+  }
+}

@@ -1,10 +1,30 @@
-import { loadHistory } from '../game/playHistory'
+import { useEffect, useRef, useState } from 'react'
+import { clearHistory, loadHistory } from '../game/playHistory'
 
 interface Props {
   onClose: () => void
 }
 
 export function StatsModal({ onClose }: Props) {
+  const [resetState, setResetState] = useState<'idle' | 'confirming' | 'done'>('idle')
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  useEffect(() => {
+    return () => clearTimeout(resetTimer.current)
+  }, [])
+
+  function handleResetClick() {
+    if (resetState === 'idle') {
+      setResetState('confirming')
+      return
+    }
+    if (resetState === 'confirming') {
+      clearHistory()
+      setResetState('done')
+      resetTimer.current = setTimeout(() => setResetState('idle'), 1500)
+    }
+  }
+
   const history = loadHistory()
   const played = history.length
   const averageScore = played > 0 ? history.reduce((sum, e) => sum + e.score, 0) / played : 0
@@ -57,10 +77,29 @@ export function StatsModal({ onClose }: Props) {
           </>
         )}
 
+        <div className="px-7 pb-2">
+          <button
+            onClick={handleResetClick}
+            className={`flex w-full items-center justify-center rounded-bin border px-4 py-3 text-center ${
+              resetState === 'idle' ? 'border-line bg-slip' : 'border-miss-border bg-miss-tint'
+            }`}
+          >
+            <span
+              className={`font-sans text-[15px] font-semibold ${
+                resetState === 'idle' ? 'text-ink' : 'text-miss-text'
+              }`}
+            >
+              {resetState === 'idle' && 'Reset stats & history'}
+              {resetState === 'confirming' && 'Tap again to confirm'}
+              {resetState === 'done' && 'Cleared'}
+            </span>
+          </button>
+        </div>
+
         <div className="px-7 pb-7 pt-2">
           <button
             onClick={onClose}
-            className="h-14 w-full rounded-bin bg-ink font-display text-lg font-bold text-screen shadow-pressed"
+            className="h-12 w-full rounded-bin bg-ink font-display text-lg font-bold text-screen shadow-pressed"
           >
             Close
           </button>

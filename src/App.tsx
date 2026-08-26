@@ -4,6 +4,7 @@ import { HomeScreen } from './components/HomeScreen'
 import { HowToPlayModal } from './components/HowToPlayModal'
 import { PlayScreen } from './components/PlayScreen'
 import { RevealScreen } from './components/RevealScreen'
+import { SettingsModal } from './components/SettingsModal'
 import { StatsModal } from './components/StatsModal'
 import { UpdateBanner } from './components/UpdateBanner'
 import type { RoundResult } from './game/types'
@@ -14,6 +15,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [showHowTo, setShowHowTo] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [result, setResult] = useState<RoundResult | null>(null)
 
   // Kept mounted for the app's whole lifetime (not just while the banner is
@@ -32,6 +34,7 @@ export default function App() {
             onPlay={() => setScreen('play')}
             onHowToPlay={() => setShowHowTo(true)}
             onShowStats={() => setShowStats(true)}
+            onShowSettings={() => setShowSettings(true)}
           />
         )}
 
@@ -57,6 +60,13 @@ export default function App() {
 
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
       {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onHowToPlay={() => setShowHowTo(true)}
+          onShowStats={() => setShowStats(true)}
+        />
+      )}
       {needRefresh && screen !== 'play' && <UpdateBanner onRefresh={() => updateServiceWorker(true)} />}
     </div>
   )
