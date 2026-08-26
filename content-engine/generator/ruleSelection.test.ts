@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Rule } from '../rules/types'
-import { eligibleRulesByFamily, pickTrueRule } from './ruleSelection'
+import { eligibleRulesByFamily, pickFamily } from './ruleSelection'
 
 function rule(id: string, family: Rule['family'], subtlety: Rule['subtlety']): Rule {
   return {
@@ -33,30 +33,28 @@ describe('eligibleRulesByFamily', () => {
 
 // Math.random() is always in [0, 1), so weight 1 makes `Math.random() < weight`
 // deterministically true and weight 0 deterministically false — no mocking needed.
-describe('pickTrueRule', () => {
+describe('pickFamily', () => {
   it('always picks semantic when weight is 1 and both families are eligible', () => {
     for (let i = 0; i < 20; i++) {
-      expect(pickTrueRule([lex2], [sem2], 1, allRules).family).toBe('semantic-knowledge')
+      expect(pickFamily([lex2], [sem2], 1)).toBe('semantic-knowledge')
     }
   })
 
   it('always picks lexical when weight is 0 and both families are eligible', () => {
     for (let i = 0; i < 20; i++) {
-      expect(pickTrueRule([lex2], [sem2], 0, allRules).family).toBe('lexical-structural')
+      expect(pickFamily([lex2], [sem2], 0)).toBe('lexical-structural')
     }
   })
 
   it('falls back to lexical when weight is 1 but no semantic rule is eligible', () => {
-    expect(pickTrueRule([lex2], [], 1, allRules)).toBe(lex2)
+    expect(pickFamily([lex2], [], 1)).toBe('lexical-structural')
   })
 
   it('falls back to semantic when weight is 0 but no lexical rule is eligible', () => {
-    expect(pickTrueRule([], [sem2], 0, allRules)).toBe(sem2)
+    expect(pickFamily([], [sem2], 0)).toBe('semantic-knowledge')
   })
 
-  it('falls back to the full rule set, ignoring subtlety, when neither family is eligible', () => {
-    for (let i = 0; i < 20; i++) {
-      expect(allRules).toContain(pickTrueRule([], [], 0.3, allRules))
-    }
+  it('returns null, deferring to the full rule set ignoring subtlety, when neither family is eligible', () => {
+    expect(pickFamily([], [], 0.3)).toBe(null)
   })
 })

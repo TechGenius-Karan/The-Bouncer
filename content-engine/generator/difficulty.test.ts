@@ -22,16 +22,16 @@ describe('resolveKnobs', () => {
 })
 
 describe('semanticRuleWeight', () => {
-  it("defaults to 0.3 (§7.1's ~70/30 lexical/semantic mix) for both tiers", () => {
-    expect(MEDIUM_KNOBS.semanticRuleWeight).toBe(0.3)
+  it('defaults to 0.5 for medium (fully semantic-eligible) and 0.3 for spicy (partially eligible)', () => {
+    expect(MEDIUM_KNOBS.semanticRuleWeight).toBe(0.5)
     expect(SPICY_KNOBS.semanticRuleWeight).toBe(0.3)
   })
 })
 
 describe('subtletyRangeFor', () => {
-  it('medium is 2-3, spicy is 4-5', () => {
+  it('medium is 2-3, spicy is 3-5', () => {
     expect(subtletyRangeFor('medium')).toEqual([2, 3])
-    expect(subtletyRangeFor('spicy')).toEqual([4, 5])
+    expect(subtletyRangeFor('spicy')).toEqual([3, 5])
   })
 })
 

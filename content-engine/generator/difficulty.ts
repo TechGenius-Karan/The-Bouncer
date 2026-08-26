@@ -2,14 +2,15 @@ import type { DifficultyTier, KnobValues } from './types'
 
 // Defaults straight from planning.md §7.4's knob table.
 // planning.md §7.1's suggested launch mix: skew toward lexical/structural
-// (~70%) since it's cheaper to generate/validate with high confidence,
-// expanding semantic coverage over time as the tagged word bank matures.
-// Applied at both tiers today — spicy's [4,5] subtlety window happens to
-// have zero eligible semantic rules right now (all rated 2-3, see
-// semanticRules.ts), so this knob is currently a no-op for spicy and only
-// takes effect for medium; it's still set here so spicy picks up semantic
-// rules automatically once any are ever rated 4+.
-const DEFAULT_SEMANTIC_WEIGHT = 0.3
+// since it's cheaper to generate/validate with high confidence, expanding
+// semantic coverage over time as the tagged word bank matures. Medium's
+// weight is set higher than spicy's because medium's [2,3] subtlety window
+// already has full semantic coverage (all 7 semantic rules are rated 2-3),
+// while spicy only picks up the 3 rated exactly 3 (category-bird,
+// category-tool, category-body-part) via subtletyRangeFor's [3,5] window —
+// it'll pick up the rest automatically once any semantic rule is rated 4+.
+const MEDIUM_SEMANTIC_WEIGHT = 0.5
+const SPICY_SEMANTIC_WEIGHT = 0.3
 
 export const MEDIUM_KNOBS: KnobValues = {
   tier: 'medium',
@@ -18,7 +19,7 @@ export const MEDIUM_KNOBS: KnobValues = {
   poolSize: 6,
   trapGuestCount: 2,
   targetSurvivingDecoyRange: [2, 3],
-  semanticRuleWeight: DEFAULT_SEMANTIC_WEIGHT,
+  semanticRuleWeight: MEDIUM_SEMANTIC_WEIGHT,
 }
 
 export const SPICY_KNOBS: KnobValues = {
@@ -28,7 +29,7 @@ export const SPICY_KNOBS: KnobValues = {
   poolSize: 6,
   trapGuestCount: 3,
   targetSurvivingDecoyRange: [4, Infinity],
-  semanticRuleWeight: DEFAULT_SEMANTIC_WEIGHT,
+  semanticRuleWeight: SPICY_SEMANTIC_WEIGHT,
 }
 
 export function resolveKnobs(
@@ -39,9 +40,17 @@ export function resolveKnobs(
   return { ...base, ...overrides }
 }
 
-/** Medium subtlety 2-3, Spicy subtlety 4-5 (planning.md §7.4). */
+/**
+ * Medium subtlety 2-3 (planning.md §7.4). Spicy widened from the spec's
+ * literal 4-5 down to 3-5: with all 7 semantic rules rated 2-3 today, a
+ * strict [4,5] floor meant spicy could never draw a semantic rule at all,
+ * permanently nulling semanticRuleWeight to 0 for half of every mixed-tier
+ * batch. Including subtlety-3 lets spicy pick up the 3 semantic rules
+ * already rated that high (category-bird/tool/body-part) without
+ * fabricating new ratings — see the approved plan doc.
+ */
 export function subtletyRangeFor(tier: DifficultyTier): [number, number] {
-  return tier === 'medium' ? [2, 3] : [4, 5]
+  return tier === 'medium' ? [2, 3] : [3, 5]
 }
 
 /**

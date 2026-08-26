@@ -37,19 +37,29 @@ describe('selectGuestPool', () => {
   })
 
   it('picks exactly one decoy-trap (satisfies the decoy, violates the true rule)', () => {
-    const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex)
-    const decoyTraps = pool.filter((g) => g.trapType === 'decoy')
-    expect(decoyTraps).toHaveLength(1)
-    expect(decoyTraps[0].wordId).toBe('level') // highest-frequency quadrant-C word
-    expect(decoyTraps[0].trueLabel).toBe('OUT')
+    // Selection is frequency-weighted random now, not a deterministic
+    // top-tier sort — assert the structural property (any quadrant-C word:
+    // 'level' or 'radar'), not one fixed word, across several draws so a
+    // regression to always-the-same-word would still get caught.
+    const quadrantC = new Set(['level', 'radar'])
+    for (let i = 0; i < 10; i++) {
+      const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex)
+      const decoyTraps = pool.filter((g) => g.trapType === 'decoy')
+      expect(decoyTraps).toHaveLength(1)
+      expect(quadrantC.has(decoyTraps[0].wordId)).toBe(true)
+      expect(decoyTraps[0].trueLabel).toBe('OUT')
+    }
   })
 
   it('picks exactly one T-but-looks-wrong trap (satisfies the true rule, violates the decoy)', () => {
-    const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex)
-    const tBadTraps = pool.filter((g) => g.trapType === 't-but-looks-wrong')
-    expect(tBadTraps).toHaveLength(1)
-    expect(tBadTraps[0].wordId).toBe('puppy') // highest-frequency quadrant-B word
-    expect(tBadTraps[0].trueLabel).toBe('IN')
+    const quadrantB = new Set(['puppy', 'letter', 'missing'])
+    for (let i = 0; i < 10; i++) {
+      const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex)
+      const tBadTraps = pool.filter((g) => g.trapType === 't-but-looks-wrong')
+      expect(tBadTraps).toHaveLength(1)
+      expect(quadrantB.has(tBadTraps[0].wordId)).toBe(true)
+      expect(tBadTraps[0].trueLabel).toBe('IN')
+    }
   })
 
   it('every guest’s trueLabel matches what the true rule actually says about that word', () => {
@@ -63,11 +73,14 @@ describe('selectGuestPool', () => {
 
   it('respects excludeIds', () => {
     const excluded = new Set(['level', 'puppy'])
-    const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex, excluded)
-    expect(pool.some((g) => excluded.has(g.wordId))).toBe(false)
-    // the next-best decoy-trap / t-but-looks-wrong candidates should be used instead
-    expect(pool.some((g) => g.trapType === 'decoy' && g.wordId === 'radar')).toBe(true)
-    expect(pool.some((g) => g.trapType === 't-but-looks-wrong' && g.wordId === 'letter')).toBe(true)
+    for (let i = 0; i < 10; i++) {
+      const pool = selectGuestPool(doubledLetter, liveDecoys, wordBank, MEDIUM_KNOBS, ruleIndex, excluded)
+      expect(pool.some((g) => excluded.has(g.wordId))).toBe(false)
+      // 'level' is the only other quadrant-C word — excluding it leaves 'radar' as the sole decoy-trap candidate
+      expect(pool.some((g) => g.trapType === 'decoy' && g.wordId === 'radar')).toBe(true)
+      // 'puppy' excluded leaves 'letter' or 'missing' as the t-but-looks-wrong candidate
+      expect(pool.some((g) => g.trapType === 't-but-looks-wrong' && (g.wordId === 'letter' || g.wordId === 'missing'))).toBe(true)
+    }
   })
 
   it('falls back gracefully when no live decoys are supplied (no traps, just clean padding)', () => {

@@ -2,7 +2,7 @@ import type { Rule } from '../rules/types'
 import type { Word } from '../words/types'
 import { trapAllocation } from './difficulty'
 import { mustFind } from './lookup'
-import { shuffle } from './random'
+import { pickWeighted } from './random'
 import type { DecoyResult, GuestEntry, KnobValues } from './types'
 
 /**
@@ -30,11 +30,13 @@ export function selectGuestPool(
   function bestCandidate(predicate: (word: Word) => boolean): Word | null {
     const candidates = wordBank.filter((w) => !used.has(w.id) && !w.safety.blocked && predicate(w))
     if (candidates.length === 0) return null
-    // Shuffle before sorting so frequency ties (common with a hand-set 3-tier
-    // scale) break randomly instead of always favoring the same word in the
-    // same position in the seed list — otherwise every candidate for a given
-    // rule ends up padded with identical filler words.
-    return shuffle(candidates).sort((a, b) => b.frequencyScore - a.frequencyScore)[0]
+    // Weighted by frequencyScore so common words are still statistically
+    // favored (planning.md §7.5's fairness intent), but a 0.6/0.3-tier word
+    // can now actually win sometimes instead of only when zero 0.9-tier
+    // candidates remain — a strict sort-by-frequency picked the same
+    // highest-tier word (or one of a small tied set) every single time a
+    // given rule was drawn, which is a real source of repeated puzzles.
+    return pickWeighted(candidates, (w) => w.frequencyScore)
   }
 
   // Pass 1: decoy traps — satisfy a live decoy but violate the true rule (quadrant C).
