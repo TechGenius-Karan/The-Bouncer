@@ -38,11 +38,11 @@ export default async (req: Request): Promise<Response> => {
   const tiers: ('medium' | 'spicy')[] = body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
 
   const { puzzles } = await getCollections()
-  const existingCount = await puzzles.countDocuments()
   const batch = generateBatchCore(count, tiers)
 
-  const newDocs: PuzzleDoc[] = batch.map((candidate, i) => ({
-    number: existingCount + i + 1,
+  const newDocs: PuzzleDoc[] = batch.map((candidate) => ({
+    // Left null — only assigned once actually scheduled, see schedulePuzzles.ts.
+    number: null,
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
     status: 'pending_approval',

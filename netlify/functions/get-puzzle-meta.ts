@@ -37,6 +37,7 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: `No puzzle is scheduled for ${today} yet.` }, 404)
   }
 
-  const response: GetPuzzleMetaResponse = { number: puzzle.number, date: today }
+  // Safe: puzzle was found via status: scheduled/live, which always has a real number.
+  const response: GetPuzzleMetaResponse = { number: puzzle.number!, date: today }
   return jsonResponse(response)
 }

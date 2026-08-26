@@ -35,7 +35,8 @@ export interface KnobValues {
 
 export interface AdminPuzzleDetail {
   puzzleId: string
-  number: number
+  /** Null for a still-pending/rejected/approved-but-unscheduled puzzle — only assigned once actually scheduled. */
+  number: number | null
   difficultyTier: 'medium' | 'spicy'
   status: string
   ruleId: string
@@ -54,6 +55,8 @@ export interface AdminListPendingResponse {
 
 export interface AdminScheduledPuzzle extends AdminPuzzleDetail {
   date: string
+  // Scheduled puzzles always have a real number — narrowed back from AdminPuzzleDetail's nullable one.
+  number: number
 }
 
 export interface AdminListScheduledResponse {

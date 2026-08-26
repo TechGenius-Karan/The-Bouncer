@@ -17,7 +17,9 @@ export default async (req: Request): Promise<Response> => {
   }
 
   const { puzzles } = await getCollections()
-  const pending = await puzzles.find({ status: 'pending_approval' }).sort({ number: 1 }).toArray()
+  // Pending puzzles have no `number` yet (only assigned at schedule time),
+  // so sort by generation order instead.
+  const pending = await puzzles.find({ status: 'pending_approval' }).sort({ createdAt: 1 }).toArray()
   const detail = await Promise.all(pending.map((p) => resolveFullPuzzleDetail(p)))
 
   const response: AdminListPendingResponse = { puzzles: detail }

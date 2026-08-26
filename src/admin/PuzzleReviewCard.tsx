@@ -36,9 +36,7 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject }: Props) {
   return (
     <div className="flex flex-col gap-4 rounded-bin border border-line bg-slip p-5">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-lg font-bold">
-          #{puzzle.number} · {puzzle.difficultyTier}
-        </div>
+        <div className="font-display text-lg font-bold capitalize">{puzzle.difficultyTier}</div>
         <div className="font-sans text-xs uppercase tracking-wide text-ink-soft">{puzzle.ruleId}</div>
       </div>
 

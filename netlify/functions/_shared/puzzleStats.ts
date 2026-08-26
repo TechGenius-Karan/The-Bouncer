@@ -122,7 +122,8 @@ export async function resolvePuzzleStats(puzzle: PuzzleDoc): Promise<AdminPuzzle
 
   return {
     puzzleId,
-    number: puzzle.number,
+    // Safe: resolvePuzzleStats is only ever called on a puzzle already found by number (admin-puzzle-stats.ts), which can't match a null field.
+    number: puzzle.number!,
     difficultyTier: puzzle.difficultyTier,
     status: puzzle.status,
     completedCount: scoreStats?.completedCount ?? 0,
@@ -171,7 +172,8 @@ export async function resolveBatchStats(from: number, to: number): Promise<Admin
     const stats = statsByPuzzleId.get(puzzle._id!.toString())
     const avgScore = stats?.avgScore ?? null
     return {
-      number: puzzle.number,
+      // Safe: puzzleDocs was queried via `number: { $in: numbers } }`, which can't match a null field.
+      number: puzzle.number!,
       difficultyTier: puzzle.difficultyTier,
       avgScore,
       completedCount: stats?.completedCount ?? 0,

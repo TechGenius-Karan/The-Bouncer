@@ -1,7 +1,8 @@
 // Phase 10 (build-plan.md): a playtesting batch's score picture at a
-// glance — GET ?from=&to= over a contiguous puzzle-number range (playtest
-// batches are always sequential, since queuePuzzles.ts assigns numbers as
-// existingCount + i + 1), instead of looking up one puzzle at a time.
+// glance — GET ?from=&to= over a contiguous puzzle-number range, instead of
+// looking up one puzzle at a time. `number` is assigned in real schedule
+// order (schedulePuzzles.ts), so "#from-#to" means "puzzles from-to in
+// actual play order," not generation-batch order.
 
 import { requireAdmin } from './_shared/adminAuth'
 import type { AdminBatchStatsResponse } from './_shared/adminApi'

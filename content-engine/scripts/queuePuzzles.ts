@@ -2,6 +2,11 @@
 // into MongoDB as "pending_approval" — real content for a reviewer to look
 // at through the /admin screen, replacing the old shortcut that inserted
 // straight to "approved" with no review step at all.
+//
+// `number` is deliberately left null here — it's only assigned once a
+// puzzle is actually scheduled (schedulePuzzles.ts), so a rejected or
+// still-pending candidate never burns a number that would otherwise leave
+// a gap in what players/admins actually see.
 // Run with: npm run content:queue-puzzles -- [count]
 
 import 'dotenv/config'
@@ -24,9 +29,8 @@ async function main() {
     process.exit(0)
   }
 
-  const existingCount = await puzzles.countDocuments()
-  const puzzleDocs: PuzzleDoc[] = batch.map((candidate, i) => ({
-    number: existingCount + i + 1,
+  const puzzleDocs: PuzzleDoc[] = batch.map((candidate) => ({
+    number: null,
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
     status: 'pending_approval',

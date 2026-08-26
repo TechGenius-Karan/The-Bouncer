@@ -29,7 +29,12 @@ export default async (req: Request): Promise<Response> => {
     .toArray()
 
   const detail: AdminScheduledPuzzle[] = await Promise.all(
-    scheduled.map(async (p) => ({ ...(await resolveFullPuzzleDetail(p)), date: p.date! })),
+    scheduled.map(async (p) => ({
+      ...(await resolveFullPuzzleDetail(p)),
+      date: p.date!,
+      // Safe: this query is scoped to scheduled/live puzzles, which always have a real number.
+      number: p.number!,
+    })),
   )
 
   const response: AdminListScheduledResponse = { today, puzzles: detail }

@@ -89,7 +89,8 @@ export default async (req: Request): Promise<Response> => {
   const response: GetRoundResponse = {
     resultId: result._id!.toString(),
     puzzleId: puzzle._id!.toString(),
-    number: puzzle.number,
+    // Safe: puzzle was found via status: scheduled/live, which always has a real number.
+    number: puzzle.number!,
     date: result.date,
     clues,
     pool,

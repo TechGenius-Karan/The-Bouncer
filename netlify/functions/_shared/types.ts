@@ -56,7 +56,8 @@ export interface KnobValues {
 
 export interface PuzzleDoc {
   _id?: ObjectId
-  number: number
+  /** Assigned only once the puzzle is actually scheduled (content-engine/scripts/schedulePuzzles.ts) — null before that, so a rejected/pending candidate never burns a number that would otherwise leave a gap in what's shown. */
+  number: number | null
   difficultyTier: 'medium' | 'spicy'
   ruleId: string
   status: PuzzleStatus

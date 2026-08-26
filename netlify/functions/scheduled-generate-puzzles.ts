@@ -50,7 +50,6 @@ export default async (req: Request): Promise<Response> => {
   }
 
   const { puzzles } = await getCollections()
-  const existingCount = await puzzles.countDocuments()
   const newDocs: PuzzleDoc[] = []
 
   for (const { tier, count } of tiersToGenerate) {
@@ -60,7 +59,8 @@ export default async (req: Request): Promise<Response> => {
     }
     for (const candidate of batch) {
       newDocs.push({
-        number: existingCount + newDocs.length + 1,
+        // Left null — only assigned once actually scheduled, see schedulePuzzles.ts.
+        number: null,
         difficultyTier: candidate.difficultyTier,
         ruleId: candidate.ruleId,
         status: 'pending_approval',
