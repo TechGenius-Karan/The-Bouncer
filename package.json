@@ -17,6 +17,7 @@
     "content:generate": "tsx content-engine/scripts/generateBatch.ts",
     "content:seed-db": "tsx content-engine/scripts/seedDatabase.ts",
     "content:queue-puzzles": "tsx content-engine/scripts/queuePuzzles.ts",
+    "content:reset-puzzles": "tsx content-engine/scripts/resetPuzzles.ts",
     "content:schedule": "tsx content-engine/scripts/schedulePuzzles.ts",
     "content:tag-words": "tsx content-engine/scripts/tagWords.ts",
     "dev:functions": "netlify dev",

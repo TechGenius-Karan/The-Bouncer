@@ -104,3 +104,9 @@ export interface AdminBatchStatsResponse {
   missingNumbers: number[]
   puzzles: AdminBatchPuzzleSummary[]
 }
+
+export interface AdminGenerateBatchResponse {
+  ok: true
+  requested: number
+  generated: number
+}

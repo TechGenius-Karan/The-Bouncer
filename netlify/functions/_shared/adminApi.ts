@@ -113,6 +113,17 @@ export interface AdminBatchStatsResponse {
   puzzles: AdminBatchPuzzleSummary[]
 }
 
+export interface AdminGenerateBatchRequest {
+  count: number
+  tiers?: ('medium' | 'spicy')[]
+}
+
+export interface AdminGenerateBatchResponse {
+  ok: true
+  requested: number
+  generated: number
+}
+
 export interface ApiErrorResponse {
   error: string
 }

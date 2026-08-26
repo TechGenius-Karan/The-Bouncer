@@ -12,6 +12,7 @@ import {
 } from './adminClient'
 import { BatchStats } from './BatchStats'
 import { BufferHealthPanel } from './BufferHealthPanel'
+import { GenerateBatchPanel } from './GenerateBatchPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
 import type { AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
@@ -135,6 +136,10 @@ export function AdminApp() {
 
         {status === 'loading' && <div className="font-sans text-ink-soft">Loading queue…</div>}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
+
+        {status === 'ready' && code && (
+          <GenerateBatchPanel code={code} onGenerated={() => code && loadQueue(code)} />
+        )}
 
         {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
 

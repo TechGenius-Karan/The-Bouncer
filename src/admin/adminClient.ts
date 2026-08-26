@@ -1,6 +1,7 @@
 import type {
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
+  AdminGenerateBatchResponse,
   AdminListPendingResponse,
   AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
@@ -99,4 +100,18 @@ export async function getBatchStats(code: string, from: number, to: number): Pro
   const res = await adminFetch(`/api/admin-batch-stats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, code)
   if (!res.ok) throw new Error(`Failed to load batch stats (${res.status})`)
   return res.json() as Promise<AdminBatchStatsResponse>
+}
+
+export async function generateBatch(
+  code: string,
+  count: number,
+  tiers?: ('medium' | 'spicy')[],
+): Promise<AdminGenerateBatchResponse> {
+  const res = await adminFetch('/api/admin-generate-batch', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ count, tiers }),
+  })
+  if (!res.ok) throw new Error(`Failed to generate batch (${res.status})`)
+  return res.json() as Promise<AdminGenerateBatchResponse>
 }
