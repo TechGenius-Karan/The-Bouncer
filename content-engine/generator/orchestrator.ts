@@ -31,30 +31,43 @@ const PRIMARY_FAMILY_ATTEMPTS = 6
  *
  * `priorUsedIds` lets a caller (batch.ts) exclude words already used by
  * earlier candidates in the same batch run, so a batch doesn't repeatedly
- * lean on the same handful of words for a given rule.
+ * lean on the same handful of words for a given rule. `priorUsedRuleIds`
+ * does the same for the rule itself — a batch shouldn't draft the same
+ * rule twice while a fresh one is still available for that tier.
  */
 export function generateCandidate(
   tier: DifficultyTier,
   wordBank: Word[],
   rules: Rule[] = RULES,
-  priorUsedIds: Set<string> = new Set()
+  priorUsedIds: Set<string> = new Set(),
+  priorUsedRuleIds: Set<string> = new Set()
 ): CandidatePuzzle | null {
   const knobs = resolveKnobs(tier)
   const [minSubtlety, maxSubtlety] = subtletyRangeFor(tier)
   const ruleIndex = buildRuleIndex(rules)
 
-  const eligibleLexical = eligibleRulesByFamily(
+  const eligibleLexicalAll = eligibleRulesByFamily(
     rules,
     'lexical-structural',
     minSubtlety,
     maxSubtlety
   )
-  const eligibleSemantic = eligibleRulesByFamily(
+  const eligibleSemanticAll = eligibleRulesByFamily(
     rules,
     'semantic-knowledge',
     minSubtlety,
     maxSubtlety
   )
+
+  // Prefer rules this batch hasn't drafted yet; only fall back to the full
+  // eligible set (allowing a repeat) once every eligible rule for this tier
+  // has already been used — e.g. a batch bigger than the tier's rule count.
+  const isFresh = (r: Rule) => !priorUsedRuleIds.has(r.id)
+  const freshLexical = eligibleLexicalAll.filter(isFresh)
+  const freshSemantic = eligibleSemanticAll.filter(isFresh)
+  const haveFreshRule = freshLexical.length > 0 || freshSemantic.length > 0
+  const eligibleLexical = haveFreshRule ? freshLexical : eligibleLexicalAll
+  const eligibleSemantic = haveFreshRule ? freshSemantic : eligibleSemanticAll
 
   const family = pickFamily(eligibleLexical, eligibleSemantic, knobs.semanticRuleWeight)
   const primaryPool = family === 'semantic-knowledge' ? eligibleSemantic : family === 'lexical-structural' ? eligibleLexical : rules
