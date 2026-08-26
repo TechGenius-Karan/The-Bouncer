@@ -31,7 +31,13 @@ export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminP
     status: puzzle.status,
     ruleId: puzzle.ruleId,
     ruleName: rule?.name ?? puzzle.ruleId,
-    ruleDescription: rule?.descriptionTemplate ?? '',
+    // An empty string here used to render as a silent blank box in the
+    // review UI whenever the `rules` collection was missing an entry for
+    // this ruleId (stale seed data — most commonly after adding a rule to
+    // the taxonomy without re-running `npm run content:seed-db`). Naming
+    // the actual problem here makes that misconfiguration obvious in the
+    // UI instead of looking like a generic bug.
+    ruleDescription: rule?.descriptionTemplate ?? `(No description found for rule "${puzzle.ruleId}" — run "npm run content:seed-db" to sync the rules collection.)`,
     clues: puzzle.clues.map((c) => ({
       wordId: c.wordId,
       word: spellingOf.get(c.wordId) ?? c.wordId,
