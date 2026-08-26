@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { version } from '../../package.json'
 import { getPuzzleMeta } from '../api/client'
+import { getTheme, toggleTheme } from '../theme'
 
 interface Props {
   onClose: () => void
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
   const [puzzleNumber, setPuzzleNumber] = useState<number | null>(null)
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
           <div className="flex items-center justify-between rounded-bin border border-line bg-slip px-4 py-3">
             <div className="font-sans text-[15px] font-semibold">Dark mode</div>
             <button
-              onClick={() => setDarkMode((v) => !v)}
+              onClick={() => setDarkMode(toggleTheme() === 'dark')}
               aria-label="Toggle dark mode"
               aria-pressed={darkMode}
               className={`relative h-6 w-11 flex-none rounded-full transition-colors ${

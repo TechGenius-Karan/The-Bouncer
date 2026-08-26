@@ -84,7 +84,7 @@ export function HomeScreen({ onPlay, onHowToPlay, onShowStats, onShowSettings }:
         </div>
         <div className="flex flex-1 flex-col items-center gap-[9px]">
           <DoorOut word="WALNUT" />
-          <div className="font-display text-[14px] font-extrabold tracking-[0.12em] text-[#B9701C]">
+          <div className="font-display text-[14px] font-extrabold tracking-[0.12em] text-door-warn">
             TURNED AWAY
           </div>
         </div>
@@ -97,7 +97,7 @@ export function HomeScreen({ onPlay, onHowToPlay, onShowStats, onShowSettings }:
         </div>
         <button
           onClick={onPlay}
-          className="h-16 w-full rounded-bin bg-ink font-display text-xl font-bold text-screen shadow-pressed transition-colors hover:bg-[#332C23]"
+          className="h-16 w-full rounded-bin bg-ink font-display text-xl font-bold text-screen shadow-pressed transition-opacity hover:opacity-90"
         >
           Play today&rsquo;s puzzle
         </button>

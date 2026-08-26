@@ -2,6 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Color tokens as "r g b" triplets so Tailwind's rgb(var(...) / <alpha-value>)
+   pattern (tailwind.config.ts) can apply opacity modifiers (e.g. bg-ink/40).
+   .dark overrides give every token a dark-mode value — see App.tsx /
+   src/theme.ts for how the class gets applied, and index.html for the
+   pre-hydration no-flash script. */
+:root {
+  --color-canvas: 241 231 213;
+  --color-screen: 247 239 224;
+  --color-slip: 255 253 247;
+  --color-line: 230 219 198;
+  --color-ink: 36 31 25;
+  --color-ink-soft: 107 97 84;
+  --color-ink-faint: 140 130 113;
+  --color-bin-in: 47 143 124;
+  --color-bin-in-text: 31 107 92;
+  --color-bin-in-chip: 223 238 233;
+  --color-bin-in-tint: 234 244 240;
+  --color-bin-in-active: 228 241 236;
+  --color-bin-out: 224 138 46;
+  --color-bin-out-text: 133 80 18;
+  --color-bin-out-label: 150 89 14;
+  --color-bin-out-chip: 250 231 204;
+  --color-bin-out-tint: 252 241 225;
+  --color-bin-out-active: 251 238 219;
+  --color-miss: 201 80 63;
+  --color-miss-text: 142 50 38;
+  --color-miss-tint: 255 243 240;
+  --color-miss-border: 240 205 197;
+  --color-skip: 216 204 180;
+  --color-skip-bg: 244 237 223;
+  --color-skip-chip: 237 227 208;
+  --color-skip-text: 140 130 113;
+  --color-skip-faint: 111 100 70;
+  --color-door-in-frame: 233 242 238;
+  --color-door-in-threshold: 211 231 224;
+  --color-door-mark-1: 185 168 140;
+  --color-door-mark-2: 203 189 162;
+  --color-door-mark-3: 239 184 119;
+  --color-door-warn: 185 112 28;
+  --color-door-warn-text: 154 91 18;
+
+  --shadow-card: 0 5px 0 -1px #e9dec9;
+  --shadow-card-hover: 0 14px 22px -10px rgba(80, 60, 30, 0.5);
+  --shadow-pressed: 0 6px 0 #0f0c09;
+  --shadow-screen: 0 30px 60px -26px rgba(80, 60, 30, 0.45);
+}
+
+.dark {
+  --color-canvas: 27 23 18;
+  --color-screen: 36 31 24;
+  --color-slip: 47 40 30;
+  --color-line: 64 56 42;
+  --color-ink: 241 230 214;
+  --color-ink-soft: 184 171 147;
+  --color-ink-faint: 147 135 111;
+  --color-bin-in: 79 187 163;
+  --color-bin-in-text: 191 239 225;
+  --color-bin-in-chip: 30 58 52;
+  --color-bin-in-tint: 22 48 42;
+  --color-bin-in-active: 27 54 47;
+  --color-bin-out: 240 169 79;
+  --color-bin-out-text: 246 206 154;
+  --color-bin-out-label: 243 192 119;
+  --color-bin-out-chip: 61 42 20;
+  --color-bin-out-tint: 48 32 16;
+  --color-bin-out-active: 54 37 18;
+  --color-miss: 225 117 99;
+  --color-miss-text: 243 183 170;
+  --color-miss-tint: 56 32 27;
+  --color-miss-border: 90 54 46;
+  --color-skip: 92 83 64;
+  --color-skip-bg: 41 36 26;
+  --color-skip-chip: 54 47 34;
+  --color-skip-text: 180 167 141;
+  --color-skip-faint: 140 130 113;
+  --color-door-in-frame: 36 51 46;
+  --color-door-in-threshold: 28 46 41;
+  --color-door-mark-1: 107 97 80;
+  --color-door-mark-2: 122 110 88;
+  --color-door-mark-3: 201 139 74;
+  --color-door-warn: 217 154 78;
+  --color-door-warn-text: 239 196 140;
+
+  --shadow-card: 0 5px 0 -1px #100d09;
+  --shadow-card-hover: 0 14px 22px -10px rgba(0, 0, 0, 0.6);
+  --shadow-pressed: 0 6px 0 #000000;
+  --shadow-screen: 0 30px 60px -26px rgba(0, 0, 0, 0.55);
+}
+
 html,
 body,
 #root {
