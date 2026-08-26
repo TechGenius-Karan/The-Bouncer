@@ -26,7 +26,7 @@ export function TrayBin({ side, cards, active, onClick }: Props) {
         {cards.map((c, n) => (
           <div
             key={c.id}
-            className={`absolute left-1/2 flex h-[34px] w-[92%] -translate-x-1/2 motion-safe:animate-settle items-center justify-center rounded-[11px] border font-display text-[15px] font-bold tracking-wide ${isIn ? 'border-[#CDE4DD] text-bin-in-text' : 'border-[#F0DCC0] text-bin-out-text'} bg-slip`}
+            className={`absolute left-1/2 flex h-[34px] w-[92%] -translate-x-1/2 motion-safe:animate-settle items-center justify-center rounded-[11px] border font-display text-[15px] font-bold tracking-wide ${isIn ? 'border-bin-in-chip text-bin-in-text' : 'border-bin-out-chip text-bin-out-text'} bg-slip`}
             style={{ top: `${6 + n * 9}px`, zIndex: n }}
           >
             {c.word}

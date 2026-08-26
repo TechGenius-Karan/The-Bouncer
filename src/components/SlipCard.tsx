@@ -72,7 +72,7 @@ export function SlipCard({
   }
   if (selected) {
     border = 'border-2 border-ink'
-    shadow = 'shadow-[0_5px_0_-1px_#241F19]'
+    shadow = 'shadow-[0_5px_0_-1px_rgb(var(--color-ink))]'
   }
   if (draggingIn) {
     border = 'border-2 border-bin-in'

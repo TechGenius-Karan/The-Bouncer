@@ -16,6 +16,7 @@ import { GenerateBatchPanel } from './GenerateBatchPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
 import type { AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
+import { getTheme, toggleTheme } from '../theme'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -24,6 +25,7 @@ function errorMessage(err: unknown): string {
 }
 
 export function AdminApp() {
+  const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
   const [code, setCode] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
@@ -125,6 +127,12 @@ export function AdminApp() {
         <div className="flex items-center justify-between">
           <div className="font-display text-2xl font-bold">Pending review ({puzzles.length})</div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setDarkMode(toggleTheme() === 'dark')}
+              className="font-sans text-sm text-ink-soft underline"
+            >
+              {darkMode ? 'Light mode' : 'Dark mode'}
+            </button>
             <a href="/admin/schedule" className="font-sans text-sm text-ink-soft underline">
               Schedule
             </a>
