@@ -84,7 +84,7 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
         <div className="flex flex-col items-center gap-1 px-7 pb-2 pt-1 text-center">
           <div className="font-sans text-sm font-semibold text-ink-soft">
             The Bouncer{' '}
-            <span className="text-[11px] font-normal text-ink-faint">
+            <span className="text-[13px] font-normal text-ink-faint">
               #{puzzleNumber ?? '—'}
             </span>
           </div>
