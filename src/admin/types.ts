@@ -64,6 +64,10 @@ export interface AdminListScheduledResponse {
   puzzles: AdminScheduledPuzzle[]
 }
 
+export interface AdminListApprovedResponse {
+  puzzles: AdminPuzzleDetail[]
+}
+
 export interface AdminBufferHealthResponse {
   mediumBufferDays: number
   spicyBufferWeeks: number

@@ -2,6 +2,7 @@ import type {
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
   AdminGenerateBatchResponse,
+  AdminListApprovedResponse,
   AdminListPendingResponse,
   AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
@@ -82,6 +83,34 @@ export async function unschedule(code: string, puzzleId: string): Promise<void> 
     body: JSON.stringify({ puzzleId }),
   })
   if (!res.ok) throw new Error(`Failed to pull puzzle from schedule (${res.status})`)
+}
+
+export async function listApproved(code: string): Promise<AdminListApprovedResponse> {
+  const res = await adminFetch('/api/admin-list-approved', code)
+  if (!res.ok) throw new Error(`Failed to load the approved queue (${res.status})`)
+  return res.json() as Promise<AdminListApprovedResponse>
+}
+
+export async function schedulePuzzle(code: string, puzzleId: string, date: string): Promise<void> {
+  const res = await adminFetch('/api/admin-schedule-puzzle', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId, date }),
+  })
+  if (!res.ok) {
+    const body: unknown = await res.json().catch(() => ({}))
+    const message = (body as { error?: string }).error ?? `Failed to schedule puzzle (${res.status})`
+    throw new Error(message)
+  }
+}
+
+export async function unapprove(code: string, puzzleId: string): Promise<void> {
+  const res = await adminFetch('/api/admin-unapprove', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId }),
+  })
+  if (!res.ok) throw new Error(`Failed to send puzzle back to review (${res.status})`)
 }
 
 export async function getBufferHealth(code: string): Promise<AdminBufferHealthResponse> {

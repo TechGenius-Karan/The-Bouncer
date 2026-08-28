@@ -64,6 +64,19 @@ export interface AdminUnscheduleRequest {
   puzzleId: string
 }
 
+export interface AdminListApprovedResponse {
+  puzzles: AdminPuzzleDetail[]
+}
+
+export interface AdminSchedulePuzzleRequest {
+  puzzleId: string
+  date: string
+}
+
+export interface AdminUnapproveRequest {
+  puzzleId: string
+}
+
 export interface AdminRejectRequest {
   puzzleId: string
   reason: string

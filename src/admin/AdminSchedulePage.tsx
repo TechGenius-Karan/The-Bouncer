@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { clearStoredCode, listScheduled, loadStoredCode, login, storeCode, unschedule } from './adminClient'
+import {
+  clearStoredCode,
+  listApproved,
+  listScheduled,
+  loadStoredCode,
+  login,
+  schedulePuzzle,
+  storeCode,
+  unapprove,
+  unschedule,
+} from './adminClient'
+import { ApprovedPanel } from './ApprovedPanel'
 import { SchedulePanel } from './SchedulePanel'
-import type { AdminListScheduledResponse } from './types'
+import type { AdminListApprovedResponse, AdminListScheduledResponse } from './types'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -14,6 +25,7 @@ export function AdminSchedulePage() {
   const [code, setCode] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
+  const [approved, setApproved] = useState<AdminListApprovedResponse | null>(null)
   const [scheduled, setScheduled] = useState<AdminListScheduledResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
@@ -21,7 +33,8 @@ export function AdminSchedulePage() {
   const loadSchedule = async (activeCode: string) => {
     setStatus('loading')
     try {
-      const schedule = await listScheduled(activeCode)
+      const [approvedQueue, schedule] = await Promise.all([listApproved(activeCode), listScheduled(activeCode)])
+      setApproved(approvedQueue)
       setScheduled(schedule)
       setStatus('ready')
     } catch (err) {
@@ -59,9 +72,22 @@ export function AdminSchedulePage() {
     await loadSchedule(code)
   }
 
+  const handleSchedulePuzzle = async (puzzleId: string, date: string) => {
+    if (!code) return
+    await schedulePuzzle(code, puzzleId, date)
+    await loadSchedule(code)
+  }
+
+  const handleUnapprove = async (puzzleId: string) => {
+    if (!code) return
+    await unapprove(code, puzzleId)
+    await loadSchedule(code)
+  }
+
   const handleLogout = () => {
     clearStoredCode()
     setCode(null)
+    setApproved(null)
     setScheduled(null)
     setStatus('gate')
   }
@@ -115,6 +141,10 @@ export function AdminSchedulePage() {
 
         {status === 'loading' && <div className="font-sans text-ink-soft">Loading schedule…</div>}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
+
+        {status === 'ready' && approved && (
+          <ApprovedPanel data={approved} onSchedule={handleSchedulePuzzle} onUnapprove={handleUnapprove} />
+        )}
 
         {status === 'ready' && scheduled && <SchedulePanel data={scheduled} onPull={handleUnschedule} />}
       </div>
