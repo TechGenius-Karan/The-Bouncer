@@ -1,7 +1,12 @@
 import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { ErrorBoundary } from './ErrorBoundary'
+import { reportError } from './reportError'
 import './index.css'
+
+window.addEventListener('error', (e) => reportError('window.onerror', e.error ?? e.message))
+window.addEventListener('unhandledrejection', (e) => reportError('unhandledrejection', e.reason))
 
 // Phase 6: no router exists (or is needed) for a couple of extra pages — a
 // plain pathname check forks to the admin screens, lazy-loaded so their
@@ -18,16 +23,18 @@ const isAdmin = !isSchedule && pathname.startsWith('/admin')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {isSchedule ? (
-      <Suspense fallback={null}>
-        <AdminSchedulePage />
-      </Suspense>
-    ) : isAdmin ? (
-      <Suspense fallback={null}>
-        <AdminApp />
-      </Suspense>
-    ) : (
-      <App />
-    )}
+    <ErrorBoundary>
+      {isSchedule ? (
+        <Suspense fallback={null}>
+          <AdminSchedulePage />
+        </Suspense>
+      ) : isAdmin ? (
+        <Suspense fallback={null}>
+          <AdminApp />
+        </Suspense>
+      ) : (
+        <App />
+      )}
+    </ErrorBoundary>
   </React.StrictMode>,
 )

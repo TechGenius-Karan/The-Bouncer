@@ -40,8 +40,29 @@ export function PlayScreen({ onDone }: Props) {
 
   if (state.phase === 'loading') {
     return (
-      <div className="flex h-full items-center justify-center px-8 text-center font-sans text-ink-soft">
-        Loading today&rsquo;s puzzle&hellip;
+      <div className="flex h-full flex-col motion-safe:animate-pulse">
+        <div className="flex items-center justify-between px-5 pt-4">
+          <div className="h-5 w-16 rounded bg-line" />
+          <div className="h-5 w-14 rounded bg-line" />
+        </div>
+
+        <div className="mx-5 mt-4 h-[124px] rounded-bin border border-line bg-slip" />
+
+        <div className="flex items-baseline justify-between px-5 pb-1.5 pt-4">
+          <div className="h-3 w-16 rounded bg-line" />
+          <div className="h-3 w-24 rounded bg-line" />
+        </div>
+
+        <div className="flex flex-1 flex-wrap content-start gap-2.5 px-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[66px] flex-[0_0_calc(50%-5px)] rounded-card bg-slip shadow-card" />
+          ))}
+        </div>
+
+        <div className="flex gap-3 px-5 pb-8 pt-3">
+          <div className="h-16 flex-1 rounded-bin bg-line" />
+          <div className="h-16 flex-1 rounded-bin bg-line" />
+        </div>
       </div>
     )
   }
