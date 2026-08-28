@@ -75,11 +75,15 @@ const config: Config = {
           '60%': { transform: 'translateY(3px) rotate(2deg)' },
           '100%': { transform: 'translateY(0) rotate(-1.5deg)' },
         },
+        bncStripe: {
+          to: { backgroundPosition: '48px 0' },
+        },
       },
       animation: {
         slipIn: 'slipIn .3s ease both',
         nudge: 'nudge .5s ease 1',
         settle: 'settle .45s ease 1',
+        bncStripe: 'bncStripe 900ms linear infinite',
       },
     },
   },

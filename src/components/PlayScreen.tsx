@@ -4,6 +4,7 @@ import { derivedEndedEarly, type RoundResult } from '../game/types'
 import { recordResult } from '../game/playHistory'
 import { ClueDeck } from './ClueDeck'
 import { LivesDots } from './LivesDots'
+import { LoadingDoor } from './LoadingDoor'
 import { SlipCard } from './SlipCard'
 import { TrayBin } from './TrayBin'
 
@@ -16,6 +17,7 @@ interface Props {
 export function PlayScreen({ onDone }: Props) {
   const { state, commit, select, fileSelected, score } = useGame()
   const [liveDragDx, setLiveDragDx] = useState<number | null>(null)
+  const [showLoader, setShowLoader] = useState(true)
 
   useEffect(() => {
     if (state.phase === 'done' && state.ruleText) {
@@ -38,35 +40,6 @@ export function PlayScreen({ onDone }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase])
 
-  if (state.phase === 'loading') {
-    return (
-      <div className="flex h-full flex-col motion-safe:animate-pulse">
-        <div className="flex items-center justify-between px-5 pt-4">
-          <div className="h-5 w-16 rounded bg-line" />
-          <div className="h-5 w-14 rounded bg-line" />
-        </div>
-
-        <div className="mx-5 mt-4 h-[124px] rounded-bin border border-line bg-slip" />
-
-        <div className="flex items-baseline justify-between px-5 pb-1.5 pt-4">
-          <div className="h-3 w-16 rounded bg-line" />
-          <div className="h-3 w-24 rounded bg-line" />
-        </div>
-
-        <div className="flex flex-1 flex-wrap content-start gap-2.5 px-5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[66px] flex-[0_0_calc(50%-5px)] rounded-card bg-slip shadow-card" />
-          ))}
-        </div>
-
-        <div className="flex gap-3 px-5 pb-8 pt-3">
-          <div className="h-16 flex-1 rounded-bin bg-line" />
-          <div className="h-16 flex-1 rounded-bin bg-line" />
-        </div>
-      </div>
-    )
-  }
-
   if (state.phase === 'error') {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
@@ -79,6 +52,10 @@ export function PlayScreen({ onDone }: Props) {
         </button>
       </div>
     )
+  }
+
+  if (showLoader) {
+    return <LoadingDoor ready={state.phase !== 'loading'} onDone={() => setShowLoader(false)} />
   }
 
   const pool = state.cards.filter((c) => c.place === 'pool')
