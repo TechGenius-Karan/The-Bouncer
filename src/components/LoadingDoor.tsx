@@ -119,14 +119,16 @@ export function LoadingDoor({ ready, onDone }: Props) {
           <div
             className="absolute inset-0"
             style={{
-              background: 'repeating-linear-gradient(90deg,#DDD1B8 0 5px,rgba(0,0,0,0) 5px 12px)',
+              background:
+                'repeating-linear-gradient(90deg,rgb(var(--color-door-track)) 0 5px,rgba(0,0,0,0) 5px 12px)',
             }}
           />
           <div
             className="absolute bottom-0 left-0 top-0"
             style={{
               width: `${(progress * 0.98).toFixed(1)}%`,
-              background: 'repeating-linear-gradient(90deg,#2F8F7C 0 5px,rgba(0,0,0,0) 5px 12px)',
+              background:
+                'repeating-linear-gradient(90deg,rgb(var(--color-bin-in)) 0 5px,rgba(0,0,0,0) 5px 12px)',
               transition: 'width 90ms linear',
             }}
           />
@@ -140,20 +142,20 @@ export function LoadingDoor({ ready, onDone }: Props) {
             className="absolute -bottom-1.5 -left-[26px] right-4 h-[26px] rounded-full"
             style={{
               background:
-                'radial-gradient(50% 60% at 62% 50%, rgba(47,143,124,0.4), rgba(47,143,124,0) 70%)',
+                'radial-gradient(50% 60% at 62% 50%, rgb(var(--color-bin-in) / 0.4), rgb(var(--color-bin-in) / 0) 70%)',
               opacity: open ? 1 : 0,
               transition: 'opacity 300ms ease',
             }}
           />
           <div
             className="absolute inset-0 rounded-t-[10px] border-2 border-b-0 border-ink bg-screen"
-            style={{ boxShadow: '5px 5px 0 rgba(36,31,25,0.13)' }}
+            style={{ boxShadow: '5px 5px 0 rgb(var(--color-ink) / 0.13)' }}
           />
           <div
             className="absolute bottom-0 left-[9px] right-[9px] top-[11px] rounded-t-[6px]"
             style={{
-              background: 'linear-gradient(#E9F4F0,#C6E1D8)',
-              boxShadow: 'inset 0 3px 0 rgba(36,31,25,0.16)',
+              background: 'linear-gradient(rgb(var(--color-door-in-frame)),rgb(var(--color-door-in-threshold)))',
+              boxShadow: 'inset 0 3px 0 rgb(var(--color-ink) / 0.16)',
               opacity: open ? 1 : 0,
               transition: 'opacity 240ms ease',
             }}
@@ -161,7 +163,7 @@ export function LoadingDoor({ ready, onDone }: Props) {
           <div
             className="absolute -right-2.5 -top-[15px] z-[5] rounded-full border-[1.5px] border-ink bg-bin-in-chip px-2.5 pb-[5px] pt-1 font-display text-xs font-extrabold tracking-[0.16em] text-bin-in-text"
             style={{
-              boxShadow: '2px 2px 0 rgba(36,31,25,0.16)',
+              boxShadow: '2px 2px 0 rgb(var(--color-ink) / 0.16)',
               opacity: inside ? 1 : 0,
               transform: inside ? 'scale(1) rotate(-6deg)' : 'scale(0.55) rotate(-6deg)',
               transition: 'opacity 220ms ease, transform 420ms cubic-bezier(.2,1.6,.4,1)',
@@ -189,7 +191,7 @@ export function LoadingDoor({ ready, onDone }: Props) {
           <div
             className="absolute -bottom-2.5 left-1.5 right-1.5 h-2 rounded-full"
             style={{
-              background: 'rgba(36,31,25,0.12)',
+              background: 'rgb(var(--color-ink) / 0.12)',
               filter: 'blur(1px)',
               opacity: inside ? 0 : 1,
               transition: 'opacity 260ms ease',
@@ -197,7 +199,7 @@ export function LoadingDoor({ ready, onDone }: Props) {
           />
           <div
             className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[13px] border-[1.5px] border-line bg-screen"
-            style={{ boxShadow: '6px 6px 0 rgba(36,31,25,0.15)' }}
+            style={{ boxShadow: '6px 6px 0 rgb(var(--color-ink) / 0.15)' }}
           >
             {words.map((word, i) => (
               <span
@@ -237,14 +239,14 @@ export function LoadingDoor({ ready, onDone }: Props) {
         </div>
         <div
           className="relative h-4 overflow-hidden rounded-full border-[1.5px] border-ink bg-slip"
-          style={{ boxShadow: '3px 3px 0 rgba(36,31,25,0.13)' }}
+          style={{ boxShadow: '3px 3px 0 rgb(var(--color-ink) / 0.13)' }}
         >
           <div
             className="h-full animate-bncStripe bg-bin-in"
             style={{
               width: `${progress.toFixed(1)}%`,
               backgroundImage:
-                'repeating-linear-gradient(115deg, rgba(255,253,247,0.22) 0 8px, rgba(0,0,0,0) 8px 24px)',
+                'repeating-linear-gradient(115deg, rgb(var(--color-slip) / 0.22) 0 8px, rgba(0,0,0,0) 8px 24px)',
               backgroundSize: '48px 100%',
               transition: 'width 90ms linear',
             }}

@@ -59,6 +59,7 @@ const config: Config = {
           'mark-3': withOpacity('--color-door-mark-3'),
           warn: withOpacity('--color-door-warn'),
           'warn-text': withOpacity('--color-door-warn-text'),
+          track: withOpacity('--color-door-track'),
         },
       },
       borderRadius: {

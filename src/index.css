@@ -42,6 +42,7 @@
   --color-door-mark-3: 239 184 119;
   --color-door-warn: 185 112 28;
   --color-door-warn-text: 154 91 18;
+  --color-door-track: 221 209 184;
 
   --shadow-card: 0 5px 0 -1px #e9dec9;
   --shadow-card-hover: 0 14px 22px -10px rgba(80, 60, 30, 0.5);
