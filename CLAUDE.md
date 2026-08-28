@@ -78,3 +78,4 @@ Implements planning.md §7 end to end. Run via the `content:*` npm scripts (tsx)
 ## Git workflow
 
 - After a few steps of meaningful, working progress (a coherent chunk landed and verified — not mid-edit, not broken), proactively suggest committing rather than letting changes pile up uncommitted. Suggest it; don't just commit unprompted — this repo still follows the standard commit-only-when-the-user-asks rule.
+- Commit messages should be brief (a short one-line summary; a body only if genuinely needed) and must never include a `Co-Authored-By: Claude` trailer or a `Claude-Session` link.
