@@ -50,6 +50,11 @@
   --shadow-screen: 0 30px 60px -26px rgba(80, 60, 30, 0.45);
 }
 
+/* Dark mode is shelved for now — commented out, not removed, so it's a
+   quick re-enable later (see src/theme.ts, index.html, SettingsModal.tsx).
+   Nothing ever adds the `dark` class to <html> while it's disabled, so this
+   block has no effect either way, but leaving it un-toggled avoids relying
+   on that.
 .dark {
   --color-canvas: 27 23 18;
   --color-screen: 36 31 24;
@@ -85,12 +90,14 @@
   --color-door-mark-3: 201 139 74;
   --color-door-warn: 217 154 78;
   --color-door-warn-text: 239 196 140;
+  --color-door-track: 127 121 106;
 
   --shadow-card: 0 5px 0 -1px #100d09;
   --shadow-card-hover: 0 14px 22px -10px rgba(0, 0, 0, 0.6);
   --shadow-pressed: 0 6px 0 #000000;
   --shadow-screen: 0 30px 60px -26px rgba(0, 0, 0, 0.55);
 }
+*/
 
 html,
 body,

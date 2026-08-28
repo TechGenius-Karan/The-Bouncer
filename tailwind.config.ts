@@ -3,7 +3,9 @@ import type { Config } from 'tailwindcss'
 const withOpacity = (variable: string) => `rgb(var(${variable}) / <alpha-value>)`
 
 const config: Config = {
-  darkMode: 'class',
+  // Dark mode is shelved for now — commented out, not removed, so it's a
+  // quick re-enable later (see src/theme.ts, index.html, SettingsModal.tsx).
+  // darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {

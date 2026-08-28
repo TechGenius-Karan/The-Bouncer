@@ -7,9 +7,12 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="The Bouncer — daily word puzzle" />
+    <meta name="theme-color" content="#F1E7D5" />
+    <!-- Dark mode is shelved for now (not needed yet) — kept commented out,
+         not deleted, so it's a quick re-enable later. See src/theme.ts,
+         SettingsModal.tsx, AdminApp.tsx, AdminSchedulePage.tsx for the rest.
     <meta name="theme-color" content="#F1E7D5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1B1712" media="(prefers-color-scheme: dark)" />
-    <title>The Bouncer</title>
     <script>
       // Applied synchronously, before paint, so there's no flash of the
       // wrong theme while React hydrates — mirrors src/theme.ts's storage
@@ -20,6 +23,8 @@
         if (dark) document.documentElement.classList.add('dark')
       })()
     </script>
+    -->
+    <title>The Bouncer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

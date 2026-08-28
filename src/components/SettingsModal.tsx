@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { version } from '../../package.json'
 import { getPuzzleMeta } from '../api/client'
-import { getTheme, toggleTheme } from '../theme'
+// Dark mode is shelved for now — commented out, not removed, so it's a
+// quick re-enable later (see src/theme.ts).
+// import { getTheme, toggleTheme } from '../theme'
 
 interface Props {
   onClose: () => void
@@ -10,7 +12,7 @@ interface Props {
 }
 
 export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
-  const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
+  // const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
   const [puzzleNumber, setPuzzleNumber] = useState<number | null>(null)
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
         </div>
 
         <div className="flex flex-col gap-2.5 px-7 py-4">
+          {/* Dark mode toggle is hidden for now — not deleted, just
+              commented out, so it's a quick re-enable later.
           <div className="flex items-center justify-between rounded-bin border border-line bg-slip px-4 py-3">
             <div className="font-sans text-[15px] font-semibold">Dark mode</div>
             <button
@@ -58,6 +62,7 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
               />
             </button>
           </div>
+          */}
 
           <button
             onClick={() => {

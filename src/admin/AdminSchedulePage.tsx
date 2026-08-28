@@ -14,7 +14,9 @@ import {
 import { ApprovedPanel } from './ApprovedPanel'
 import { SchedulePanel } from './SchedulePanel'
 import type { AdminListApprovedResponse, AdminListScheduledResponse } from './types'
-import { getTheme, toggleTheme } from '../theme'
+// Dark mode is shelved for now — commented out, not removed, so it's a
+// quick re-enable later (see src/theme.ts).
+// import { getTheme, toggleTheme } from '../theme'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -23,7 +25,7 @@ function errorMessage(err: unknown): string {
 }
 
 export function AdminSchedulePage() {
-  const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
+  // const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
   const [code, setCode] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
@@ -132,12 +134,15 @@ export function AdminSchedulePage() {
         <div className="flex items-center justify-between">
           <div className="font-display text-2xl font-bold">Schedule</div>
           <div className="flex items-center gap-4">
+            {/* Dark mode toggle is hidden for now — not deleted, just
+                commented out, so it's a quick re-enable later.
             <button
               onClick={() => setDarkMode(toggleTheme() === 'dark')}
               className="font-sans text-sm text-ink-soft underline"
             >
               {darkMode ? 'Light mode' : 'Dark mode'}
             </button>
+            */}
             <a href="/admin" className="font-sans text-sm text-ink-soft underline">
               Back to review queue
             </a>
