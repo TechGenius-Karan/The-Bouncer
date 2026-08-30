@@ -102,10 +102,6 @@ export interface AdminAiReviewResponse {
   stillPending: boolean
 }
 
-export interface AdminRepairWordResponse {
-  ok: true
-  repaired: boolean
-}
 
 export interface AdminGuestMissRate {
   wordId: string

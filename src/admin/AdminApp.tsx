@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
+  aiReview,
   approve,
   clearStoredCode,
   getBufferHealth,
@@ -9,7 +10,6 @@ import {
   loadStoredCode,
   login,
   reject,
-  repairWord,
   setRuleOverride,
   storeCode,
 } from './adminClient'
@@ -19,7 +19,12 @@ import { GenerateBatchPanel } from './GenerateBatchPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
 import { RuleRejectStatsPanel } from './RuleRejectStatsPanel'
-import type { AdminBufferHealthResponse, AdminPuzzleDetail, AdminRuleRejectStat } from './types'
+import type {
+  AdminAiReviewResponse,
+  AdminBufferHealthResponse,
+  AdminPuzzleDetail,
+  AdminRuleRejectStat,
+} from './types'
 // Dark mode is shelved for now — commented out, not removed, so it's a
 // quick re-enable later (see src/theme.ts).
 // import { getTheme, toggleTheme } from '../theme'
@@ -30,6 +35,21 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong.'
 }
 
+function aiBannerHeadline(result: AdminAiReviewResponse): string {
+  switch (result.action) {
+    case 'swap-word':
+      return 'AI swapped a word and re-validated — this puzzle is back in the queue.'
+    case 'redraft-puzzle':
+      return 'AI redrafted this puzzle for the same rule — it is back in the queue.'
+    case 'adjust-difficulty':
+      return 'AI recalibrated the rule’s difficulty and rejected this puzzle.'
+    case 'retire-rule':
+      return 'AI retired the rule and rejected this puzzle.'
+    case 'agree-reject':
+      return 'AI agreed there was nothing to salvage and rejected this puzzle.'
+  }
+}
+
 export function AdminApp() {
   // const [darkMode, setDarkMode] = useState(() => getTheme() === 'dark')
   const [code, setCode] = useState<string | null>(null)
@@ -38,6 +58,7 @@ export function AdminApp() {
   const [puzzles, setPuzzles] = useState<AdminPuzzleDetail[]>([])
   const [bufferHealth, setBufferHealth] = useState<AdminBufferHealthResponse | null>(null)
   const [ruleRejectStats, setRuleRejectStats] = useState<AdminRuleRejectStat[]>([])
+  const [aiBanner, setAiBanner] = useState<AdminAiReviewResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
 
@@ -90,18 +111,22 @@ export function AdminApp() {
 
   const handleReject = async (puzzleId: string, reason: string) => {
     if (!code) return
-    await reject(code, puzzleId, reason)
-    setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
+    // The reviewer's reasoning goes to AI review, which decides and executes
+    // the remediation server-side; the outcome may leave the puzzle pending
+    // (swapped/redrafted) or rejected, so reload rather than hand-patch state.
+    const result = await aiReview(code, puzzleId, reason)
+    setAiBanner(result)
+    await loadQueue(code)
   }
 
-  const handleRepairWord = async (puzzleId: string, badWordId: string, reason: string) => {
-    if (!code) return { repaired: false }
-    const result = await repairWord(code, puzzleId, badWordId, reason)
-    // Either outcome changes this puzzle's content or status server-side —
-    // simplest correct thing is to reload the queue rather than hand-patch
-    // local state for a swapped word or a flip to rejected.
+  const handleRetireRule = async (puzzleId: string, ruleId: string, ruleName: string) => {
+    if (!code) return
+    // Direct, no-AI path: retire the rule for future generation, and reject
+    // this instance (via the plain reject endpoint, no AI) since its rule is
+    // now gone — otherwise it'd linger in the queue under a disabled rule.
+    await setRuleOverride(code, ruleId, { disabled: true })
+    await reject(code, puzzleId, `Rule "${ruleName}" retired by reviewer.`)
     await loadQueue(code)
-    return result
   }
 
   const handleRuleOverride = async (
@@ -179,6 +204,27 @@ export function AdminApp() {
         {status === 'loading' && <div className="font-sans text-ink-soft">Loading queue…</div>}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
 
+        {aiBanner && (
+          <div
+            className={`flex items-start justify-between gap-3 rounded-bin border p-4 font-sans text-sm ${
+              aiBanner.stillPending
+                ? 'border-bin-in bg-bin-in-chip text-bin-in-text'
+                : 'border-line bg-slip text-ink'
+            }`}
+          >
+            <div>
+              <div className="font-semibold">{aiBannerHeadline(aiBanner)}</div>
+              <div className="mt-1 text-ink-soft">Rationale: {aiBanner.rationale}</div>
+            </div>
+            <button
+              onClick={() => setAiBanner(null)}
+              className="shrink-0 font-sans text-xs text-ink-soft underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {status === 'ready' && code && (
           <GenerateBatchPanel code={code} onGenerated={() => code && loadQueue(code)} />
         )}
@@ -198,7 +244,7 @@ export function AdminApp() {
             puzzle={puzzle}
             onApprove={() => handleApprove(puzzle.puzzleId)}
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
-            onRepairWord={(badWordId, reason) => handleRepairWord(puzzle.puzzleId, badWordId, reason)}
+            onRetireRule={() => handleRetireRule(puzzle.puzzleId, puzzle.ruleId, puzzle.ruleName)}
           />
         ))}
 

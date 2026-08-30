@@ -4,18 +4,19 @@ import type { AdminPuzzleDetail } from './types'
 interface Props {
   puzzle: AdminPuzzleDetail
   onApprove: () => Promise<void>
+  /** Sends the reviewer's free-text reasoning to AI review (admin-ai-review), which decides and executes the remediation. */
   onReject: (reason: string) => Promise<void>
-  onRepairWord: (badWordId: string, reason: string) => Promise<{ repaired: boolean }>
+  /** Direct, no-AI rule retirement (admin-rule-override) — for when the reviewer already knows the whole rule should go. */
+  onRetireRule: () => Promise<void>
 }
 
-// '' means "whole puzzle / rule concept" — a normal reject. Any other value
-// is a wordId, meaning the reviewer thinks only that one word is the
-// problem — Phase 10.6 item 2's cheap word-level repair path.
-const WHOLE_PUZZLE = ''
-
-export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRepairWord }: Props) {
+// ai-feedback-plan.md §8: the word-picker dropdown from Phase 10.6 item 2 is
+// gone — the AI now infers word-vs-concept itself from the puzzle + reasoning,
+// so the reviewer just writes why and lets the model decide. The separate
+// "Retire this rule" button stays for the case where they already know the
+// whole rule is bad and don't want to explain it to an AI first.
+export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRetireRule }: Props) {
   const [reason, setReason] = useState('')
-  const [badWordId, setBadWordId] = useState(WHOLE_PUZZLE)
   const [busy, setBusy] = useState(false)
 
   const clueIn = puzzle.clues.filter((c) => c.label === 'IN').map((c) => c.word)
@@ -34,16 +35,19 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRepairWord }: 
     if (!reason.trim()) return
     setBusy(true)
     try {
-      if (badWordId === WHOLE_PUZZLE) {
-        await onReject(reason.trim())
-        return
-      }
-      await onRepairWord(badWordId, reason.trim())
-      // On success the puzzle stays in the queue with the word swapped —
-      // reset so the form doesn't keep pointing at a wordId that may no
-      // longer exist in the (now-updated) puzzle.
-      setReason('')
-      setBadWordId(WHOLE_PUZZLE)
+      await onReject(reason.trim())
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRetireRule = async () => {
+    if (!window.confirm(`Retire "${puzzle.ruleName}"? It will stop being generated until manually reinstated.`)) {
+      return
+    }
+    setBusy(true)
+    try {
+      await onRetireRule()
     } finally {
       setBusy(false)
     }
@@ -111,27 +115,10 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRepairWord }: 
           >
             Approve
           </button>
-          <select
-            value={badWordId}
-            onChange={(e) => setBadWordId(e.target.value)}
-            className="rounded-card border border-line bg-screen px-2 py-2 font-sans text-sm"
-          >
-            <option value={WHOLE_PUZZLE}>Whole puzzle / rule concept</option>
-            {puzzle.clues.map((c) => (
-              <option key={c.wordId} value={c.wordId}>
-                Just "{c.word}" ({c.label} clue)
-              </option>
-            ))}
-            {puzzle.guests.map((g) => (
-              <option key={g.wordId} value={g.wordId}>
-                Just "{g.word}" (pool, {g.trueLabel})
-              </option>
-            ))}
-          </select>
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason…"
+            placeholder="Why is this being rejected? The AI reads this and acts on it…"
             className="min-w-[180px] flex-1 rounded-card border border-line bg-screen px-3 py-2 font-sans text-sm"
           />
           <button
@@ -139,9 +126,16 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRepairWord }: 
             disabled={busy || !reason.trim()}
             className="rounded-bin bg-miss px-4 py-2 font-display text-sm font-bold text-white disabled:opacity-50"
           >
-            {badWordId === WHOLE_PUZZLE ? 'Reject' : 'Fix word & requeue'}
+            Reject
           </button>
         </div>
+        <button
+          onClick={handleRetireRule}
+          disabled={busy}
+          className="self-start font-sans text-xs text-miss-text underline disabled:opacity-50"
+        >
+          Retire this rule (no AI)
+        </button>
       </div>
     </div>
   )

@@ -125,19 +125,6 @@ export interface AdminAiReviewResponse {
   stillPending: boolean
 }
 
-/** Phase 10.6 item 2's "cheap word-level repair path" — swaps one flagged word (clue or guest) for a different one satisfying the same rule, re-validates the whole puzzle, and keeps it in pending_approval on success instead of rejecting outright. */
-export interface AdminRepairWordRequest {
-  puzzleId: string
-  badWordId: string
-  reason: string
-}
-
-export interface AdminRepairWordResponse {
-  ok: true
-  /** true if a replacement word was found and validated — puzzle stays pending_approval. false means no valid replacement existed and it fell back to a normal reject. */
-  repaired: boolean
-}
-
 export interface AdminBufferHealthResponse {
   mediumBufferDays: number
   spicyBufferWeeks: number
