@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from 'mongodb'
-import type { PuzzleDoc, ResultDoc, RuleDoc, WordDoc } from './types'
+import type { AiReviewDoc, PuzzleDoc, ResultDoc, RuleDoc, WordDoc } from './types'
 
 const uri: string = (() => {
   const value = process.env.MONGODB_URI
@@ -27,5 +27,6 @@ export async function getCollections() {
     rules: db.collection<RuleDoc>('rules'),
     puzzles: db.collection<PuzzleDoc>('puzzles'),
     results: db.collection<ResultDoc>('results'),
+    aiReviews: db.collection<AiReviewDoc>('aiReviews'),
   }
 }

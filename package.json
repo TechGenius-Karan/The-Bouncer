@@ -22,10 +22,12 @@
     "content:tag-words": "tsx content-engine/scripts/tagWords.ts",
     "content:expand-word-bank": "tsx content-engine/scripts/expandWordBank.ts",
     "content:discover-hidden-category-words": "tsx content-engine/scripts/discoverHiddenCategoryWords.ts",
+    "content:test-ai-review": "tsx content-engine/scripts/testAiReview.ts",
     "dev:functions": "netlify dev",
     "pwa:generate-icons": "pwa-assets-generator"
   },
   "dependencies": {
+    "@google/genai": "^2.19.0",
     "framer-motion": "^11.0.0",
     "mongodb": "^7.5.0",
     "react": "^18.3.1",
