@@ -17,3 +17,34 @@ export async function resolveRuleOverrides(): Promise<RuleOverride[]> {
     subtletyOverride: doc.subtletyOverride,
   }))
 }
+
+export interface RuleOverrideChanges {
+  disabled?: boolean
+  /** A number sets an override; null clears it, reverting to the rule's code-defined subtlety. */
+  subtletyOverride?: number | null
+}
+
+/**
+ * Writes disabled/subtletyOverride onto a rule doc (ai-feedback-plan.md §7.6).
+ * Shared by the manual admin-rule-override.ts endpoint and the AI-driven
+ * admin-ai-review.ts retire-rule/adjust-difficulty branches so the Mongo
+ * write lives in exactly one place. Returns false if no rule matched the id.
+ */
+export async function writeRuleOverride(ruleId: string, changes: RuleOverrideChanges): Promise<boolean> {
+  const set: Record<string, unknown> = {}
+  const unset: Record<string, ''> = {}
+  if (changes.disabled !== undefined) set.disabled = changes.disabled
+  if (changes.subtletyOverride !== undefined) {
+    if (changes.subtletyOverride === null) unset.subtletyOverride = ''
+    else set.subtletyOverride = changes.subtletyOverride
+  }
+  if (Object.keys(set).length === 0 && Object.keys(unset).length === 0) return true // nothing to change — no-op
+
+  const update: Record<string, unknown> = {}
+  if (Object.keys(set).length > 0) update.$set = set
+  if (Object.keys(unset).length > 0) update.$unset = unset
+
+  const { rules } = await getCollections()
+  const result = await rules.updateOne({ _id: ruleId }, update)
+  return result.matchedCount > 0
+}

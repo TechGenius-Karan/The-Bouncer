@@ -1,4 +1,5 @@
 import type {
+  AdminAiReviewResponse,
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
   AdminGenerateBatchResponse,
@@ -86,6 +87,20 @@ export async function repairWord(
   })
   if (!res.ok) throw new Error(`Failed to repair word (${res.status})`)
   return res.json() as Promise<AdminRepairWordResponse>
+}
+
+export async function aiReview(
+  code: string,
+  puzzleId: string,
+  reason: string,
+): Promise<AdminAiReviewResponse> {
+  const res = await adminFetch('/api/admin-ai-review', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId, reason }),
+  })
+  if (!res.ok) throw new Error(`Failed to run AI review (${res.status})`)
+  return res.json() as Promise<AdminAiReviewResponse>
 }
 
 export async function getRuleRejectStats(code: string): Promise<AdminRuleRejectStatsResponse> {

@@ -1,4 +1,4 @@
-import type { KnobValues, Label, PuzzleStatus } from './types'
+import type { AiReviewActionType, KnobValues, Label, PuzzleStatus } from './types'
 
 // Wire contract for the admin-only endpoints. Kept separate from api.ts,
 // which is explicitly scoped to "the two player-facing endpoints" — these
@@ -109,6 +109,20 @@ export interface AdminRuleOverrideRequest {
 
 export interface AdminRuleOverrideResponse {
   ok: true
+}
+
+/** ai-feedback-plan.md §7.5 — the reviewer's free-text reasoning goes to the AI, which decides and executes one bounded remediation. */
+export interface AdminAiReviewRequest {
+  puzzleId: string
+  reason: string
+}
+
+export interface AdminAiReviewResponse {
+  ok: true
+  action: AiReviewActionType
+  rationale: string
+  /** True when the puzzle survived (word swapped or redrafted) and is back in the review queue; false when it was rejected. */
+  stillPending: boolean
 }
 
 /** Phase 10.6 item 2's "cheap word-level repair path" — swaps one flagged word (clue or guest) for a different one satisfying the same rule, re-validates the whole puzzle, and keeps it in pending_approval on success instead of rejecting outright. */

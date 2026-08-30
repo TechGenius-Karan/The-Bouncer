@@ -8,7 +8,7 @@
 
 import { requireAdmin } from './_shared/adminAuth'
 import type { AdminRuleOverrideRequest, AdminRuleOverrideResponse } from './_shared/adminApi'
-import { getCollections } from './_shared/db'
+import { writeRuleOverride } from './_shared/ruleOverrides'
 import { jsonResponse } from './_shared/respond'
 
 export default async (req: Request): Promise<Response> => {
@@ -38,24 +38,15 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'subtletyOverride must be an integer 1-5, or null to clear it' }, 400)
   }
 
-  const set: Record<string, unknown> = {}
-  const unset: Record<string, ''> = {}
-  if (body.disabled !== undefined) set.disabled = body.disabled
-  if (body.subtletyOverride !== undefined) {
-    if (body.subtletyOverride === null) unset.subtletyOverride = ''
-    else set.subtletyOverride = body.subtletyOverride
-  }
-  if (Object.keys(set).length === 0 && Object.keys(unset).length === 0) {
+  if (body.disabled === undefined && body.subtletyOverride === undefined) {
     return jsonResponse({ error: 'Nothing to update — pass disabled and/or subtletyOverride' }, 400)
   }
 
-  const { rules } = await getCollections()
-  const update: Record<string, unknown> = {}
-  if (Object.keys(set).length > 0) update.$set = set
-  if (Object.keys(unset).length > 0) update.$unset = unset
-
-  const result = await rules.updateOne({ _id: ruleId }, update)
-  if (result.matchedCount === 0) {
+  const matched = await writeRuleOverride(ruleId, {
+    disabled: body.disabled,
+    subtletyOverride: body.subtletyOverride,
+  })
+  if (!matched) {
     return jsonResponse({ error: `Unknown ruleId: ${ruleId}` }, 404)
   }
 
