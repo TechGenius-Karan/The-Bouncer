@@ -11,4 +11,13 @@ describe('generateBatchCore', () => {
       expect(candidate.status).toBe('pending_approval')
     }
   })
+
+  it('still produces a full batch when a rejectCounts map is passed', () => {
+    const rejectCounts = new Map([
+      ['doubled-letter', 5],
+      ['category-animal', 5],
+    ])
+    const batch = generateBatchCore(10, ['medium', 'spicy'], rejectCounts)
+    expect(batch).toHaveLength(10)
+  })
 })

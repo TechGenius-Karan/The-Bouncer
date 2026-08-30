@@ -6,6 +6,8 @@ import type {
   AdminListPendingResponse,
   AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
+  AdminRepairWordResponse,
+  AdminRuleRejectStatsResponse,
 } from './types'
 
 const CODE_KEY = 'bouncer-admin-code'
@@ -68,6 +70,27 @@ export async function reject(code: string, puzzleId: string, reason: string): Pr
     body: JSON.stringify({ puzzleId, reason }),
   })
   if (!res.ok) throw new Error(`Failed to reject (${res.status})`)
+}
+
+export async function repairWord(
+  code: string,
+  puzzleId: string,
+  badWordId: string,
+  reason: string,
+): Promise<AdminRepairWordResponse> {
+  const res = await adminFetch('/api/admin-repair-word', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId, badWordId, reason }),
+  })
+  if (!res.ok) throw new Error(`Failed to repair word (${res.status})`)
+  return res.json() as Promise<AdminRepairWordResponse>
+}
+
+export async function getRuleRejectStats(code: string): Promise<AdminRuleRejectStatsResponse> {
+  const res = await adminFetch('/api/admin-rule-reject-stats', code)
+  if (!res.ok) throw new Error(`Failed to load rule reject stats (${res.status})`)
+  return res.json() as Promise<AdminRuleRejectStatsResponse>
 }
 
 export async function listScheduled(code: string): Promise<AdminListScheduledResponse> {

@@ -21,6 +21,7 @@ import type { Config } from '@netlify/functions'
 import { generateBatchCore } from '../../content-engine/generator/batch'
 import { getCollections } from './_shared/db'
 import { resolveBufferHealth } from './_shared/puzzleStats'
+import { resolveRejectCounts } from './_shared/rejectStats'
 import type { PuzzleDoc } from './_shared/types'
 import { jsonResponse } from './_shared/respond'
 
@@ -50,10 +51,11 @@ export default async (req: Request): Promise<Response> => {
   }
 
   const { puzzles } = await getCollections()
+  const rejectCounts = await resolveRejectCounts()
   const newDocs: PuzzleDoc[] = []
 
   for (const { tier, count } of tiersToGenerate) {
-    const batch = generateBatchCore(count, [tier])
+    const batch = generateBatchCore(count, [tier], rejectCounts)
     if (batch.length < count) {
       console.warn(`Only generated ${batch.length}/${count} ${tier} candidates.`)
     }

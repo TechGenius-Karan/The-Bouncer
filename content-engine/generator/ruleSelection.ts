@@ -1,4 +1,5 @@
 import type { Rule } from '../rules/types'
+import { pickWeighted } from './random'
 
 /**
  * Rules of a given family whose subtlety falls within [minSubtlety, maxSubtlety].
@@ -37,4 +38,16 @@ export function pickFamily(
   const rollSemantic = eligibleSemantic.length > 0 && Math.random() < semanticRuleWeight
   if (rollSemantic) return 'semantic-knowledge'
   return eligibleLexical.length > 0 ? 'lexical-structural' : 'semantic-knowledge'
+}
+
+/**
+ * Picks a specific rule from an already-family-selected pool, deprioritizing
+ * (not excluding) rules with recent reviewer rejections — build-plan.md
+ * Phase 10.6 item 2's "next-batch soft-avoidance." A rule with no recent
+ * rejections gets weight 1; each recent rejection roughly halves its share
+ * (1/(1+count)) rather than zeroing it out — a heavily-rejected rule can
+ * still be drawn if the batch genuinely has nothing else fresh to offer.
+ */
+export function pickTrueRule(pool: Rule[], rejectCounts: Map<string, number> = new Map()): Rule {
+  return pickWeighted(pool, (r) => 1 / (1 + (rejectCounts.get(r.id) ?? 0)))
 }

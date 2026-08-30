@@ -5,8 +5,7 @@ import { resolveKnobs, subtletyRangeFor } from './difficulty'
 import { draftClueSet } from './draftClueSet'
 import { scanDecoys } from './decoyScan'
 import { buildRuleIndex } from './lookup'
-import { pickRandom } from './random'
-import { eligibleRulesByFamily, pickFamily } from './ruleSelection'
+import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection'
 import { selectGuestPool } from './trapSelection'
 import type { CandidatePuzzle, DifficultyTier } from './types'
 import { validateAndRepair } from './validator'
@@ -34,13 +33,18 @@ const PRIMARY_FAMILY_ATTEMPTS = 6
  * lean on the same handful of words for a given rule. `priorUsedRuleIds`
  * does the same for the rule itself — a batch shouldn't draft the same
  * rule twice while a fresh one is still available for that tier.
+ *
+ * `rejectCounts` (build-plan.md Phase 10.6 item 2) softly deprioritizes
+ * rule ids a human reviewer has recently rejected candidates for — see
+ * ruleSelection.ts's pickTrueRule.
  */
 export function generateCandidate(
   tier: DifficultyTier,
   wordBank: Word[],
   rules: Rule[] = RULES,
   priorUsedIds: Set<string> = new Set(),
-  priorUsedRuleIds: Set<string> = new Set()
+  priorUsedRuleIds: Set<string> = new Set(),
+  rejectCounts: Map<string, number> = new Map()
 ): CandidatePuzzle | null {
   const knobs = resolveKnobs(tier)
   const [minSubtlety, maxSubtlety] = subtletyRangeFor(tier)
@@ -78,7 +82,7 @@ export function generateCandidate(
     // primaryPool/fallbackPool are never both empty (pickFamily's own
     // contract), so whichever branch this lands on is guaranteed non-empty.
     const pool = wantPrimary && primaryPool.length > 0 ? primaryPool : fallbackPool.length > 0 ? fallbackPool : primaryPool
-    const trueRule = pickRandom(pool)
+    const trueRule = pickTrueRule(pool, rejectCounts)
 
     let clues
     try {

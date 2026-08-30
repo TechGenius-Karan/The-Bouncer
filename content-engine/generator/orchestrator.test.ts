@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../rules'
 import { buildWordBank } from '../words/wordBank'
-import { resolveKnobs } from './difficulty'
+import { resolveKnobs, subtletyRangeFor } from './difficulty'
 import { buildRuleIndex } from './lookup'
 import { generateCandidate } from './orchestrator'
 import { validateAndRepair } from './validator'
@@ -37,5 +37,16 @@ describe.each(['medium', 'spicy'] as const)('generateCandidate(%s)', (tier) => {
       expect(result.status).toBe('valid')
       expect(JSON.stringify(candidate.guests)).toBe(before)
     }
+  })
+
+  // Phase 10.6 item 2: rejectCounts is optional and softly deprioritizes,
+  // never excludes, a rule — generation must still succeed even when every
+  // eligible rule for this tier has been "recently rejected."
+  it('still produces a valid candidate when every eligible rule has reject history', () => {
+    const [min, max] = subtletyRangeFor(tier)
+    const eligible = RULES.filter((r) => r.subtlety >= min && r.subtlety <= max)
+    const rejectCounts = new Map(eligible.map((r) => [r.id, 10]))
+    const candidate = generateCandidate(tier, wordBank, RULES, new Set(), new Set(), rejectCounts)
+    expect(candidate).not.toBeNull()
   })
 })

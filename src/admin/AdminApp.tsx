@@ -4,10 +4,12 @@ import {
   approve,
   clearStoredCode,
   getBufferHealth,
+  getRuleRejectStats,
   listPending,
   loadStoredCode,
   login,
   reject,
+  repairWord,
   storeCode,
 } from './adminClient'
 import { BatchStats } from './BatchStats'
@@ -15,7 +17,8 @@ import { BufferHealthPanel } from './BufferHealthPanel'
 import { GenerateBatchPanel } from './GenerateBatchPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
-import type { AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
+import { RuleRejectStatsPanel } from './RuleRejectStatsPanel'
+import type { AdminBufferHealthResponse, AdminPuzzleDetail, AdminRuleRejectStat } from './types'
 // Dark mode is shelved for now — commented out, not removed, so it's a
 // quick re-enable later (see src/theme.ts).
 // import { getTheme, toggleTheme } from '../theme'
@@ -33,15 +36,21 @@ export function AdminApp() {
   const [error, setError] = useState<string | null>(null)
   const [puzzles, setPuzzles] = useState<AdminPuzzleDetail[]>([])
   const [bufferHealth, setBufferHealth] = useState<AdminBufferHealthResponse | null>(null)
+  const [ruleRejectStats, setRuleRejectStats] = useState<AdminRuleRejectStat[]>([])
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
 
   const loadQueue = async (activeCode: string) => {
     setStatus('loading')
     try {
-      const [pending, health] = await Promise.all([listPending(activeCode), getBufferHealth(activeCode)])
+      const [pending, health, rejectStats] = await Promise.all([
+        listPending(activeCode),
+        getBufferHealth(activeCode),
+        getRuleRejectStats(activeCode),
+      ])
       setPuzzles(pending.puzzles)
       setBufferHealth(health)
+      setRuleRejectStats(rejectStats.rules)
       setStatus('ready')
     } catch (err) {
       setError(errorMessage(err))
@@ -82,6 +91,16 @@ export function AdminApp() {
     if (!code) return
     await reject(code, puzzleId, reason)
     setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
+  }
+
+  const handleRepairWord = async (puzzleId: string, badWordId: string, reason: string) => {
+    if (!code) return { repaired: false }
+    const result = await repairWord(code, puzzleId, badWordId, reason)
+    // Either outcome changes this puzzle's content or status server-side —
+    // simplest correct thing is to reload the queue rather than hand-patch
+    // local state for a swapped word or a flip to rejected.
+    await loadQueue(code)
+    return result
   }
 
   const handleLogout = () => {
@@ -155,6 +174,7 @@ export function AdminApp() {
         )}
 
         {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
+        {status === 'ready' && <RuleRejectStatsPanel rules={ruleRejectStats} />}
 
         {status === 'ready' && puzzles.length === 0 && (
           <div className="font-sans text-ink-soft">Nothing waiting for review.</div>
@@ -166,6 +186,7 @@ export function AdminApp() {
             puzzle={puzzle}
             onApprove={() => handleApprove(puzzle.puzzleId)}
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
+            onRepairWord={(badWordId, reason) => handleRepairWord(puzzle.puzzleId, badWordId, reason)}
           />
         ))}
 

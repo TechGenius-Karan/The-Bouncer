@@ -31,6 +31,7 @@ export interface KnobValues {
   poolSize: number
   trapGuestCount: number
   targetSurvivingDecoyRange: [number, number]
+  semanticRuleWeight: number
 }
 
 export interface AdminPuzzleDetail {
@@ -72,6 +73,22 @@ export interface AdminBufferHealthResponse {
   mediumBufferDays: number
   spicyBufferWeeks: number
   gapDates: string[]
+}
+
+export interface AdminRuleRejectStat {
+  ruleId: string
+  ruleName: string
+  rejectCount: number
+  flagged: boolean
+}
+
+export interface AdminRuleRejectStatsResponse {
+  rules: AdminRuleRejectStat[]
+}
+
+export interface AdminRepairWordResponse {
+  ok: true
+  repaired: boolean
 }
 
 export interface AdminGuestMissRate {

@@ -52,6 +52,8 @@ export interface KnobValues {
   poolSize: number
   trapGuestCount: number
   targetSurvivingDecoyRange: [number, number]
+  /** Was already stored on every PuzzleDoc (copied verbatim from content-engine's CandidatePuzzle) but missing from this duplicated type until now. */
+  semanticRuleWeight: number
 }
 
 export interface PuzzleDoc {

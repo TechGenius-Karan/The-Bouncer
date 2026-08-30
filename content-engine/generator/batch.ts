@@ -22,10 +22,17 @@ import type { CandidatePuzzle, DifficultyTier } from './types'
  * generateCandidate's "no fresh rule left" fallback (which allows
  * unrestricted reuse) far too early and making spicy's repeats *worse*
  * than having no rule exclusion at all.
+ *
+ * `rejectCounts` (build-plan.md Phase 10.6 item 2) is an optional recent
+ * reject-count-per-rule-id map, passed straight through to every
+ * generateCandidate call so a batch softly avoids rules a reviewer has
+ * recently rejected candidates for. Callers with Mongo access resolve this
+ * via netlify/functions/_shared/rejectStats.ts before calling in.
  */
 export function generateBatchCore(
   n: number,
   tiers: DifficultyTier[] = ['medium', 'spicy'],
+  rejectCounts: Map<string, number> = new Map(),
 ): CandidatePuzzle[] {
   const wordBank = buildWordBank()
   const batch: CandidatePuzzle[] = []
@@ -41,9 +48,9 @@ export function generateBatchCore(
     attempts++
     const usedRuleIds = usedRuleIdsByTier.get(tier) ?? new Set<string>()
     const candidate =
-      generateCandidate(tier, wordBank, RULES, usedIds, usedRuleIds) ??
-      generateCandidate(tier, wordBank, RULES, new Set(), usedRuleIds) ??
-      generateCandidate(tier, wordBank, RULES)
+      generateCandidate(tier, wordBank, RULES, usedIds, usedRuleIds, rejectCounts) ??
+      generateCandidate(tier, wordBank, RULES, new Set(), usedRuleIds, rejectCounts) ??
+      generateCandidate(tier, wordBank, RULES, new Set(), new Set(), rejectCounts)
     if (candidate) {
       batch.push(candidate)
       for (const clue of candidate.clues) usedIds.add(clue.wordId)
