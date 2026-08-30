@@ -10,6 +10,7 @@
 import { ObjectId } from 'mongodb'
 import { RULES } from '../../content-engine/rules'
 import { planAiReviewDispatch } from '../../content-engine/generator/aiReviewDispatch'
+import { shuffle } from '../../content-engine/generator/random'
 import { buildWordBank } from '../../content-engine/words/wordBank'
 import { requireAdmin } from './_shared/adminAuth'
 import type { AdminAiReviewRequest, AdminAiReviewResponse } from './_shared/adminApi'
@@ -19,6 +20,13 @@ import { getCollections } from './_shared/db'
 import { jsonResponse } from './_shared/respond'
 import { writeRuleOverride } from './_shared/ruleOverrides'
 import type { AiReviewDoc } from './_shared/types'
+
+// How many real, correctly-sided bank words to offer the AI as a menu for the
+// rewrite-puzzle action. IN is generous so skewed rules (e.g. hidden-number,
+// where "one"/"ten" words swamp the rarer "six"/"nine" ones) still surface
+// enough of the rare words for the AI to build genuine variety from.
+const IN_MENU_SIZE = 100
+const OUT_MENU_SIZE = 40
 
 export default async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') {
@@ -48,7 +56,27 @@ export default async (req: Request): Promise<Response> => {
   }
 
   const detail = await resolveFullPuzzleDetail(doc)
-  const { decision, rawResponse } = await getAiReviewDecision({ puzzle: detail, reason: trimmedReason })
+  const wordBank = buildWordBank()
+
+  // Build the rewrite-puzzle menu of real, correctly-sided words. Excludes
+  // words already in this puzzle so a rewrite is actually fresh, and shuffles
+  // before slicing so skewed rules still surface their rarer words.
+  const rule = RULES.find((r) => r.id === doc.ruleId)
+  const usedIds = new Set([...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)])
+  const available = wordBank.filter((w) => !w.safety.blocked && !usedIds.has(w.id))
+  const inWordMenu = rule
+    ? shuffle(available.filter((w) => rule.evaluate(w))).slice(0, IN_MENU_SIZE).map((w) => w.spelling)
+    : []
+  const outWordMenu = rule
+    ? shuffle(available.filter((w) => !rule.evaluate(w))).slice(0, OUT_MENU_SIZE).map((w) => w.spelling)
+    : []
+
+  const { decision, rawResponse } = await getAiReviewDecision({
+    puzzle: detail,
+    reason: trimmedReason,
+    inWordMenu,
+    outWordMenu,
+  })
 
   const plan = planAiReviewDispatch(
     decision,
@@ -60,7 +88,7 @@ export default async (req: Request): Promise<Response> => {
       guests: doc.guests,
     },
     RULES,
-    buildWordBank()
+    wordBank
   )
 
   // Apply any taxonomy-level override first (retire / recalibrate) — this is

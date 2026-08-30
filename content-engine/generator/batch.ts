@@ -31,10 +31,8 @@ import type { CandidatePuzzle, DifficultyTier } from './types'
  * via netlify/functions/_shared/rejectStats.ts before calling in.
  *
  * `rules` (ai-feedback-plan.md §11 phase 1) defaults to the full static
- * taxonomy but lets a caller pass an already-overridden set instead —
- * either the effective rules after applyRuleOverrides (live
- * disabled/subtletyOverride toggles), or a singleton array to force a
- * specific rule (the AI "redraft this puzzle" action's approach).
+ * taxonomy but lets a caller pass the effective rules after
+ * applyRuleOverrides (live disabled/subtletyOverride toggles) instead.
  */
 export function generateBatchCore(
   n: number,

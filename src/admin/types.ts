@@ -93,7 +93,7 @@ export interface AdminRuleOverrideResponse {
   ok: true
 }
 
-export type AiReviewActionType = 'swap-word' | 'redraft-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
+export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
 
 export interface AdminAiReviewResponse {
   ok: true

@@ -55,22 +55,68 @@ describe('planAiReviewDispatch', () => {
     expect(plan.ruleOverride).toBeNull()
   })
 
-  it('redraft-puzzle: regenerates fresh content for the same rule and stays pending', () => {
-    const input: RepairWordInput = { ...containsQInput(), ruleId: 'same-start-end' }
-    const plan = planAiReviewDispatch({ action: 'redraft-puzzle', rationale: 'weak traps' }, input, RULES, wordBank)
+  const validRewrite = {
+    action: 'rewrite-puzzle' as const,
+    rationale: 'more variety',
+    clues: [
+      { word: 'quiet', label: 'IN' as const },
+      { word: 'unique', label: 'IN' as const },
+      { word: 'square', label: 'IN' as const },
+      { word: 'cat', label: 'OUT' as const },
+      { word: 'plan', label: 'OUT' as const },
+      { word: 'dog', label: 'OUT' as const },
+    ],
+    guests: [
+      { word: 'quick', label: 'IN' as const },
+      { word: 'quarter', label: 'IN' as const },
+      { word: 'equal', label: 'IN' as const },
+      { word: 'table', label: 'OUT' as const },
+      { word: 'chair', label: 'OUT' as const },
+      { word: 'apple', label: 'OUT' as const },
+    ],
+  }
+
+  it('rewrite-puzzle: accepts AI-authored content that validates and stays pending', () => {
+    const plan = planAiReviewDispatch(validRewrite, containsQInput(), RULES, wordBank)
     expect(plan.stillPending).toBe(true)
     expect(plan.puzzleMutation.kind).toBe('update-content')
     if (plan.puzzleMutation.kind === 'update-content') {
-      expect(plan.puzzleMutation.clues.length).toBeGreaterThan(0)
-      expect(plan.puzzleMutation.guests.length).toBeGreaterThan(0)
+      expect(plan.puzzleMutation.clues.map((c) => c.wordId)).toContain('quiet')
+      // guest true-labels are recomputed from the rule, not trusted from the AI
+      const quick = plan.puzzleMutation.guests.find((g) => g.wordId === 'quick')!
+      expect(quick.trueLabel).toBe('IN')
     }
   })
 
-  it('redraft-puzzle: falls back to reject when the ruleId is unknown', () => {
-    const input: RepairWordInput = { ...containsQInput(), ruleId: 'no-such-rule' }
-    const plan = planAiReviewDispatch({ action: 'redraft-puzzle', rationale: 'x' }, input, RULES, wordBank)
-    expect(plan.puzzleMutation.kind).toBe('reject')
-    expect(plan.stillPending).toBe(false)
+  it('rewrite-puzzle: rejects when a word is not in the bank', () => {
+    const bad = { ...validRewrite, clues: [{ word: 'zzqqxx', label: 'IN' as const }, ...validRewrite.clues.slice(1)] }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+  })
+
+  it('rewrite-puzzle: rejects when a clue is mislabeled against the real rule', () => {
+    // "cat" has no q, so labeling it IN for contains-q is a lie the server catches.
+    const bad = { ...validRewrite, clues: [{ word: 'cat', label: 'IN' as const }, ...validRewrite.clues.slice(1)] }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+  })
+
+  it('rewrite-puzzle: rejects when the counts do not match the tier knobs', () => {
+    const bad = { ...validRewrite, clues: validRewrite.clues.slice(0, 4) }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+  })
+
+  it('rewrite-puzzle: rejects an all-one-side giveaway guest pool', () => {
+    const bad = {
+      ...validRewrite,
+      guests: [
+        { word: 'quick', label: 'IN' as const },
+        { word: 'quarter', label: 'IN' as const },
+        { word: 'equal', label: 'IN' as const },
+        { word: 'quiz', label: 'IN' as const },
+        { word: 'quote', label: 'IN' as const },
+        { word: 'queen', label: 'IN' as const },
+      ],
+    }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
   })
 
   it('adjust-difficulty: rejects this instance and carries a subtletyOverride', () => {

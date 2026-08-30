@@ -98,7 +98,7 @@ export interface ResultDoc {
   completedAt: Date | null
 }
 
-export type AiReviewActionType = 'swap-word' | 'redraft-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
+export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
 
 /** ai-feedback-plan.md §7.1 — audit trail for every AI-assisted reject review, and the source material for §5's few-shot library growth. */
 export interface AiReviewDoc {
@@ -110,7 +110,7 @@ export interface AiReviewDoc {
   aiRationale: string
   /** Full raw model response — debugging/audit only, never shown to the reviewer. */
   aiRawResponse: string
-  /** Set for swap-word/redraft-puzzle (the puzzle survives under the same _id); null for the other three actions. */
+  /** Set for swap-word/rewrite-puzzle (the puzzle survives under the same _id); null for the other three actions. */
   resultingPuzzleId: string | null
   createdAt: Date
   /** Filled in later once a human acts on the re-surfaced puzzle — the feedback signal §5's few-shot growth reads from. */

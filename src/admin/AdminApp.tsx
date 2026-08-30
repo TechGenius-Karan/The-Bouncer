@@ -39,8 +39,10 @@ function aiBannerHeadline(result: AdminAiReviewResponse): string {
   switch (result.action) {
     case 'swap-word':
       return 'AI swapped a word and re-validated — this puzzle is back in the queue.'
-    case 'redraft-puzzle':
-      return 'AI redrafted this puzzle for the same rule — it is back in the queue.'
+    case 'rewrite-puzzle':
+      return result.stillPending
+        ? 'AI rewrote the puzzle to address the feedback — it is back in the queue.'
+        : 'AI tried to rewrite the puzzle but its version did not validate, so this puzzle was rejected.'
     case 'adjust-difficulty':
       return 'AI recalibrated the rule’s difficulty and rejected this puzzle.'
     case 'retire-rule':
@@ -113,7 +115,7 @@ export function AdminApp() {
     if (!code) return
     // The reviewer's reasoning goes to AI review, which decides and executes
     // the remediation server-side; the outcome may leave the puzzle pending
-    // (swapped/redrafted) or rejected, so reload rather than hand-patch state.
+    // (swapped/rewritten) or rejected, so reload rather than hand-patch state.
     const result = await aiReview(code, puzzleId, reason)
     setAiBanner(result)
     await loadQueue(code)

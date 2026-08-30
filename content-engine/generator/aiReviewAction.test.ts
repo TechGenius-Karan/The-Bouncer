@@ -16,9 +16,29 @@ describe('parseAiReviewAction', () => {
     })
   })
 
-  it('accepts a well-formed redraft-puzzle action', () => {
-    const result = parseAiReviewAction({ action: 'redraft-puzzle', rationale: 'traps are both bird names' }, context)
-    expect(result).toEqual({ action: 'redraft-puzzle', rationale: 'traps are both bird names' })
+  it('accepts a well-formed rewrite-puzzle action', () => {
+    const result = parseAiReviewAction(
+      {
+        action: 'rewrite-puzzle',
+        rationale: 'varied the hidden numbers',
+        clues: [{ word: 'sixteen', label: 'IN' }],
+        guests: [{ word: 'nine', label: 'IN' }],
+      },
+      context
+    )
+    expect(result).toEqual({
+      action: 'rewrite-puzzle',
+      rationale: 'varied the hidden numbers',
+      clues: [{ word: 'sixteen', label: 'IN' }],
+      guests: [{ word: 'nine', label: 'IN' }],
+    })
+  })
+
+  it('falls back to agree-reject when rewrite-puzzle has malformed or empty word lists', () => {
+    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [], guests: [{ word: 'a', label: 'IN' }] }, context).action).toBe('agree-reject')
+    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ word: 'a', label: 'IN' }] }, context).action).toBe('agree-reject')
+    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ word: 'a', label: 'MAYBE' }], guests: [{ word: 'b', label: 'OUT' }] }, context).action).toBe('agree-reject')
+    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ label: 'IN' }], guests: [{ word: 'b', label: 'OUT' }] }, context).action).toBe('agree-reject')
   })
 
   it('accepts a well-formed adjust-difficulty action', () => {

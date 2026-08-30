@@ -1,9 +1,10 @@
 import type { Rule } from '../rules/types'
 import type { Word } from '../words/types'
-import type { AiReviewAction } from './aiReviewAction'
-import { generateCandidate } from './orchestrator'
+import type { AiAuthoredWord, AiReviewAction } from './aiReviewAction'
+import { buildRuleIndex } from './lookup'
 import { repairWord, type RepairWordInput } from './repairWord'
 import type { CandidatePuzzle } from './types'
+import { validateAndRepair } from './validator'
 
 // ai-feedback-plan.md §7.5/§10: the pure, Mongo-free core of admin-ai-review.ts.
 // Given a *validated* AiReviewAction (parseAiReviewAction already ran) plus the
@@ -41,12 +42,77 @@ function reject(ruleOverride: AiReviewRuleOverride | null = null): AiReviewDispa
 }
 
 /**
+ * Turns the AI's authored words (Option A's rewrite-puzzle) into a validated
+ * puzzle, or null if it can't be trusted. The AI proposes words; the server
+ * disposes: every word must exist in the bank, every clue must actually sit
+ * on the side the AI claims (checked against the real rule, never the AI's
+ * label), the counts must match the tier's knobs, guest true-labels are
+ * recomputed from the rule (never trusted from the AI), the pool must be a
+ * genuine mix (not an all-one-label giveaway), and the whole thing must pass
+ * the same uniqueness validator every generated puzzle passes.
+ */
+function validateAuthoredPuzzle(
+  puzzle: RepairWordInput,
+  authoredClues: AiAuthoredWord[],
+  authoredGuests: AiAuthoredWord[],
+  rules: Rule[],
+  wordBank: Word[]
+): CandidatePuzzle | null {
+  const rule = rules.find((r) => r.id === puzzle.ruleId)
+  if (!rule) return null
+
+  const wordById = new Map(wordBank.map((w) => [w.id, w]))
+  const knobs = puzzle.knobValues
+
+  const inClues = authoredClues.filter((c) => c.label === 'IN')
+  const outClues = authoredClues.filter((c) => c.label === 'OUT')
+  if (inClues.length !== knobs.clueCountIn || outClues.length !== knobs.clueCountOut) return null
+  if (authoredGuests.length !== knobs.poolSize) return null
+
+  // No word may appear twice across clues + guests.
+  const allSpellings = [...authoredClues.map((c) => c.word), ...authoredGuests.map((g) => g.word)]
+  if (new Set(allSpellings).size !== allSpellings.length) return null
+
+  // Every clue word must be in the bank AND actually sit on the side the AI claims.
+  for (const clue of authoredClues) {
+    const word = wordById.get(clue.word)
+    if (!word || word.safety.blocked) return null
+    if (rule.evaluate(word) !== (clue.label === 'IN')) return null
+  }
+
+  // Guests: true label is recomputed from the rule, never trusted from the AI.
+  const guestWords = authoredGuests.map((g) => wordById.get(g.word))
+  if (guestWords.some((w) => !w || w.safety.blocked)) return null
+  const guestLabels = guestWords.map((w) => (rule.evaluate(w!) ? 'IN' : 'OUT'))
+  if (!guestLabels.includes('IN') || !guestLabels.includes('OUT')) return null // no all-one-side giveaway pool
+
+  const candidate: CandidatePuzzle = {
+    ruleId: puzzle.ruleId,
+    difficultyTier: puzzle.difficultyTier,
+    knobValues: knobs,
+    status: 'pending_approval',
+    clues: authoredClues.map((c, i) => ({ wordId: c.word, label: c.label, displayOrder: i })),
+    guests: authoredGuests.map((g, i) => ({
+      wordId: g.word,
+      trueLabel: guestLabels[i],
+      displayOrder: i,
+      isTrap: false,
+      trapType: null,
+    })),
+    liveDecoys: [],
+  }
+
+  const result = validateAndRepair(candidate, rules, buildRuleIndex(rules), wordBank)
+  return result.status === 'valid' ? result.candidate : null
+}
+
+/**
  * Resolves a validated AI decision into a concrete plan. swap-word and
- * redraft-puzzle both re-run the real validator (via repairWord /
- * generateCandidate) and only survive if it passes — a failed attempt falls
- * back to a plain reject, so the reviewer's click always resolves. The other
- * three actions never rewrite puzzle content: they reject this instance and,
- * for adjust-difficulty / retire-rule, carry a taxonomy-level override.
+ * rewrite-puzzle both run the real uniqueness validator (via repairWord /
+ * validateAuthoredPuzzle) and only survive if it passes — a failed attempt
+ * falls back to a plain reject, so the reviewer's click always resolves. The
+ * other three actions never change puzzle content: they reject this instance
+ * and, for adjust-difficulty / retire-rule, carry a taxonomy-level override.
  */
 export function planAiReviewDispatch(
   decision: AiReviewAction,
@@ -69,11 +135,11 @@ export function planAiReviewDispatch(
         stillPending: true,
       }
     }
-    case 'redraft-puzzle': {
-      const rule = rules.find((r) => r.id === puzzle.ruleId)
-      // A singleton [rule] array forces generateCandidate onto that one rule
-      // with no new forceRuleId parameter — see ai-feedback-plan.md §7.3.
-      const candidate = rule ? generateCandidate(puzzle.difficultyTier, wordBank, [rule]) : null
+    case 'rewrite-puzzle': {
+      // Option A: the AI authored the replacement words to address specific
+      // content feedback; validateAuthoredPuzzle gates them hard, and a
+      // failed rewrite falls back to a plain reject so the click resolves.
+      const candidate = validateAuthoredPuzzle(puzzle, decision.clues, decision.guests, rules, wordBank)
       if (!candidate) return reject()
       return {
         puzzleMutation: {

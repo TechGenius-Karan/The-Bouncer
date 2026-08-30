@@ -24,7 +24,6 @@ npm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea/
-.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj
@@ -38,3 +37,10 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 deno.lock
+
+# Claude Code / agent tooling — local environment + installed skill caches,
+# not project source (skills are reinstalled per-machine, worktrees and the
+# scheduled-tasks lock are session-local state).
+.claude/
+.agents/
+skills-lock.json
