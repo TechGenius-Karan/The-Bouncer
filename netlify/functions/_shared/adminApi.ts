@@ -87,10 +87,28 @@ export interface AdminRuleRejectStat {
   ruleName: string
   rejectCount: number
   flagged: boolean
+  /** True when a reviewer has retired this rule via admin-rule-override.ts — it's excluded from generation until reinstated. */
+  disabled: boolean
+  /** Live-recalibrated subtlety, or null if the rule is still running at its code-defined subtlety. */
+  subtletyOverride: number | null
+  /** The rule's code-defined subtlety, for comparison against subtletyOverride in the UI. */
+  baseSubtlety: number
 }
 
 export interface AdminRuleRejectStatsResponse {
   rules: AdminRuleRejectStat[]
+}
+
+/** ai-feedback-plan.md §7.6 — the direct, no-AI path for a reviewer to retire/reinstate a rule or recalibrate its difficulty. Fields are independently optional: only the ones present get applied. */
+export interface AdminRuleOverrideRequest {
+  ruleId: string
+  disabled?: boolean
+  /** A number sets an override; null clears it, reverting to the rule's code-defined subtlety. */
+  subtletyOverride?: number | null
+}
+
+export interface AdminRuleOverrideResponse {
+  ok: true
 }
 
 /** Phase 10.6 item 2's "cheap word-level repair path" — swaps one flagged word (clue or guest) for a different one satisfying the same rule, re-validates the whole puzzle, and keeps it in pending_approval on success instead of rejecting outright. */

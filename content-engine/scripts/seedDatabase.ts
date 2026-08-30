@@ -46,9 +46,13 @@ async function main() {
   )
 
   console.log(`Upserting ${ruleDocs.length} rules...`)
+  // $set (not replaceOne) — a rule can carry a live disabled/subtletyOverride
+  // toggle (ai-feedback-plan.md) that this script must never wipe out on a
+  // routine re-seed after the taxonomy changes; only the code-defined fields
+  // below are touched.
   await rules.bulkWrite(
     ruleDocs.map((doc) => ({
-      replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true },
+      updateOne: { filter: { _id: doc._id }, update: { $set: doc }, upsert: true },
     })),
   )
 

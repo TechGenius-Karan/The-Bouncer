@@ -23,6 +23,10 @@ export interface RuleDoc {
   descriptionTemplate: string
   family: string
   subtlety: number
+  /** Live override (ai-feedback-plan.md) — excludes the rule from generation without a code deploy. Reinstate by clearing it. */
+  disabled?: boolean
+  /** Live override — replaces `subtlety` for generation-eligibility purposes only; the rule's code-defined evaluate() logic never changes. */
+  subtletyOverride?: number
 }
 
 export interface PuzzleClueDoc {

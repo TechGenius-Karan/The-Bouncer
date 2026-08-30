@@ -1,4 +1,5 @@
 import { RULES } from '../rules'
+import type { Rule } from '../rules/types'
 import { buildWordBank } from '../words/wordBank'
 import { generateCandidate } from './orchestrator'
 import type { CandidatePuzzle, DifficultyTier } from './types'
@@ -28,11 +29,18 @@ import type { CandidatePuzzle, DifficultyTier } from './types'
  * generateCandidate call so a batch softly avoids rules a reviewer has
  * recently rejected candidates for. Callers with Mongo access resolve this
  * via netlify/functions/_shared/rejectStats.ts before calling in.
+ *
+ * `rules` (ai-feedback-plan.md §11 phase 1) defaults to the full static
+ * taxonomy but lets a caller pass an already-overridden set instead —
+ * either the effective rules after applyRuleOverrides (live
+ * disabled/subtletyOverride toggles), or a singleton array to force a
+ * specific rule (the AI "redraft this puzzle" action's approach).
  */
 export function generateBatchCore(
   n: number,
   tiers: DifficultyTier[] = ['medium', 'spicy'],
   rejectCounts: Map<string, number> = new Map(),
+  rules: Rule[] = RULES,
 ): CandidatePuzzle[] {
   const wordBank = buildWordBank()
   const batch: CandidatePuzzle[] = []
@@ -48,9 +56,9 @@ export function generateBatchCore(
     attempts++
     const usedRuleIds = usedRuleIdsByTier.get(tier) ?? new Set<string>()
     const candidate =
-      generateCandidate(tier, wordBank, RULES, usedIds, usedRuleIds, rejectCounts) ??
-      generateCandidate(tier, wordBank, RULES, new Set(), usedRuleIds, rejectCounts) ??
-      generateCandidate(tier, wordBank, RULES, new Set(), new Set(), rejectCounts)
+      generateCandidate(tier, wordBank, rules, usedIds, usedRuleIds, rejectCounts) ??
+      generateCandidate(tier, wordBank, rules, new Set(), usedRuleIds, rejectCounts) ??
+      generateCandidate(tier, wordBank, rules, new Set(), new Set(), rejectCounts)
     if (candidate) {
       batch.push(candidate)
       for (const clue of candidate.clues) usedIds.add(clue.wordId)

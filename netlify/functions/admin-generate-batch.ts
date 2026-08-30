@@ -11,7 +11,10 @@ import { requireAdmin } from './_shared/adminAuth'
 import type { AdminGenerateBatchRequest } from './_shared/adminApi'
 import { getCollections } from './_shared/db'
 import { generateBatchCore } from '../../content-engine/generator/batch'
+import { RULES } from '../../content-engine/rules'
+import { applyRuleOverrides } from '../../content-engine/rules/ruleOverrides'
 import { resolveRejectCounts } from './_shared/rejectStats'
+import { resolveRuleOverrides } from './_shared/ruleOverrides'
 import type { PuzzleDoc } from './_shared/types'
 import { jsonResponse } from './_shared/respond'
 
@@ -39,8 +42,9 @@ export default async (req: Request): Promise<Response> => {
   const tiers: ('medium' | 'spicy')[] = body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
 
   const { puzzles } = await getCollections()
-  const rejectCounts = await resolveRejectCounts()
-  const batch = generateBatchCore(count, tiers, rejectCounts)
+  const [rejectCounts, ruleOverrides] = await Promise.all([resolveRejectCounts(), resolveRuleOverrides()])
+  const effectiveRules = applyRuleOverrides(RULES, ruleOverrides)
+  const batch = generateBatchCore(count, tiers, rejectCounts, effectiveRules)
 
   const newDocs: PuzzleDoc[] = batch.map((candidate) => ({
     // Left null — only assigned once actually scheduled, see schedulePuzzles.ts.

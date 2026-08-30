@@ -7,6 +7,7 @@ import type {
   AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
   AdminRepairWordResponse,
+  AdminRuleOverrideResponse,
   AdminRuleRejectStatsResponse,
 } from './types'
 
@@ -91,6 +92,20 @@ export async function getRuleRejectStats(code: string): Promise<AdminRuleRejectS
   const res = await adminFetch('/api/admin-rule-reject-stats', code)
   if (!res.ok) throw new Error(`Failed to load rule reject stats (${res.status})`)
   return res.json() as Promise<AdminRuleRejectStatsResponse>
+}
+
+export async function setRuleOverride(
+  code: string,
+  ruleId: string,
+  changes: { disabled?: boolean; subtletyOverride?: number | null },
+): Promise<AdminRuleOverrideResponse> {
+  const res = await adminFetch('/api/admin-rule-override', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ruleId, ...changes }),
+  })
+  if (!res.ok) throw new Error(`Failed to update rule override (${res.status})`)
+  return res.json() as Promise<AdminRuleOverrideResponse>
 }
 
 export async function listScheduled(code: string): Promise<AdminListScheduledResponse> {

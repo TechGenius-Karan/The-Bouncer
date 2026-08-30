@@ -10,6 +10,7 @@ import {
   login,
   reject,
   repairWord,
+  setRuleOverride,
   storeCode,
 } from './adminClient'
 import { BatchStats } from './BatchStats'
@@ -103,6 +104,15 @@ export function AdminApp() {
     return result
   }
 
+  const handleRuleOverride = async (
+    ruleId: string,
+    changes: { disabled?: boolean; subtletyOverride?: number | null },
+  ) => {
+    if (!code) return
+    await setRuleOverride(code, ruleId, changes)
+    await loadQueue(code)
+  }
+
   const handleLogout = () => {
     clearStoredCode()
     setCode(null)
@@ -174,7 +184,9 @@ export function AdminApp() {
         )}
 
         {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
-        {status === 'ready' && <RuleRejectStatsPanel rules={ruleRejectStats} />}
+        {status === 'ready' && (
+          <RuleRejectStatsPanel rules={ruleRejectStats} onOverride={handleRuleOverride} />
+        )}
 
         {status === 'ready' && puzzles.length === 0 && (
           <div className="font-sans text-ink-soft">Nothing waiting for review.</div>

@@ -80,10 +80,17 @@ export interface AdminRuleRejectStat {
   ruleName: string
   rejectCount: number
   flagged: boolean
+  disabled: boolean
+  subtletyOverride: number | null
+  baseSubtlety: number
 }
 
 export interface AdminRuleRejectStatsResponse {
   rules: AdminRuleRejectStat[]
+}
+
+export interface AdminRuleOverrideResponse {
+  ok: true
 }
 
 export interface AdminRepairWordResponse {
