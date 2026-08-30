@@ -15,6 +15,7 @@
  * (Step 3) doesn't die partway through on one bad entry.
  */
 import naturalPkg from 'natural'
+import type { PartOfSpeech } from './types'
 
 // `natural` builds its CJS export map dynamically, so Node's ESM interop
 // can't see named exports statically — import the default and destructure.
@@ -226,6 +227,49 @@ export async function fetchWordnetHyponymsDeep(
   }
 
   return results
+}
+
+const WORDNET_POS_MAP: Record<string, PartOfSpeech> = {
+  n: 'noun',
+  v: 'verb',
+  a: 'adjective',
+  s: 'adjective', // WordNet's "adjective satellite" — grouped with plain adjectives here
+  r: 'adverb',
+}
+
+/**
+ * `word`'s most common part of speech across all its WordNet senses (a
+ * majority vote, not just the first sense — sense order isn't reliable,
+ * per Step 1's findings). Falls back to `'other'` if WordNet has no entry
+ * or the lookup fails; used by `expandWordBank.ts` to bulk-tag words
+ * pulled from a frequency corpus that carries no part-of-speech data.
+ */
+export async function fetchWordnetPartOfSpeech(word: string): Promise<PartOfSpeech> {
+  const wn = getWordNet()
+  let records: WordnetRecord[]
+  try {
+    records = await lookupWord(wn, word)
+  } catch (err) {
+    console.warn(`WordNet lookup for "${word}" failed:`, err)
+    return 'other'
+  }
+
+  const counts = new Map<PartOfSpeech, number>()
+  for (const record of records) {
+    const mapped = WORDNET_POS_MAP[record.pos]
+    if (!mapped) continue
+    counts.set(mapped, (counts.get(mapped) ?? 0) + 1)
+  }
+
+  let best: PartOfSpeech = 'other'
+  let bestCount = 0
+  for (const [pos, count] of counts) {
+    if (count > bestCount) {
+      best = pos
+      bestCount = count
+    }
+  }
+  return best
 }
 
 // natural's WordNet API is callback-based; promisify the two calls used above.

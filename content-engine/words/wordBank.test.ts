@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { BULK_SEED_WORDS } from './bulkSeedWords'
 import { SEED_WORDS } from './seedWords'
 import { buildWordBank } from './wordBank'
 
 describe('buildWordBank', () => {
   const bank = buildWordBank()
 
-  it('produces one Word per seed entry', () => {
-    expect(bank).toHaveLength(SEED_WORDS.length)
+  it('produces one Word per seed entry (hand-curated + corpus-sourced)', () => {
+    expect(bank).toHaveLength(SEED_WORDS.length + BULK_SEED_WORDS.length)
   })
 
   it('has no duplicate ids', () => {
@@ -35,7 +36,7 @@ describe('buildWordBank', () => {
     expect(count((w) => w.features.noAdjacentVowels)).toBeGreaterThanOrEqual(25)
     expect(count((w) => w.features.hiddenWordHits.length > 0)).toBeGreaterThanOrEqual(12)
     expect(count((w) => w.length >= 3 && 'aeiou'.includes(w.spelling[2]))).toBeGreaterThanOrEqual(
-      20,
+      20
     )
     expect(count((w) => w.features.subsequenceHits.length > 0)).toBeGreaterThanOrEqual(15)
   })

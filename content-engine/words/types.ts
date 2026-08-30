@@ -23,8 +23,9 @@ export interface LetterFeatures {
   hiddenWordHits: string[]
   /** Which SUBSEQUENCE_TARGETS appear as an in-order (non-adjacent) subsequence. */
   subsequenceHits: string[]
-  /** Sorted letters — unused by the current rule set, kept for future anagram-adjacent rules. */
+  /** Sorted letters. Also doubles as the alphabetical-order-run check: spelling === anagramSignature. */
   anagramSignature: string
+  isPalindrome: boolean
 }
 
 export interface Word {

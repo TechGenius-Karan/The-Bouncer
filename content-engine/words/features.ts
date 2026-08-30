@@ -68,5 +68,6 @@ export function buildLetterFeatures(spelling: string): LetterFeatures {
     hiddenWordHits: HIDDEN_WORD_TARGETS.filter((target) => spelling.includes(target)),
     subsequenceHits: SUBSEQUENCE_TARGETS.filter((target) => isSubsequence(target, spelling)),
     anagramSignature: chars.slice().sort().join(''),
+    isPalindrome: spelling === chars.slice().reverse().join(''),
   }
 }
