@@ -64,6 +64,8 @@ export interface PuzzleDoc {
   number: number | null
   difficultyTier: 'medium' | 'spicy'
   ruleId: string
+  /** The rule's template family, when it came from one — used for scheduling cooldown. */
+  templateId?: string
   status: PuzzleStatus
   /** UTC calendar date ("YYYY-MM-DD") this puzzle is scheduled for, or null if not yet scheduled. */
   date: string | null

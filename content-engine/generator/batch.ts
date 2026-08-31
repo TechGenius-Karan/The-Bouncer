@@ -33,12 +33,17 @@ import type { CandidatePuzzle, DifficultyTier } from './types'
  * `rules` (ai-feedback-plan.md §11 phase 1) defaults to the full static
  * taxonomy but lets a caller pass the effective rules after
  * applyRuleOverrides (live subtlety overrides) instead.
+ *
+ * `recentlyUsedRuleIds` extends the per-batch freshness set across runs, so a
+ * rule committed to in a recent batch isn't drafted again immediately.
+ * Callers with Mongo access resolve it via _shared/ruleUsage.ts.
  */
 export function generateBatchCore(
   n: number,
   tiers: DifficultyTier[] = ['medium', 'spicy'],
   rejectCounts: Map<string, number> = new Map(),
   rules: Rule[] = RULES,
+  recentlyUsedRuleIds: Set<string> = new Set(),
 ): CandidatePuzzle[] {
   const wordBank = buildWordBank()
   const batch: CandidatePuzzle[] = []
@@ -52,7 +57,11 @@ export function generateBatchCore(
     const tier = tiers[tierIndex % tiers.length]
     tierIndex++
     attempts++
-    const usedRuleIds = usedRuleIdsByTier.get(tier) ?? new Set<string>()
+    // Seeded with rules already used by recently-approved puzzles, so the
+    // freshness machinery treats a cross-run cooldown exactly the way it
+    // already treats within-batch reuse (and falls back the same way if the
+    // tier genuinely has nothing fresh left).
+    const usedRuleIds = usedRuleIdsByTier.get(tier) ?? new Set<string>(recentlyUsedRuleIds)
     const candidate =
       generateCandidate(tier, wordBank, rules, usedIds, usedRuleIds, rejectCounts) ??
       generateCandidate(tier, wordBank, rules, new Set(), usedRuleIds, rejectCounts) ??

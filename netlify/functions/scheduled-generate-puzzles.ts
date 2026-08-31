@@ -25,6 +25,7 @@ import { getCollections } from './_shared/db'
 import { resolveBufferHealth } from './_shared/puzzleStats'
 import { resolveRejectCounts } from './_shared/rejectStats'
 import { resolveRuleOverrides } from './_shared/ruleOverrides'
+import { resolveRecentRuleUsage } from './_shared/ruleUsage'
 import type { PuzzleDoc } from './_shared/types'
 import { jsonResponse } from './_shared/respond'
 
@@ -54,12 +55,16 @@ export default async (req: Request): Promise<Response> => {
   }
 
   const { puzzles } = await getCollections()
-  const [rejectCounts, ruleOverrides] = await Promise.all([resolveRejectCounts(), resolveRuleOverrides()])
+  const [rejectCounts, ruleOverrides, recentUsage] = await Promise.all([
+    resolveRejectCounts(),
+    resolveRuleOverrides(),
+    resolveRecentRuleUsage(),
+  ])
   const effectiveRules = applyRuleOverrides(RULES, ruleOverrides)
   const newDocs: PuzzleDoc[] = []
 
   for (const { tier, count } of tiersToGenerate) {
-    const batch = generateBatchCore(count, [tier], rejectCounts, effectiveRules)
+    const batch = generateBatchCore(count, [tier], rejectCounts, effectiveRules, recentUsage.ruleIds)
     if (batch.length < count) {
       console.warn(`Only generated ${batch.length}/${count} ${tier} candidates.`)
     }
@@ -69,6 +74,7 @@ export default async (req: Request): Promise<Response> => {
         number: null,
         difficultyTier: candidate.difficultyTier,
         ruleId: candidate.ruleId,
+    ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
         status: 'pending_approval',
         date: null,
         clues: candidate.clues,

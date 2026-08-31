@@ -134,6 +134,7 @@ export function generateCandidate(
 
     const candidate: CandidatePuzzle = {
       ruleId: trueRule.id,
+      ...(trueRule.templateId ? { templateId: trueRule.templateId } : {}),
       difficultyTier: tier,
       knobValues: knobs,
       status: 'pending_approval',

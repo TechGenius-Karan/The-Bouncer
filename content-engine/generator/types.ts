@@ -40,6 +40,8 @@ export interface DecoyResult {
 
 export interface CandidatePuzzle {
   ruleId: string
+  /** The rule's template family ("hidden-word", "ends-with"), when it came from one — lets scheduling space out a kind of puzzle, not just a specific rule. */
+  templateId?: string
   difficultyTier: DifficultyTier
   knobValues: KnobValues
   status: 'pending_approval'

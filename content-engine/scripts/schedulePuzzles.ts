@@ -26,6 +26,35 @@ const START_DATE = process.argv[3] || resolvePuzzleDateString()
 // something is misconfigured rather than looping indefinitely.
 const MAX_DAYS_WALKED = 3650
 
+// Don't put the same rule within this many days of itself, or the same
+// template family (all the "ends with X" rules, say) within this many —
+// families are spaced more tightly since they're a softer kind of sameness.
+const RULE_SPACING_DAYS = 60
+const TEMPLATE_SPACING_DAYS = 6
+
+interface Placement {
+  date: string
+  ruleId: string
+  templateId?: string
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000
+}
+
+/** True when this puzzle's rule and template family are far enough from every date already placed. */
+function isFreshFor(date: string, puzzle: PuzzleDoc, placements: Placement[]): boolean {
+  return !placements.some((p) => {
+    const gap = daysBetween(date, p.date)
+    if (p.ruleId === puzzle.ruleId && gap < RULE_SPACING_DAYS) return true
+    return (
+      puzzle.templateId !== undefined &&
+      p.templateId === puzzle.templateId &&
+      gap < TEMPLATE_SPACING_DAYS
+    )
+  })
+}
+
 async function main() {
   const { puzzles } = await getCollections()
 
@@ -65,10 +94,17 @@ async function main() {
   const takenDocs = await puzzles
     .find(
       { status: { $in: ['scheduled', 'live'] }, date: { $ne: null } },
-      { projection: { date: 1 } },
+      { projection: { date: 1, ruleId: 1, templateId: 1 } },
     )
     .toArray()
   const taken = new Set(takenDocs.map((doc) => doc.date as string))
+  // What's already on the calendar, so the spacing check below sees existing
+  // schedule entries as well as ones made during this run.
+  const placements: Placement[] = takenDocs.map((doc) => ({
+    date: doc.date as string,
+    ruleId: doc.ruleId,
+    templateId: doc.templateId,
+  }))
 
   let nextNumber = (await puzzles.countDocuments({ status: { $in: ['scheduled', 'live'] } })) + 1
 
@@ -86,7 +122,14 @@ async function main() {
 
     const tier: PuzzleDoc['difficultyTier'] = isSaturday(cursor) ? 'spicy' : 'medium'
     const queue = tier === 'spicy' ? spicyQueue : mediumQueue
-    const candidate = queue.shift()
+    // Strict FIFO used to place whatever came next, never looking at ruleId —
+    // so a batch that happened to produce the same rule several times landed
+    // those on nearby dates. Prefer the earliest queued puzzle whose rule (and
+    // template family) hasn't been used near this date; fall back to plain FIFO
+    // if the whole queue is in cooldown, since shipping a repeat still beats
+    // leaving the day empty.
+    const freshIndex = queue.findIndex((p) => isFreshFor(cursor, p, placements))
+    const candidate = freshIndex === -1 ? queue.shift() : queue.splice(freshIndex, 1)[0]
 
     if (!candidate) {
       console.warn(
@@ -98,6 +141,7 @@ async function main() {
 
     const date = cursor
     taken.add(date)
+    placements.push({ date, ruleId: candidate.ruleId, templateId: candidate.templateId })
     cursor = addDaysToDateString(cursor, 1)
 
     const number = nextNumber

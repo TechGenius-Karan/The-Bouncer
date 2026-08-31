@@ -15,6 +15,7 @@ import { RULES } from '../../content-engine/rules'
 import { applyRuleOverrides } from '../../content-engine/rules/ruleOverrides'
 import { resolveRejectCounts } from './_shared/rejectStats'
 import { resolveRuleOverrides } from './_shared/ruleOverrides'
+import { resolveRecentRuleUsage } from './_shared/ruleUsage'
 import type { PuzzleDoc } from './_shared/types'
 import { jsonResponse } from './_shared/respond'
 
@@ -42,15 +43,20 @@ export default async (req: Request): Promise<Response> => {
   const tiers: ('medium' | 'spicy')[] = body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
 
   const { puzzles } = await getCollections()
-  const [rejectCounts, ruleOverrides] = await Promise.all([resolveRejectCounts(), resolveRuleOverrides()])
+  const [rejectCounts, ruleOverrides, recentUsage] = await Promise.all([
+    resolveRejectCounts(),
+    resolveRuleOverrides(),
+    resolveRecentRuleUsage(),
+  ])
   const effectiveRules = applyRuleOverrides(RULES, ruleOverrides)
-  const batch = generateBatchCore(count, tiers, rejectCounts, effectiveRules)
+  const batch = generateBatchCore(count, tiers, rejectCounts, effectiveRules, recentUsage.ruleIds)
 
   const newDocs: PuzzleDoc[] = batch.map((candidate) => ({
     // Left null — only assigned once actually scheduled, see schedulePuzzles.ts.
     number: null,
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
+    ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
     status: 'pending_approval',
     date: null,
     clues: candidate.clues,

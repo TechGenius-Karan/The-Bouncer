@@ -13,6 +13,7 @@ import 'dotenv/config'
 import { getCollections } from '../../netlify/functions/_shared/db'
 import { resolveRejectCounts } from '../../netlify/functions/_shared/rejectStats'
 import { resolveRuleOverrides } from '../../netlify/functions/_shared/ruleOverrides'
+import { resolveRecentRuleUsage } from '../../netlify/functions/_shared/ruleUsage'
 import type { PuzzleDoc } from '../../netlify/functions/_shared/types'
 import { RULES } from '../rules'
 import { applyRuleOverrides } from '../rules/ruleOverrides'
@@ -22,11 +23,15 @@ const PUZZLE_COUNT = Number(process.argv[2]) || 5
 
 async function main() {
   const { puzzles } = await getCollections()
-  const [rejectCounts, ruleOverrides] = await Promise.all([resolveRejectCounts(), resolveRuleOverrides()])
+  const [rejectCounts, ruleOverrides, recentUsage] = await Promise.all([
+    resolveRejectCounts(),
+    resolveRuleOverrides(),
+    resolveRecentRuleUsage(),
+  ])
   const effectiveRules = applyRuleOverrides(RULES, ruleOverrides)
 
   console.log(`Generating ${PUZZLE_COUNT} candidate puzzles...`)
-  const batch = generateBatchCore(PUZZLE_COUNT, ['medium', 'spicy'], rejectCounts, effectiveRules)
+  const batch = generateBatchCore(PUZZLE_COUNT, ['medium', 'spicy'], rejectCounts, effectiveRules, recentUsage.ruleIds)
   if (batch.length < PUZZLE_COUNT) {
     console.warn(`Only generated ${batch.length}/${PUZZLE_COUNT} candidates.`)
   }
@@ -39,6 +44,7 @@ async function main() {
     number: null,
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
+    ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
     status: 'pending_approval',
     date: null,
     clues: candidate.clues,
