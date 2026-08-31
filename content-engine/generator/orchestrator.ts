@@ -121,6 +121,13 @@ export function generateCandidate(
     clues = bestClues
     liveDecoys = bestDecoys
 
+    // Hard gate, not a preference. Both trap loops in trapSelection are
+    // guarded on having at least one live decoy, so a zero-decoy candidate is
+    // structurally guaranteed to ship with zero traps — "apply the obvious
+    // rule to 6 words". 12 of 20 puzzles in the last committed batch were
+    // like this. Retry with a different rule instead of emitting one.
+    if (liveDecoys.length === 0) continue
+
     const usedIds = new Set([...priorUsedIds, ...clues.map((c) => c.wordId)])
     const guests = selectGuestPool(trueRule, liveDecoys, wordBank, knobs, ruleIndex, usedIds)
     if (guests.length < knobs.poolSize) continue // couldn't fill the pool — try a different rule

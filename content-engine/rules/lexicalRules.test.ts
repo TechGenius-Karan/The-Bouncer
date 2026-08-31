@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildWordBank } from '../words/wordBank'
 import { buildLetterFeatures } from '../words/features'
 import { CONTAINS_LETTER_TARGETS, LEXICAL_RULES } from './lexicalRules'
+import { subtletyRangeFor } from '../generator/difficulty'
 import { RULES } from './index'
 import type { Word } from '../words/types'
 
@@ -34,14 +35,40 @@ describe('registry sanity', () => {
   // content is covered by lexicalRules's own describe.each below and by
   // semanticRules.test.ts; this just guards against cross-family id
   // collisions and other registry-level regressions.
-  it('has exactly 29 rules with unique ids and valid subtlety ratings', () => {
-    expect(RULES).toHaveLength(29)
+  it('has exactly 32 rules with unique ids and valid subtlety/aha ratings', () => {
+    expect(RULES).toHaveLength(32)
     const ids = new Set(RULES.map((r) => r.id))
-    expect(ids.size).toBe(29)
+    expect(ids.size).toBe(32)
     for (const rule of RULES) {
       expect(rule.subtlety).toBeGreaterThanOrEqual(1)
       expect(rule.subtlety).toBeLessThanOrEqual(5)
+      expect(rule.aha ?? 3).toBeGreaterThanOrEqual(1)
+      expect(rule.aha ?? 3).toBeLessThanOrEqual(5)
       expect(rule.descriptionTemplate.length).toBeGreaterThan(0)
+    }
+  })
+
+  // Regression guard: 10 of the previous 29 rules were rated subtlety 1,
+  // which sits outside BOTH tier windows (medium [2,3], spicy [3,5]) — they
+  // could never be drawn and existed only as decoy material. Nothing caught
+  // it because no test related rule ratings to tier eligibility.
+  it('has no rule stranded outside every tier window', () => {
+    const windows = (['medium', 'spicy'] as const).map(subtletyRangeFor)
+    for (const rule of RULES) {
+      const reachable = windows.some(([min, max]) => rule.subtlety >= min && rule.subtlety <= max)
+      expect(reachable, `rule "${rule.id}" (subtlety ${rule.subtlety}) is unreachable by any tier`).toBe(true)
+    }
+  })
+
+  // Regression guard: `no-adjacent-vowels` matched 73% of the bank, which
+  // made it a surviving decoy on nearly every puzzle and permanently ate a
+  // decoy slot. A rule matching most of the bank isn't a rule, it's a
+  // background condition.
+  it('has no rule matching more than half the word bank', () => {
+    const bank = buildWordBank()
+    for (const rule of RULES) {
+      const share = bank.filter((w) => rule.evaluate(w)).length / bank.length
+      expect(share, `rule "${rule.id}" matches ${(share * 100).toFixed(0)}% of the bank`).toBeLessThan(0.5)
     }
   })
 })
@@ -57,9 +84,12 @@ describe.each([
   ['contains-k', ['kitten', 'quick', 'pickle'], ['word', 'plan', 'cat']],
   ['contains-g', ['missing', 'agenda', 'gang'], ['word', 'plan', 'cat']],
   ['contains-b', ['bubble', 'rabbit', 'butter'], ['word', 'plan', 'cat']],
+  ['contains-j', ['jump', 'major', 'enjoy'], ['word', 'plan', 'cat']],
+  ['contains-x', ['box', 'expect', 'mixed'], ['word', 'plan', 'cat']],
+  ['contains-z', ['dizzy', 'zone', 'crazy'], ['word', 'plan', 'cat']],
   ['starts-with-vowel', ['apple', 'otter', 'umbrella'], ['cat', 'dog', 'plan']],
   ['exactly-two-vowels', ['apple', 'hello'], ['dog', 'beautiful']],
-  ['no-adjacent-vowels', ['cat', 'plan', 'dog'], ['quiet', 'bead', 'ocean']],
+  ['adjacent-vowels', ['quiet', 'bead', 'ocean'], ['cat', 'plan', 'dog']],
   ['hidden-number', ['money', 'honest', 'network', 'canine', 'often'], ['cat', 'plan', 'bubble']],
   ['hidden-one', ['money', 'honest', 'stone'], ['cat', 'plan', 'bubble']],
   ['hidden-ten', ['kitten', 'tent', 'often'], ['cat', 'plan', 'bubble']],
@@ -95,6 +125,21 @@ describe('contains-letter coverage floor', () => {
   it.each(CONTAINS_LETTER_TARGETS)('letter "%s" still has at least 15 matching words', (letter) => {
     const count = bank.filter((w) => w.spelling.includes(letter)).length
     expect(count).toBeGreaterThanOrEqual(15)
+  })
+})
+
+// Regression guard: category tags were reviewed one category at a time, so
+// `category:bird` was not a subset of `category:animal` — 21 of 22 birds were
+// not tagged as animals, making "Is an Animal" puzzles mark eagles as OUT.
+describe('category hierarchy', () => {
+  const bank = buildWordBank()
+
+  it('every bird is also an animal', () => {
+    const birds = bank.filter((w) => w.tags.includes('category:bird'))
+    expect(birds.length).toBeGreaterThan(0)
+    for (const bird of birds) {
+      expect(bird.tags, `"${bird.spelling}" is a bird but not an animal`).toContain('category:animal')
+    }
   })
 })
 

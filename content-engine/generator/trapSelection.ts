@@ -2,7 +2,7 @@ import type { Rule } from '../rules/types'
 import type { Word } from '../words/types'
 import { trapAllocation } from './difficulty'
 import { mustFind } from './lookup'
-import { pickWeighted } from './random'
+import { pickWeighted, shuffle } from './random'
 import type { DecoyResult, GuestEntry, KnobValues } from './types'
 
 /**
@@ -22,6 +22,14 @@ export function selectGuestPool(
 ): GuestEntry[] {
   const { decoyTraps: decoyTrapTarget, tButLooksWrong: tBadTarget } = trapAllocation(knobs)
   const rankedDecoys = liveDecoys.slice().sort((a, b) => b.subtlety - a.subtlety)
+
+  // How many of the pool should be IN, drawn fresh per puzzle. The old
+  // heuristic (`inCount <= poolSize / 2`) was fully deterministic and always
+  // produced exactly 4 IN / 2 OUT — which, combined with an unshuffled pool,
+  // let a player win by rote ("the last two are OUT") without reasoning about
+  // the rule at all. See the approved plan's Phase 1.
+  const half = Math.floor(knobs.poolSize / 2)
+  const targetIn = half + (Math.random() < 0.5 ? 0 : 1)
 
   const used = new Set(excludeIds)
   const guests: GuestEntry[] = []
@@ -63,11 +71,10 @@ export function selectGuestPool(
     used.add(pick.id)
   }
 
-  // Pass 3: clean padding, biased toward whichever side is currently under-represented
-  // (a soft heuristic only — see the approved plan's note on pool balance).
+  // Pass 3: clean padding, filling toward this puzzle's targetIn.
   while (guests.length < knobs.poolSize) {
     const inCount = guests.filter((g) => g.trueLabel === 'IN').length
-    const wantIn = inCount <= knobs.poolSize / 2
+    const wantIn = inCount < targetIn
 
     let pick = bestCandidate((w) => trueRule.evaluate(w) === wantIn)
     let label: 'IN' | 'OUT' = wantIn ? 'IN' : 'OUT'
@@ -81,5 +88,9 @@ export function selectGuestPool(
     used.add(pick.id)
   }
 
-  return guests
+  // Shuffle before assigning final display order. Generation order is
+  // structured (decoy traps -> t-but-looks-wrong -> padding), and the pool is
+  // served to the player in stored order, so without this the trap positions
+  // and the IN/OUT run are both predictable from position alone.
+  return shuffle(guests).map((guest, index) => ({ ...guest, displayOrder: index }))
 }

@@ -1,4 +1,5 @@
 import { BULK_SEED_WORDS } from './bulkSeedWords'
+import { withParentCategories } from './categoryHierarchy'
 import { buildLetterFeatures } from './features'
 import { SEED_WORDS } from './seedWords'
 import { TAG_OVERRIDES } from './tagOverrides'
@@ -19,7 +20,12 @@ export function buildWordBank(): Word[] {
     features: buildLetterFeatures(seed.spelling),
     frequencyScore: seed.frequencyScore,
     partOfSpeech: seed.partOfSpeech,
-    tags: [...new Set([...(seed.tags ?? []), ...(TAG_OVERRIDES[seed.spelling] ?? [])])],
+    // Parent categories are applied here rather than being hand-written into
+    // the tag files, so "every bird is an animal" holds by construction and
+    // survives re-tagging — see categoryHierarchy.ts.
+    tags: withParentCategories([
+      ...new Set([...(seed.tags ?? []), ...(TAG_OVERRIDES[seed.spelling] ?? [])]),
+    ]),
     safety: { blocked: false, needsReview: false },
   }))
 

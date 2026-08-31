@@ -12,6 +12,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names an animal.',
     family: 'semantic-knowledge',
     subtlety: 2,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:animal'),
   },
   {
@@ -20,6 +21,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a fruit.',
     family: 'semantic-knowledge',
     subtlety: 2,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:fruit'),
   },
   {
@@ -28,6 +30,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a vehicle.',
     family: 'semantic-knowledge',
     subtlety: 2,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:vehicle'),
   },
   {
@@ -36,6 +39,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a building.',
     family: 'semantic-knowledge',
     subtlety: 2,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:building'),
   },
   {
@@ -44,6 +48,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a bird.',
     family: 'semantic-knowledge',
     subtlety: 3,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:bird'),
   },
   {
@@ -52,6 +57,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a tool.',
     family: 'semantic-knowledge',
     subtlety: 3,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:tool'),
   },
   {
@@ -60,6 +66,7 @@ export const SEMANTIC_RULES: Rule[] = [
     descriptionTemplate: 'The word names a body part.',
     family: 'semantic-knowledge',
     subtlety: 3,
+    aha: 4,
     evaluate: (word) => word.tags.includes('category:body-part'),
   },
 ]

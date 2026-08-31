@@ -20,7 +20,7 @@ function containsQInput(): RepairWordInput {
     ],
     guests: [
       { wordId: 'mosque', trueLabel: 'IN', displayOrder: 0, isTrap: false, trapType: null },
-      { wordId: 'dog', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
+      { wordId: 'ocean', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
     ],
   }
 }
@@ -36,7 +36,7 @@ describe('repairWord', () => {
     expect(newGuest.trueLabel).toBe('IN')
     expect(newGuest.wordId.includes('q')).toBe(true)
     // The untouched guest is unchanged.
-    expect(result.candidate.guests.find((g) => g.displayOrder === 1)!.wordId).toBe('dog')
+    expect(result.candidate.guests.find((g) => g.displayOrder === 1)!.wordId).toBe('ocean')
   })
 
   it('swaps a flagged clue word, preserving its label and displayOrder', () => {
@@ -55,7 +55,7 @@ describe('repairWord', () => {
       ...containsQInput(),
       guests: [
         { wordId: 'mosque', trueLabel: 'IN', displayOrder: 0, isTrap: true, trapType: 'decoy' },
-        { wordId: 'dog', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
+        { wordId: 'ocean', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
       ],
     }
     const result = repairWord(input, 'mosque', RULES, wordBank)
@@ -75,7 +75,7 @@ describe('repairWord', () => {
       makeWord('cat'),
       makeWord('plan'),
       makeWord('mosque'),
-      makeWord('dog'),
+      makeWord('ocean'),
       // no spare IN (contains-q) word available as a replacement for "mosque"
     ]
 

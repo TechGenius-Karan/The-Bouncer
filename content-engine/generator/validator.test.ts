@@ -89,7 +89,7 @@ describe('validateAndRepair', () => {
       ],
       guests: [
         { wordId: 'mosque', trueLabel: 'IN', displayOrder: 0, isTrap: false, trapType: null },
-        { wordId: 'dog', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
+        { wordId: 'ocean', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
       ],
       liveDecoys: [],
     }
@@ -97,6 +97,6 @@ describe('validateAndRepair', () => {
     const result = validateAndRepair(candidate, RULES, ruleIndex, wordBank)
 
     expect(result.status).toBe('valid')
-    expect(candidate.guests.map((g) => g.wordId)).toEqual(['mosque', 'dog'])
+    expect(candidate.guests.map((g) => g.wordId)).toEqual(['mosque', 'ocean'])
   })
 })
