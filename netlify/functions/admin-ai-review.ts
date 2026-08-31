@@ -65,7 +65,9 @@ export default async (req: Request): Promise<Response> => {
   const usedIds = new Set([...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)])
   const available = wordBank.filter((w) => !w.safety.blocked && !usedIds.has(w.id))
   const inWordMenu = rule
-    ? shuffle(available.filter((w) => rule.evaluate(w))).slice(0, IN_MENU_SIZE).map((w) => w.spelling)
+    ? shuffle(available.filter((w) => rule.evaluate(w)))
+        .slice(0, IN_MENU_SIZE)
+        .map((w) => ({ word: w.spelling, ...(rule.variantOf?.(w) ? { variant: rule.variantOf(w)! } : {}) }))
     : []
   const outWordMenu = rule
     ? shuffle(available.filter((w) => !rule.evaluate(w))).slice(0, OUT_MENU_SIZE).map((w) => w.spelling)

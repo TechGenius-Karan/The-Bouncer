@@ -30,7 +30,11 @@ async function main() {
     const rule = RULES.find((r) => r.id === doc.ruleId)
     const usedIds = new Set([...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)])
     const available = wordBank.filter((w) => !w.safety.blocked && !usedIds.has(w.id))
-    const inWordMenu = rule ? shuffle(available.filter((w) => rule.evaluate(w))).slice(0, 100).map((w) => w.spelling) : []
+    const inWordMenu = rule
+      ? shuffle(available.filter((w) => rule.evaluate(w)))
+          .slice(0, 100)
+          .map((w) => ({ word: w.spelling, ...(rule.variantOf?.(w) ? { variant: rule.variantOf(w)! } : {}) }))
+      : []
     const outWordMenu = rule ? shuffle(available.filter((w) => !rule.evaluate(w))).slice(0, 40).map((w) => w.spelling) : []
 
     console.log(`\n=== ${detail.ruleName} (${detail.difficultyTier}) — puzzle ${detail.puzzleId} ===`)

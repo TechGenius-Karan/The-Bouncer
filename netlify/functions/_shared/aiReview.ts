@@ -45,11 +45,17 @@ const RESPONSE_SCHEMA = {
   required: ['action', 'rationale'],
 }
 
+/** A menu word plus, where the rule has variants, why it matches ("listening" -> "ten"). */
+export interface MenuWord {
+  word: string
+  variant?: string
+}
+
 export interface AiReviewInput {
   puzzle: AdminPuzzleDetail
   reason: string
-  /** rewrite-puzzle menu: real bank words that satisfy the rule (spellings only). The AI may only author IN clues/guests from this list. */
-  inWordMenu: string[]
+  /** rewrite-puzzle menu: real bank words that satisfy the rule. The AI may only author IN clues/guests from this list. */
+  inWordMenu: MenuWord[]
   /** rewrite-puzzle menu: real bank words that do NOT satisfy the rule. */
   outWordMenu: string[]
   /** §5's few-shot library — recent (reason -> action -> outcome) examples, formatted as prose. Optional; omitted until aiReviews has real history to draw from. */
@@ -72,6 +78,23 @@ function buildPrompt({ puzzle, reason, inWordMenu, outWordMenu, fewShotExamples 
       ? puzzle.liveDecoys.map((d) => `  - ${d.ruleName} (subtlety ${d.subtlety})`).join('\n')
       : '  (none)'
   const { clueCountIn, clueCountOut, poolSize } = puzzle.knobValues
+
+  // Annotate each IN word with *why* it matches. Without this the model was
+  // handed a bare list like "listening, ninety, everyone" and asked to honor
+  // "vary which number is hidden" — it had no way to know which number each
+  // word hid, so it couldn't act on the feedback however well it understood it.
+  const hasVariants = inWordMenu.some((m) => m.variant)
+  const inMenuText = inWordMenu
+    .map((m) => (m.variant ? `${m.word} (${m.variant})` : m.word))
+    .join(', ')
+  const variantCounts = new Map<string, number>()
+  for (const m of inWordMenu) {
+    if (m.variant) variantCounts.set(m.variant, (variantCounts.get(m.variant) ?? 0) + 1)
+  }
+  const variantSummary = [...variantCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([v, n]) => `${v} (${n} words)`)
+    .join(', ')
 
   return `You are reviewing a rejected puzzle from "The Bouncer," a daily word-sorting game. Players see
 IN/OUT clue words for a hidden rule, then sort a pool of guest words against that same rule with
@@ -102,9 +125,14 @@ Author a brand-new set of words that directly addresses the reviewer's feedback,
 the menus below (do not invent words — words not in these menus will be rejected).
 - clues: EXACTLY ${clueCountIn} words labeled "IN" and EXACTLY ${clueCountOut} labeled "OUT".
 - guests: EXACTLY ${poolSize} words, a genuine mix of IN and OUT (never all one side).
-- IN words (satisfy the rule — use for IN clues/guests): ${inWordMenu.join(', ')}
+- IN words (satisfy the rule — use for IN clues/guests)${hasVariants ? ', each shown with WHY it matches in brackets' : ''}: ${inMenuText}
 - OUT words (do NOT satisfy the rule — use for OUT clues/guests): ${outWordMenu.join(', ')}
 - No word may appear more than once across clues and guests.
+- Write ONLY the word itself in your answer, never the bracketed reason.${
+    hasVariants
+      ? `\n- This rule matches for several different reasons — available: ${variantSummary}. Unless the reviewer asked for something else, spread the IN clues across DIFFERENT reasons rather than picking several words that match for the same one.`
+      : ''
+  }
 
 Respond with the action and one short sentence of rationale (plus clues/guests only for rewrite-puzzle).`
 }
