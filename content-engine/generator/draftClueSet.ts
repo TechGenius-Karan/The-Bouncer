@@ -8,9 +8,53 @@ import type { ClueEntry, KnobValues } from './types'
 const CLUE_FREQUENCY_FLOOR = 0.6
 
 function pickClueWords(pool: Word[], count: number): Word[] {
-  const preferred = pool.filter((w) => w.frequencyScore >= CLUE_FREQUENCY_FLOOR)
-  const source = preferred.length >= count ? preferred : pool
+  // Proper nouns stay usable in the guest pool but are kept out of clues:
+  // clues are the evidence the whole inference rests on, and a name like
+  // "margaret" reads as an odd, arbitrary example rather than a fair one.
+  const preferred = pool.filter((w) => w.frequencyScore >= CLUE_FREQUENCY_FLOOR && !w.properNoun)
+  const fallback = pool.filter((w) => !w.properNoun)
+  const source = preferred.length >= count ? preferred : fallback.length >= count ? fallback : pool
   return shuffle(source).slice(0, count)
+}
+
+/**
+ * Picks IN clues that don't all match the rule for the same reason.
+ *
+ * Without this, a "hides a number" clue set could be `done, telephone, money`
+ * — all three hiding "one" — which teaches the player the wrong, narrower
+ * rule and makes the pool feel arbitrary when it turns out "ten" counts too.
+ * (That exact puzzle shipped; it's what prompted this.) Round-robins across
+ * the distinct `variantOf` values so the clue set demonstrates the rule's
+ * actual breadth. Rules with no `variantOf` match for one uniform reason and
+ * fall straight through to the plain random pick.
+ */
+function pickDiverseClueWords(rule: Rule, pool: Word[], count: number): Word[] {
+  if (!rule.variantOf) return pickClueWords(pool, count)
+
+  const byVariant = new Map<string, Word[]>()
+  for (const word of pool) {
+    const variant = rule.variantOf(word)
+    if (variant === null) continue
+    const bucket = byVariant.get(variant)
+    if (bucket) bucket.push(word)
+    else byVariant.set(variant, [word])
+  }
+  // One variant available (or none resolvable) — diversity isn't achievable.
+  if (byVariant.size < 2) return pickClueWords(pool, count)
+
+  const buckets = shuffle([...byVariant.values()].map((words) => shuffle(words)))
+  const picked: Word[] = []
+  for (let round = 0; picked.length < count; round++) {
+    let progressed = false
+    for (const bucket of buckets) {
+      if (picked.length >= count) break
+      if (round >= bucket.length) continue
+      picked.push(bucket[round])
+      progressed = true
+    }
+    if (!progressed) break // every bucket exhausted
+  }
+  return picked.length === count ? picked : pickClueWords(pool, count)
 }
 
 /**
@@ -31,7 +75,9 @@ export function draftClueSet(
     throw new Error(`Not enough words in the bank to draft a clue set for rule "${rule.id}"`)
   }
 
-  const inWords = pickClueWords(inCandidates, knobs.clueCountIn)
+  // Only the IN side gets variant-spread: OUT words fail the rule and have no
+  // variant to be diverse across.
+  const inWords = pickDiverseClueWords(rule, inCandidates, knobs.clueCountIn)
   const outWords = pickClueWords(outCandidates, knobs.clueCountOut)
 
   let order = 0

@@ -3,7 +3,7 @@
 // re-run `npm run content:build-rule-params` after changing the bank.
 
 export const RULE_PARAMS = {
-  hiddenWords: ["one","ten","ear","rat","ant","red"],
+  hiddenWords: ["one","ten","ear","ant","red"],
   hiddenGroups: ["number","body part","animal","color"],
   startsWith: ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","r","s","t","u","v","w","ch","sh","th","st","pr","tr","br","cl","fl"],
   endsWith: ["a","b","c","d","e","g","h","k","l","m","n","o","p","r","s","t","w","y","ed","er","ly","ng","ion","ing","ous","ent","ment","tion"],

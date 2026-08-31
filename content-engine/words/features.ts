@@ -19,6 +19,18 @@ export function isSubsequence(letters: string, word: string): boolean {
   return false
 }
 
+// A word doesn't "hide" a target when it simply is that target ("green" for
+// hides-a-colour), nor when it's just the target inflected ("cats" for "cat") —
+// both read as a giveaway rather than a discovery. Only genuine coincidental
+// containment ("credit" hiding "red") makes the rule fun.
+const TRIVIAL_SUFFIXES = ['s', 'es', 'ed', 'ing', 'er', 'y', 'ly', 'less', 'ful']
+
+export function isHiddenIn(spelling: string, target: string): boolean {
+  if (!spelling.includes(target)) return false
+  if (spelling === target) return false
+  return !TRIVIAL_SUFFIXES.some((suffix) => spelling === target + suffix)
+}
+
 export function buildLetterFeatures(spelling: string): LetterFeatures {
   const chars = spelling.split('')
   const length = chars.length
@@ -65,7 +77,7 @@ export function buildLetterFeatures(spelling: string): LetterFeatures {
     startsWithVowel: VOWELS.has(firstLetter),
     isPrimeLength: isPrime(length),
     firstBeforeLastAlpha: firstLetter < lastLetter,
-    hiddenWordHits: HIDDEN_WORD_TARGETS.filter((target) => spelling.includes(target)),
+    hiddenWordHits: HIDDEN_WORD_TARGETS.filter((target) => isHiddenIn(spelling, target)),
     subsequenceHits: SUBSEQUENCE_TARGETS.filter((target) => isSubsequence(target, spelling)),
     anagramSignature: chars.slice().sort().join(''),
     isPalindrome: spelling === chars.slice().reverse().join(''),
