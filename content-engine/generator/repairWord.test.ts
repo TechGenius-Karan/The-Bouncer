@@ -58,7 +58,12 @@ describe('repairWord', () => {
         { wordId: 'ocean', trueLabel: 'OUT', displayOrder: 1, isTrap: false, trapType: null },
       ],
     }
-    const result = repairWord(input, 'mosque', RULES, wordBank)
+    // Deliberately a narrow rule set: this asserts repairWord's own handling of
+    // the trap role, and the full taxonomy would let validateAndRepair
+    // legitimately re-flag the replacement as a trap for an unrelated
+    // collision, which is a different behaviour from the one under test.
+    const isolated = RULES.filter((r) => ['contains-q', 'palindrome'].includes(r.id))
+    const result = repairWord(input, 'mosque', isolated, wordBank)
 
     expect(result.repaired).toBe(true)
     if (!result.repaired) return

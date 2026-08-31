@@ -10,6 +10,13 @@ export interface Rule {
   /** Plain-text reveal shown to the player once a round ends (planning.md §3.5). */
   descriptionTemplate: string
   family: RuleFamily
+  /**
+   * Which template produced this rule ("hidden-word", "starts-with"), for
+   * rules built from a parameter list. Lets scheduling space out a whole
+   * family, not just an individual rule — three "hides an animal" puzzles in
+   * a week feel repetitive even though the rule ids differ.
+   */
+  templateId?: string
   /** How hard the rule is to *spot*. Drives which difficulty tier may draw it. */
   subtlety: Subtlety
   /**

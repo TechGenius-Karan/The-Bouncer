@@ -19,6 +19,7 @@ function wordFor(spelling: string): Word {
     features: buildLetterFeatures(spelling),
     frequencyScore: 0.5,
     partOfSpeech: 'other',
+    properNoun: false,
     tags: [],
     safety: { blocked: false, needsReview: false },
   }
@@ -35,10 +36,13 @@ describe('registry sanity', () => {
   // content is covered by lexicalRules's own describe.each below and by
   // semanticRules.test.ts; this just guards against cross-family id
   // collisions and other registry-level regressions.
-  it('has exactly 32 rules with unique ids and valid subtlety/aha ratings', () => {
-    expect(RULES).toHaveLength(32)
+  // No exact count: most of the taxonomy is now generated from
+  // coverage-checked parameters (rules/ruleParams.ts), so the total moves with
+  // the word bank by design. A floor still catches an accidental collapse.
+  it('has a healthy number of rules with unique ids and valid subtlety/aha ratings', () => {
+    expect(RULES.length).toBeGreaterThanOrEqual(60)
     const ids = new Set(RULES.map((r) => r.id))
-    expect(ids.size).toBe(32)
+    expect(ids.size, 'duplicate rule ids').toBe(RULES.length)
     for (const rule of RULES) {
       expect(rule.subtlety).toBeGreaterThanOrEqual(1)
       expect(rule.subtlety).toBeLessThanOrEqual(5)
@@ -90,9 +94,6 @@ describe.each([
   ['starts-with-vowel', ['apple', 'otter', 'umbrella'], ['cat', 'dog', 'plan']],
   ['exactly-two-vowels', ['apple', 'hello'], ['dog', 'beautiful']],
   ['adjacent-vowels', ['quiet', 'bead', 'ocean'], ['cat', 'plan', 'dog']],
-  ['hidden-number', ['money', 'honest', 'network', 'canine', 'often'], ['cat', 'plan', 'bubble']],
-  ['hidden-one', ['money', 'honest', 'stone'], ['cat', 'plan', 'bubble']],
-  ['hidden-ten', ['kitten', 'tent', 'often'], ['cat', 'plan', 'bubble']],
   ['third-letter-vowel', ['piano', 'poetic', 'react'], ['cabin', 'table', 'basket']],
   [
     'subsequence-ace',
@@ -140,15 +141,6 @@ describe('category hierarchy', () => {
     for (const bird of birds) {
       expect(bird.tags, `"${bird.spelling}" is a bird but not an animal`).toContain('category:animal')
     }
-  })
-})
-
-describe('hidden-word-target coverage floor', () => {
-  const bank = buildWordBank()
-
-  it.each(['one', 'ten'])('target "%s" still has at least 15 matching words', (target) => {
-    const count = bank.filter((w) => w.spelling.includes(target)).length
-    expect(count).toBeGreaterThanOrEqual(15)
   })
 })
 

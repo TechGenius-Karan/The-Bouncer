@@ -101,38 +101,6 @@ export const LEXICAL_RULES: Rule[] = [
     evaluate: (word) => !word.features.noAdjacentVowels,
   },
   {
-    id: 'hidden-number',
-    name: 'Hidden Number',
-    descriptionTemplate: 'The word hides a number word inside it.',
-    family: 'lexical-structural',
-    subtlety: 4,
-    aha: 5,
-    // hiddenWordHits only ever contains members of HIDDEN_WORD_TARGETS (currently
-    // all numbers), so this is equivalent to `.length > 0` today — written this
-    // way so a future hidden-color/hidden-body-part rule can share the same
-    // precomputed field against a different target list without recomputing it.
-    evaluate: (word) => word.features.hiddenWordHits.length > 0,
-    variantOf: (word) => word.features.hiddenWordHits[0] ?? null,
-  },
-  {
-    id: 'hidden-one',
-    name: 'Hidden "One"',
-    descriptionTemplate: 'The word hides the number word "one" inside it.',
-    family: 'lexical-structural',
-    subtlety: 4,
-    aha: 5,
-    evaluate: (word) => word.features.hiddenWordHits.includes('one'),
-  },
-  {
-    id: 'hidden-ten',
-    name: 'Hidden "Ten"',
-    descriptionTemplate: 'The word hides the number word "ten" inside it.',
-    family: 'lexical-structural',
-    subtlety: 4,
-    aha: 5,
-    evaluate: (word) => word.features.hiddenWordHits.includes('ten'),
-  },
-  {
     id: 'third-letter-vowel',
     name: 'Third Letter is a Vowel',
     descriptionTemplate: "The word's third letter is a vowel.",
