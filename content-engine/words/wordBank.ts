@@ -20,6 +20,7 @@ export function buildWordBank(): Word[] {
     features: buildLetterFeatures(seed.spelling),
     frequencyScore: seed.frequencyScore,
     partOfSpeech: seed.partOfSpeech,
+    properNoun: seed.properNoun ?? false,
     // Parent categories are applied here rather than being hand-written into
     // the tag files, so "every bird is an animal" holds by construction and
     // survives re-tagging — see categoryHierarchy.ts.

@@ -10,6 +10,7 @@ export function makeWord(spelling: string, frequencyScore = 0.9, partOfSpeech: P
     features: buildLetterFeatures(spelling),
     frequencyScore,
     partOfSpeech,
+    properNoun: false,
     tags: [],
     safety: { blocked: false, needsReview: false },
   }

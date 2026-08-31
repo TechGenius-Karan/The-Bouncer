@@ -15,6 +15,7 @@ function wordFor(spelling: string): Word {
     features: buildLetterFeatures(spelling),
     frequencyScore: 0.5,
     partOfSpeech: 'other',
+    properNoun: false,
     tags: [],
     safety: { blocked: false, needsReview: false },
   }

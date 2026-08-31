@@ -72,6 +72,14 @@ interface WordnetRecord {
   ptrs: WordnetPtr[]
 }
 
+export interface WordnetProfile {
+  /** WordNet has at least one entry for this spelling. False for corpus junk like "didn"/"isn". */
+  known: boolean
+  partOfSpeech: PartOfSpeech
+  /** Every WordNet sense lists this spelling capitalized (e.g. "Margaret", "Paris"). */
+  properNoun: boolean
+}
+
 type WordNetInstance = InstanceType<typeof WordNet>
 
 // Sharing one instance avoids re-reading WordNet's index files from disk on
@@ -245,14 +253,31 @@ const WORDNET_POS_MAP: Record<string, PartOfSpeech> = {
  * pulled from a frequency corpus that carries no part-of-speech data.
  */
 export async function fetchWordnetPartOfSpeech(word: string): Promise<PartOfSpeech> {
+  return (await fetchWordnetProfile(word)).partOfSpeech
+}
+
+/**
+ * One WordNet lookup answering the three things bulk word-bank building
+ * needs: does the word exist at all, what is it, and is it a proper noun.
+ *
+ * `known` matters because `partOfSpeech` alone can't distinguish "WordNet
+ * has no entry" from "WordNet has entries this map doesn't cover" — both
+ * previously returned 'other'. The SUBTLEXus subtitle corpus is full of
+ * apostrophe-split fragments (`didn`, `doesn`, `isn`, `couldn`, `ain`) that
+ * pass every mechanical filter (alphabetic, not a stopword, not profane) and
+ * were landing in real puzzles at maximum frequency. WordNet doesn't know
+ * them, so `known` is the filter that removes them.
+ */
+export async function fetchWordnetProfile(word: string): Promise<WordnetProfile> {
   const wn = getWordNet()
   let records: WordnetRecord[]
   try {
     records = await lookupWord(wn, word)
   } catch (err) {
     console.warn(`WordNet lookup for "${word}" failed:`, err)
-    return 'other'
+    return { known: false, partOfSpeech: 'other', properNoun: false }
   }
+  if (records.length === 0) return { known: false, partOfSpeech: 'other', properNoun: false }
 
   const counts = new Map<PartOfSpeech, number>()
   for (const record of records) {
@@ -269,7 +294,13 @@ export async function fetchWordnetPartOfSpeech(word: string): Promise<PartOfSpee
       bestCount = count
     }
   }
-  return best
+
+  // WordNet stores proper nouns capitalized. If every synset listing this
+  // spelling lists it with a capital, the word only exists as a name.
+  const lemmas = records.flatMap((r) => r.synonyms).filter((s) => s.toLowerCase() === word)
+  const properNoun = lemmas.length > 0 && lemmas.every((s) => s[0] === s[0].toUpperCase())
+
+  return { known: true, partOfSpeech: best, properNoun }
 }
 
 // natural's WordNet API is callback-based; promisify the two calls used above.

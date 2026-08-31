@@ -35,6 +35,8 @@ export interface Word {
   features: LetterFeatures
   frequencyScore: number
   partOfSpeech: PartOfSpeech
+  /** Exists in WordNet only as a name ("margaret", "paris"). Usable in pools, avoided for clues. */
+  properNoun: boolean
   tags: string[]
   safety: { blocked: boolean; needsReview: boolean }
 }
@@ -43,6 +45,8 @@ export interface SeedWord {
   spelling: string
   frequencyScore: number
   partOfSpeech: PartOfSpeech
+  /** Set by expandWordBank for corpus-sourced words; hand-curated seed words are never names. */
+  properNoun?: boolean
   /** Human-reviewed semantic tags (build-plan.md Phase 10.5 §2, Step 4) — e.g. "category:animal". */
   tags?: string[]
 }
