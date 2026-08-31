@@ -46,7 +46,7 @@ async function main() {
   )
 
   console.log(`Upserting ${ruleDocs.length} rules...`)
-  // $set (not replaceOne) — a rule can carry a live disabled/subtletyOverride
+  // $set (not replaceOne) — a rule can carry a live subtletyOverride
   // toggle (ai-feedback-plan.md) that this script must never wipe out on a
   // routine re-seed after the taxonomy changes; only the code-defined fields
   // below are touched.

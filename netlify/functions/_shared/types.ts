@@ -23,8 +23,6 @@ export interface RuleDoc {
   descriptionTemplate: string
   family: string
   subtlety: number
-  /** Live override (ai-feedback-plan.md) — excludes the rule from generation without a code deploy. Reinstate by clearing it. */
-  disabled?: boolean
   /** Live override — replaces `subtlety` for generation-eligibility purposes only; the rule's code-defined evaluate() logic never changes. */
   subtletyOverride?: number
 }
@@ -98,7 +96,7 @@ export interface ResultDoc {
   completedAt: Date | null
 }
 
-export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
+export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
 
 /** ai-feedback-plan.md §7.1 — audit trail for every AI-assisted reject review, and the source material for §5's few-shot library growth. */
 export interface AiReviewDoc {

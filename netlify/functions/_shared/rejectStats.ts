@@ -11,7 +11,6 @@ import { getCollections } from './db'
 // carries both `ruleId` and `createdAt`, so there's nothing to add.
 
 const LOOKBACK_DAYS = 30
-export const REJECT_FLAG_THRESHOLD = 3
 
 /** Recent (last LOOKBACK_DAYS) reject count per rule id — feeds generator soft-avoidance. */
 export async function resolveRejectCounts(now: Date = new Date()): Promise<Map<string, number>> {
@@ -24,42 +23,4 @@ export async function resolveRejectCounts(now: Date = new Date()): Promise<Map<s
     ])
     .toArray()
   return new Map(rows.map((r) => [r._id, r.count]))
-}
-
-export interface RuleRejectStat {
-  ruleId: string
-  ruleName: string
-  rejectCount: number
-  /** rejectCount has crossed REJECT_FLAG_THRESHOLD — surfaced for a human to review the template itself. */
-  flagged: boolean
-  disabled: boolean
-  subtletyOverride: number | null
-  baseSubtlety: number
-}
-
-/**
- * Lists every rule in the taxonomy (ai-feedback-plan.md §11 phase 1 widened
- * this from "only rules with a recent reject" — a reviewer needs to be able
- * to retire/recalibrate any rule directly, not just ones that already hit
- * the reject threshold), joined with reject counts and current override
- * state, for the admin dashboard.
- */
-export async function resolveRuleRejectStats(now: Date = new Date()): Promise<RuleRejectStat[]> {
-  const [counts, { rules }] = await Promise.all([resolveRejectCounts(now), getCollections()])
-  const ruleDocs = await rules.find({}).toArray()
-
-  return ruleDocs
-    .map((doc) => {
-      const rejectCount = counts.get(doc._id) ?? 0
-      return {
-        ruleId: doc._id,
-        ruleName: doc.name,
-        rejectCount,
-        flagged: rejectCount >= REJECT_FLAG_THRESHOLD,
-        disabled: doc.disabled ?? false,
-        subtletyOverride: doc.subtletyOverride ?? null,
-        baseSubtlety: doc.subtlety,
-      }
-    })
-    .sort((a, b) => b.rejectCount - a.rejectCount || a.ruleId.localeCompare(b.ruleId))
 }

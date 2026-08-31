@@ -34,7 +34,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     action: {
       type: Type.STRING,
-      enum: ['swap-word', 'rewrite-puzzle', 'adjust-difficulty', 'retire-rule', 'agree-reject'],
+      enum: ['swap-word', 'rewrite-puzzle', 'adjust-difficulty', 'agree-reject'],
     },
     rationale: { type: Type.STRING, description: 'One short sentence explaining the choice.' },
     badWordId: { type: Type.STRING, description: 'Only for swap-word: the id of the one bad word.' },
@@ -95,7 +95,6 @@ Decide exactly ONE action:
 - swap-word: only ONE specific word is the problem (a proper name, something ambiguous or awkward) — the rule/concept itself is fine. Set badWordId to that word's id from the lists above.
 - rewrite-puzzle: the rule is fine but the WORD CHOICES need to change to address the reviewer's feedback (e.g. more variety, better/harder examples). YOU pick the replacement words — see the rewrite instructions below. Prefer this over agree-reject whenever the feedback is about which words appear.
 - adjust-difficulty: the rule itself is sound but miscalibrated (too easy to guess by elimination, or surprisingly hard for its tier). Set newSubtlety to a better 1-5 rating.
-- retire-rule: the rule fundamentally doesn't work — ambiguous by nature, boring, or the reasoning makes clear no recalibration fixes it.
 - agree-reject: the reviewer gave no usable reasoning, or nothing here is worth fixing.
 
 REWRITE-PUZZLE INSTRUCTIONS (only if you choose that action):

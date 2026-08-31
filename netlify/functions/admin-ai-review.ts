@@ -91,11 +91,10 @@ export default async (req: Request): Promise<Response> => {
     wordBank
   )
 
-  // Apply any taxonomy-level override first (retire / recalibrate) — this is
-  // independent of what happens to the puzzle instance itself.
+  // Apply any taxonomy-level recalibration first — independent of what
+  // happens to the puzzle instance itself.
   if (plan.ruleOverride) {
     await writeRuleOverride(plan.ruleOverride.ruleId, {
-      disabled: plan.ruleOverride.disabled,
       subtletyOverride: plan.ruleOverride.subtletyOverride,
     })
   }

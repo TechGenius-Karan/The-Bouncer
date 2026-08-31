@@ -5,12 +5,9 @@ import {
   approve,
   clearStoredCode,
   getBufferHealth,
-  getRuleRejectStats,
   listPending,
   loadStoredCode,
   login,
-  reject,
-  setRuleOverride,
   storeCode,
 } from './adminClient'
 import { BatchStats } from './BatchStats'
@@ -18,13 +15,7 @@ import { BufferHealthPanel } from './BufferHealthPanel'
 import { GenerateBatchPanel } from './GenerateBatchPanel'
 import { LivePuzzleStats } from './LivePuzzleStats'
 import { PuzzleReviewCard } from './PuzzleReviewCard'
-import { RuleRejectStatsPanel } from './RuleRejectStatsPanel'
-import type {
-  AdminAiReviewResponse,
-  AdminBufferHealthResponse,
-  AdminPuzzleDetail,
-  AdminRuleRejectStat,
-} from './types'
+import type { AdminAiReviewResponse, AdminBufferHealthResponse, AdminPuzzleDetail } from './types'
 // Dark mode is shelved for now — commented out, not removed, so it's a
 // quick re-enable later (see src/theme.ts).
 // import { getTheme, toggleTheme } from '../theme'
@@ -45,8 +36,6 @@ function aiBannerHeadline(result: AdminAiReviewResponse): string {
         : 'AI tried to rewrite the puzzle but its version did not validate, so this puzzle was rejected.'
     case 'adjust-difficulty':
       return 'AI recalibrated the rule’s difficulty and rejected this puzzle.'
-    case 'retire-rule':
-      return 'AI retired the rule and rejected this puzzle.'
     case 'agree-reject':
       return 'AI agreed there was nothing to salvage and rejected this puzzle.'
   }
@@ -59,7 +48,6 @@ export function AdminApp() {
   const [error, setError] = useState<string | null>(null)
   const [puzzles, setPuzzles] = useState<AdminPuzzleDetail[]>([])
   const [bufferHealth, setBufferHealth] = useState<AdminBufferHealthResponse | null>(null)
-  const [ruleRejectStats, setRuleRejectStats] = useState<AdminRuleRejectStat[]>([])
   const [aiBanner, setAiBanner] = useState<AdminAiReviewResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
@@ -67,14 +55,12 @@ export function AdminApp() {
   const loadQueue = async (activeCode: string) => {
     setStatus('loading')
     try {
-      const [pending, health, rejectStats] = await Promise.all([
+      const [pending, health] = await Promise.all([
         listPending(activeCode),
         getBufferHealth(activeCode),
-        getRuleRejectStats(activeCode),
       ])
       setPuzzles(pending.puzzles)
       setBufferHealth(health)
-      setRuleRejectStats(rejectStats.rules)
       setStatus('ready')
     } catch (err) {
       setError(errorMessage(err))
@@ -118,25 +104,6 @@ export function AdminApp() {
     // (swapped/rewritten) or rejected, so reload rather than hand-patch state.
     const result = await aiReview(code, puzzleId, reason)
     setAiBanner(result)
-    await loadQueue(code)
-  }
-
-  const handleRetireRule = async (puzzleId: string, ruleId: string, ruleName: string) => {
-    if (!code) return
-    // Direct, no-AI path: retire the rule for future generation, and reject
-    // this instance (via the plain reject endpoint, no AI) since its rule is
-    // now gone — otherwise it'd linger in the queue under a disabled rule.
-    await setRuleOverride(code, ruleId, { disabled: true })
-    await reject(code, puzzleId, `Rule "${ruleName}" retired by reviewer.`)
-    await loadQueue(code)
-  }
-
-  const handleRuleOverride = async (
-    ruleId: string,
-    changes: { disabled?: boolean; subtletyOverride?: number | null },
-  ) => {
-    if (!code) return
-    await setRuleOverride(code, ruleId, changes)
     await loadQueue(code)
   }
 
@@ -232,9 +199,6 @@ export function AdminApp() {
         )}
 
         {status === 'ready' && bufferHealth && <BufferHealthPanel health={bufferHealth} />}
-        {status === 'ready' && (
-          <RuleRejectStatsPanel rules={ruleRejectStats} onOverride={handleRuleOverride} />
-        )}
 
         {status === 'ready' && puzzles.length === 0 && (
           <div className="font-sans text-ink-soft">Nothing waiting for review.</div>
@@ -246,7 +210,6 @@ export function AdminApp() {
             puzzle={puzzle}
             onApprove={() => handleApprove(puzzle.puzzleId)}
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
-            onRetireRule={() => handleRetireRule(puzzle.puzzleId, puzzle.ruleId, puzzle.ruleName)}
           />
         ))}
 

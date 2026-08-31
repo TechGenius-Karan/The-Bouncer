@@ -131,18 +131,6 @@ describe('planAiReviewDispatch', () => {
     expect(plan.ruleOverride).toEqual({ ruleId: 'contains-q', subtletyOverride: 4 })
   })
 
-  it('retire-rule: rejects this instance and carries a disabled override', () => {
-    const plan = planAiReviewDispatch(
-      { action: 'retire-rule', rationale: 'ambiguous' },
-      containsQInput(),
-      RULES,
-      wordBank
-    )
-    expect(plan.puzzleMutation.kind).toBe('reject')
-    expect(plan.stillPending).toBe(false)
-    expect(plan.ruleOverride).toEqual({ ruleId: 'contains-q', disabled: true })
-  })
-
   it('agree-reject: rejects this instance with no override', () => {
     const plan = planAiReviewDispatch(
       { action: 'agree-reject', rationale: 'nothing to fix' },

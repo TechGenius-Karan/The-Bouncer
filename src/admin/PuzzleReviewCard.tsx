@@ -6,16 +6,12 @@ interface Props {
   onApprove: () => Promise<void>
   /** Sends the reviewer's free-text reasoning to AI review (admin-ai-review), which decides and executes the remediation. */
   onReject: (reason: string) => Promise<void>
-  /** Direct, no-AI rule retirement (admin-rule-override) — for when the reviewer already knows the whole rule should go. */
-  onRetireRule: () => Promise<void>
 }
 
 // ai-feedback-plan.md §8: the word-picker dropdown from Phase 10.6 item 2 is
 // gone — the AI now infers word-vs-concept itself from the puzzle + reasoning,
-// so the reviewer just writes why and lets the model decide. The separate
-// "Retire this rule" button stays for the case where they already know the
-// whole rule is bad and don't want to explain it to an AI first.
-export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRetireRule }: Props) {
+// so the reviewer just writes why and lets the model decide.
+export function PuzzleReviewCard({ puzzle, onApprove, onReject }: Props) {
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -36,18 +32,6 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRetireRule }: 
     setBusy(true)
     try {
       await onReject(reason.trim())
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleRetireRule = async () => {
-    if (!window.confirm(`Retire "${puzzle.ruleName}"? It will stop being generated until manually reinstated.`)) {
-      return
-    }
-    setBusy(true)
-    try {
-      await onRetireRule()
     } finally {
       setBusy(false)
     }
@@ -129,13 +113,6 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject, onRetireRule }: 
             Reject
           </button>
         </div>
-        <button
-          onClick={handleRetireRule}
-          disabled={busy}
-          className="self-start font-sans text-xs text-miss-text underline disabled:opacity-50"
-        >
-          Retire this rule (no AI)
-        </button>
       </div>
     </div>
   )

@@ -7,8 +7,6 @@ import type {
   AdminListPendingResponse,
   AdminListScheduledResponse,
   AdminPuzzleStatsResponse,
-  AdminRuleOverrideResponse,
-  AdminRuleRejectStatsResponse,
 } from './types'
 
 const CODE_KEY = 'bouncer-admin-code'
@@ -64,15 +62,6 @@ export async function approve(code: string, puzzleId: string): Promise<void> {
   if (!res.ok) throw new Error(`Failed to approve (${res.status})`)
 }
 
-export async function reject(code: string, puzzleId: string, reason: string): Promise<void> {
-  const res = await adminFetch('/api/admin-reject', code, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ puzzleId, reason }),
-  })
-  if (!res.ok) throw new Error(`Failed to reject (${res.status})`)
-}
-
 export async function aiReview(
   code: string,
   puzzleId: string,
@@ -85,26 +74,6 @@ export async function aiReview(
   })
   if (!res.ok) throw new Error(`Failed to run AI review (${res.status})`)
   return res.json() as Promise<AdminAiReviewResponse>
-}
-
-export async function getRuleRejectStats(code: string): Promise<AdminRuleRejectStatsResponse> {
-  const res = await adminFetch('/api/admin-rule-reject-stats', code)
-  if (!res.ok) throw new Error(`Failed to load rule reject stats (${res.status})`)
-  return res.json() as Promise<AdminRuleRejectStatsResponse>
-}
-
-export async function setRuleOverride(
-  code: string,
-  ruleId: string,
-  changes: { disabled?: boolean; subtletyOverride?: number | null },
-): Promise<AdminRuleOverrideResponse> {
-  const res = await adminFetch('/api/admin-rule-override', code, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ruleId, ...changes }),
-  })
-  if (!res.ok) throw new Error(`Failed to update rule override (${res.status})`)
-  return res.json() as Promise<AdminRuleOverrideResponse>
 }
 
 export async function listScheduled(code: string): Promise<AdminListScheduledResponse> {

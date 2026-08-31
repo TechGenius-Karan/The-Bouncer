@@ -75,25 +75,7 @@ export interface AdminBufferHealthResponse {
   gapDates: string[]
 }
 
-export interface AdminRuleRejectStat {
-  ruleId: string
-  ruleName: string
-  rejectCount: number
-  flagged: boolean
-  disabled: boolean
-  subtletyOverride: number | null
-  baseSubtlety: number
-}
-
-export interface AdminRuleRejectStatsResponse {
-  rules: AdminRuleRejectStat[]
-}
-
-export interface AdminRuleOverrideResponse {
-  ok: true
-}
-
-export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
+export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
 
 export interface AdminAiReviewResponse {
   ok: true
@@ -101,7 +83,6 @@ export interface AdminAiReviewResponse {
   rationale: string
   stillPending: boolean
 }
-
 
 export interface AdminGuestMissRate {
   wordId: string

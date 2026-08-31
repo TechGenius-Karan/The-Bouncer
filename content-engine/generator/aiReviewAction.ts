@@ -13,7 +13,7 @@
 // uniqueness validator) in aiReviewDispatch — the AI proposes, the validator
 // disposes.
 
-export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'retire-rule' | 'agree-reject'
+export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
 
 export interface AiAuthoredWord {
   word: string
@@ -24,7 +24,6 @@ export type AiReviewAction =
   | { action: 'swap-word'; badWordId: string; rationale: string }
   | { action: 'rewrite-puzzle'; clues: AiAuthoredWord[]; guests: AiAuthoredWord[]; rationale: string }
   | { action: 'adjust-difficulty'; newSubtlety: 1 | 2 | 3 | 4 | 5; rationale: string }
-  | { action: 'retire-rule'; rationale: string }
   | { action: 'agree-reject'; rationale: string }
 
 export interface ParseContext {
@@ -36,7 +35,6 @@ const KNOWN_ACTIONS = new Set<AiReviewActionType>([
   'swap-word',
   'rewrite-puzzle',
   'adjust-difficulty',
-  'retire-rule',
   'agree-reject',
 ])
 
@@ -99,8 +97,6 @@ export function parseAiReviewAction(raw: unknown, context: ParseContext): AiRevi
       if (!isValidSubtlety(obj.newSubtlety)) return fallback('adjust-difficulty missing a valid newSubtlety (1-5)')
       return { action: 'adjust-difficulty', newSubtlety: obj.newSubtlety, rationale }
     }
-    case 'retire-rule':
-      return { action: 'retire-rule', rationale }
     case 'agree-reject':
       return { action: 'agree-reject', rationale }
   }

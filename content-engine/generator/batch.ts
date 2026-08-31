@@ -32,7 +32,7 @@ import type { CandidatePuzzle, DifficultyTier } from './types'
  *
  * `rules` (ai-feedback-plan.md §11 phase 1) defaults to the full static
  * taxonomy but lets a caller pass the effective rules after
- * applyRuleOverrides (live disabled/subtletyOverride toggles) instead.
+ * applyRuleOverrides (live subtlety overrides) instead.
  */
 export function generateBatchCore(
   n: number,

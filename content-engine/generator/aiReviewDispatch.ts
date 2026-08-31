@@ -23,11 +23,10 @@ export type AiReviewPuzzleMutation =
     }
   | { kind: 'reject' }
 
-/** A live rule-taxonomy change to apply (retire / recalibrate), or null. */
+/** A live recalibration of the rule's difficulty, or null. */
 export interface AiReviewRuleOverride {
   ruleId: string
-  disabled?: boolean
-  subtletyOverride?: number
+  subtletyOverride: number
 }
 
 export interface AiReviewDispatchPlan {
@@ -154,8 +153,6 @@ export function planAiReviewDispatch(
     }
     case 'adjust-difficulty':
       return reject({ ruleId: puzzle.ruleId, subtletyOverride: decision.newSubtlety })
-    case 'retire-rule':
-      return reject({ ruleId: puzzle.ruleId, disabled: true })
     case 'agree-reject':
       return reject()
   }

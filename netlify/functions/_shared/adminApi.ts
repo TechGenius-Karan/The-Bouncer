@@ -82,35 +82,6 @@ export interface AdminRejectRequest {
   reason: string
 }
 
-export interface AdminRuleRejectStat {
-  ruleId: string
-  ruleName: string
-  rejectCount: number
-  flagged: boolean
-  /** True when a reviewer has retired this rule via admin-rule-override.ts — it's excluded from generation until reinstated. */
-  disabled: boolean
-  /** Live-recalibrated subtlety, or null if the rule is still running at its code-defined subtlety. */
-  subtletyOverride: number | null
-  /** The rule's code-defined subtlety, for comparison against subtletyOverride in the UI. */
-  baseSubtlety: number
-}
-
-export interface AdminRuleRejectStatsResponse {
-  rules: AdminRuleRejectStat[]
-}
-
-/** ai-feedback-plan.md §7.6 — the direct, no-AI path for a reviewer to retire/reinstate a rule or recalibrate its difficulty. Fields are independently optional: only the ones present get applied. */
-export interface AdminRuleOverrideRequest {
-  ruleId: string
-  disabled?: boolean
-  /** A number sets an override; null clears it, reverting to the rule's code-defined subtlety. */
-  subtletyOverride?: number | null
-}
-
-export interface AdminRuleOverrideResponse {
-  ok: true
-}
-
 /** ai-feedback-plan.md §7.5 — the reviewer's free-text reasoning goes to the AI, which decides and executes one bounded remediation. */
 export interface AdminAiReviewRequest {
   puzzleId: string

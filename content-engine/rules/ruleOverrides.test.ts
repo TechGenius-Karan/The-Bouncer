@@ -19,12 +19,6 @@ describe('applyRuleOverrides', () => {
     expect(applyRuleOverrides(rules, [])).toEqual(rules)
   })
 
-  it('drops a disabled rule entirely', () => {
-    const rules = [rule('a'), rule('b')]
-    const result = applyRuleOverrides(rules, [{ ruleId: 'a', disabled: true }])
-    expect(result.map((r) => r.id)).toEqual(['b'])
-  })
-
   it('replaces subtlety for an overridden rule, leaving evaluate/name/etc. untouched', () => {
     const rules = [rule('a', 2)]
     const result = applyRuleOverrides(rules, [{ ruleId: 'a', subtletyOverride: 5 }])
@@ -40,20 +34,4 @@ describe('applyRuleOverrides', () => {
     expect(result.find((r) => r.id === 'b')).toEqual(rules[1])
   })
 
-  it('applies disabled and subtletyOverride together, on different rules, in one pass', () => {
-    const rules = [rule('a', 2), rule('b', 3), rule('c', 1)]
-    const result = applyRuleOverrides(rules, [
-      { ruleId: 'a', disabled: true },
-      { ruleId: 'b', subtletyOverride: 5 },
-    ])
-    expect(result.map((r) => r.id)).toEqual(['b', 'c'])
-    expect(result.find((r) => r.id === 'b')!.subtlety).toBe(5)
-    expect(result.find((r) => r.id === 'c')!.subtlety).toBe(1)
-  })
-
-  it('disabled takes precedence when a rule has both disabled and a subtletyOverride set', () => {
-    const rules = [rule('a', 2)]
-    const result = applyRuleOverrides(rules, [{ ruleId: 'a', disabled: true, subtletyOverride: 5 }])
-    expect(result).toHaveLength(0)
-  })
 })

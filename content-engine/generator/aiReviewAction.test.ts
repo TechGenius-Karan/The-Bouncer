@@ -49,11 +49,6 @@ describe('parseAiReviewAction', () => {
     expect(result).toEqual({ action: 'adjust-difficulty', newSubtlety: 4, rationale: 'too easy to guess by elimination' })
   })
 
-  it('accepts a well-formed retire-rule action', () => {
-    const result = parseAiReviewAction({ action: 'retire-rule', rationale: 'ambiguous by nature' }, context)
-    expect(result).toEqual({ action: 'retire-rule', rationale: 'ambiguous by nature' })
-  })
-
   it('accepts a well-formed agree-reject action', () => {
     const result = parseAiReviewAction({ action: 'agree-reject', rationale: 'no usable reasoning given' }, context)
     expect(result).toEqual({ action: 'agree-reject', rationale: 'no usable reasoning given' })
@@ -71,8 +66,8 @@ describe('parseAiReviewAction', () => {
   })
 
   it('falls back to agree-reject when rationale is missing or empty', () => {
-    expect(parseAiReviewAction({ action: 'retire-rule' }, context).action).toBe('agree-reject')
-    expect(parseAiReviewAction({ action: 'retire-rule', rationale: '   ' }, context).action).toBe('agree-reject')
+    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 4 }, context).action).toBe('agree-reject')
+    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 4, rationale: '   ' }, context).action).toBe('agree-reject')
   })
 
   it('falls back to agree-reject when swap-word references a word not in the puzzle', () => {
