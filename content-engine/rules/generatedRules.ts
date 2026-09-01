@@ -1,3 +1,4 @@
+import { CATEGORY_DEFINITIONS, categoryTag } from '../words/categories'
 import { HIDDEN_WORD_GROUPS } from '../words/fixedLists'
 import type { PartOfSpeech } from '../words/types'
 import { RULE_PARAMS } from './ruleParams'
@@ -113,7 +114,35 @@ export function partOfSpeechRule(pos: PartOfSpeech): Rule {
   }
 }
 
+const CATEGORY_BY_ID = new Map(CATEGORY_DEFINITIONS.map((c) => [c.id, c]))
+
+/**
+ * "The word names a bird" — semantic category membership, the family with the
+ * most headroom now that tags come from the AI tagger rather than 227
+ * hand-reviewed words. Rule ids match the previously hand-written ones
+ * (`category-animal` etc.) so puzzles already approved against them still
+ * resolve.
+ */
+export function categoryRule(id: string): Rule {
+  const def = CATEGORY_BY_ID.get(id)
+  if (!def) throw new Error(`Unknown category id: ${id}`)
+  const tag = categoryTag(id)
+  return {
+    id: `category-${id}`,
+    name: `Is ${def.label}`,
+    templateId: 'category',
+    descriptionTemplate: `The word names ${def.label}.`,
+    family: 'semantic-knowledge',
+    subtlety: def.subtlety,
+    // Recognising a shared category is a genuine insight rather than a
+    // letter-counting exercise, so these sit high on the aha axis.
+    aha: 4,
+    evaluate: (word) => word.tags.includes(tag),
+  }
+}
+
 export const GENERATED_RULES: Rule[] = [
+  ...RULE_PARAMS.categories.map(categoryRule),
   ...RULE_PARAMS.hiddenWords.map(hiddenWordRule),
   ...RULE_PARAMS.hiddenGroups.map((g) => hiddenGroupRule(g as keyof typeof HIDDEN_WORD_GROUPS)),
   ...RULE_PARAMS.startsWith.map(startsWithRule),

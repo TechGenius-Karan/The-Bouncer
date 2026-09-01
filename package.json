@@ -21,6 +21,7 @@
     "content:reset-puzzles": "tsx content-engine/scripts/resetPuzzles.ts",
     "content:schedule": "tsx content-engine/scripts/schedulePuzzles.ts",
     "content:tag-words": "tsx content-engine/scripts/tagWords.ts",
+    "content:tag-words-ai": "tsx content-engine/scripts/tagWordsAi.ts",
     "content:build-rule-params": "tsx content-engine/scripts/buildRuleParams.ts",
     "content:expand-word-bank": "tsx content-engine/scripts/expandWordBank.ts",
     "content:discover-hidden-category-words": "tsx content-engine/scripts/discoverHiddenCategoryWords.ts",

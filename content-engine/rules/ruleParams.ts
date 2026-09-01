@@ -9,4 +9,5 @@ export const RULE_PARAMS = {
   endsWith: ["a","b","c","d","e","f","g","h","i","k","l","m","n","o","p","r","s","t","u","w","x","y","ed","er","ly","ng","ion","ing","est","ous","ful","ent","ance","ment","ness","able","tion","less"],
   wordLengths: [3,4,5,6,7,8,9,10],
   partsOfSpeech: ["verb","adjective","adverb"],
+  categories: ["animal","bird","fish","insect","plant","tree","flower","body-part","food","fruit","vegetable","drink","clothing","furniture","tool","weapon","vehicle","container","instrument","toy","building","room","landform","celestial","profession","relative","emotion","weather","color","metal","sport","illness","time-period"],
 } as const

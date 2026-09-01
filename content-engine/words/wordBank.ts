@@ -1,6 +1,7 @@
+import { AI_TAGS } from './aiTags'
 import { BLOCKED_WORDS } from './blockedWords'
 import { BULK_SEED_WORDS } from './bulkSeedWords'
-import { withParentCategories } from './categoryHierarchy'
+import { withParentCategories } from './categories'
 import { buildLetterFeatures } from './features'
 import { SEED_WORDS } from './seedWords'
 import { TAG_OVERRIDES } from './tagOverrides'
@@ -22,11 +23,17 @@ export function buildWordBank(): Word[] {
     frequencyScore: seed.frequencyScore,
     partOfSpeech: seed.partOfSpeech,
     properNoun: seed.properNoun ?? false,
-    // Parent categories are applied here rather than being hand-written into
-    // the tag files, so "every bird is an animal" holds by construction and
-    // survives re-tagging — see categoryHierarchy.ts.
+    // Three tag sources, in precedence order: the hand-curated seed word's own
+    // tags, the human-reviewed TAG_OVERRIDES, and machine-assigned AI_TAGS —
+    // the AI ones apply only where a human hasn't already ruled on the word,
+    // so re-running the tagger can never overwrite a reviewed decision.
+    // Parent categories are then applied by construction ("every bird is an
+    // animal") rather than being hand-written into the tag files.
     tags: withParentCategories([
-      ...new Set([...(seed.tags ?? []), ...(TAG_OVERRIDES[seed.spelling] ?? [])]),
+      ...new Set([
+        ...(seed.tags ?? []),
+        ...(TAG_OVERRIDES[seed.spelling] ?? AI_TAGS[seed.spelling] ?? []),
+      ]),
     ]),
     safety: { blocked: BLOCKED_WORDS.has(seed.spelling), needsReview: false },
   }))
