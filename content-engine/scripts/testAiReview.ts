@@ -28,8 +28,7 @@ async function main() {
   for (const doc of docs) {
     const detail = await resolveFullPuzzleDetail(doc)
     const rule = RULES.find((r) => r.id === doc.ruleId)
-    const usedIds = new Set([...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)])
-    const available = wordBank.filter((w) => !w.safety.blocked && !usedIds.has(w.id))
+    const available = wordBank.filter((w) => !w.safety.blocked)
     const inWordMenu = rule
       ? shuffle(available.filter((w) => rule.evaluate(w)))
           .slice(0, 100)

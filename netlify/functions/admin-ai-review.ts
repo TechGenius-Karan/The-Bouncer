@@ -58,12 +58,16 @@ export default async (req: Request): Promise<Response> => {
   const detail = await resolveFullPuzzleDetail(doc)
   const wordBank = buildWordBank()
 
-  // Build the rewrite-puzzle menu of real, correctly-sided words. Excludes
-  // words already in this puzzle so a rewrite is actually fresh, and shuffles
+  // Build the rewrite-puzzle menu of real, correctly-sided words. Shuffled
   // before slicing so skewed rules still surface their rarer words.
+  //
+  // The puzzle's own words are deliberately INCLUDED. They're valid choices —
+  // the model is asked to return the full word list including everything it's
+  // keeping — and excluding them meant a request like "move that pool word
+  // into the clues" came back as "not in the word bank", which is both wrong
+  // and confusing.
   const rule = RULES.find((r) => r.id === doc.ruleId)
-  const usedIds = new Set([...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)])
-  const available = wordBank.filter((w) => !w.safety.blocked && !usedIds.has(w.id))
+  const available = wordBank.filter((w) => !w.safety.blocked)
   const inWordMenu = rule
     ? shuffle(available.filter((w) => rule.evaluate(w)))
         .slice(0, IN_MENU_SIZE)

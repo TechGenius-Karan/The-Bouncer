@@ -8,12 +8,23 @@ import type { AdminPuzzleDetail } from './adminApi'
 // now 404 for new accounts ("no longer available to new users"); Google's own
 // error steers new users to 3.6-flash, which is what we use. Re-verify quotas
 // at https://ai.google.dev/gemini-api/docs/rate-limits before assuming.
-const MODEL = 'gemini-3.6-flash'
-// Generous margin: a Netlify sync function caps at 26s. 3.6-flash returns a
-// structured call in ~5s in practice, so this is headroom, not the norm.
-// (Tried thinkingBudget:0 to shave latency — 3.6-flash rejects it with a 400,
-// and its default thinking is already fast enough, so no thinkingConfig.)
-const TIMEOUT_MS = 25_000
+// A *-flash-lite model, deliberately, after measuring the alternatives on the
+// real review prompt (2026-08-31):
+//   gemini-3.6-flash      17-25s per call, and a 20-request/DAY free quota
+//   gemini-3.5-flash      slower still, also 20/day
+//   gemini-3.5-flash-lite ~1s, far larger free quota
+// The 20/day cap is the important one — published third-party figures claim
+// 1,500/day for these models, but the API's own 429 says
+// "quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit: 20".
+// A reviewer working through a queue exhausts that in one sitting, and the
+// full-size calls were also brushing the timeout. This is bounded
+// word-selection from a supplied menu, not open-ended reasoning, so a lite
+// model is the right fit as well as the affordable one.
+// Override with GEMINI_MODEL to try another without a code change.
+const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash-lite'
+// Netlify sync functions hard-cap at 26s, so this can't usefully go higher —
+// the fix for a slow model is a faster model, not a longer wait.
+const TIMEOUT_MS = 20_000
 
 // A loose, flat schema (not a true discriminated union — Gemini's JSON
 // Schema subset doesn't make that worth the complexity here) that nudges
