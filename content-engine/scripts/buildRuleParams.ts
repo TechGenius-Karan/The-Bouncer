@@ -72,7 +72,9 @@ function report<T>(label: string, swept: Swept<T>, total: number): void {
 }
 
 function main(): void {
-  const bank = buildWordBank()
+  // Blocked words can never be drafted, so counting them would overstate a
+  // parameter's real coverage and promote rules the generator can't fill.
+  const bank = buildWordBank().filter((w) => !w.safety.blocked)
   console.log(`Word bank: ${bank.length} words. Coverage floor ${MIN_COVERAGE}, ceiling ${MAX_COVERAGE_SHARE * 100}%.\n`)
 
   const hiddenWords = sweep(HIDDEN_WORD_TARGETS, bank, (w, t) => w.features.hiddenWordHits.includes(t))

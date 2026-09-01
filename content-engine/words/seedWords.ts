@@ -484,4 +484,63 @@ export const SEED_WORDS: SeedWord[] = [
   w('stomach', COMMON, 'noun', ['category:body-part']),
   w('neck', COMMON, 'noun', ['category:body-part']),
   w('chest', COMMON, 'noun', ['category:body-part']),
+
+  // --- palindromes ---
+  // The frequency corpus barely contains any: long palindromes are rare in
+  // ordinary speech, so a subtitle-derived bank had 42 of them and most were
+  // 3-letter filler (bib, gig, tnt). These are the recognizable ones a player
+  // would actually accept as fair, hand-added because no corpus will supply them.
+  w('rotor', MODERATE, 'noun'),
+  w('tenet', MODERATE, 'noun'),
+  w('racecar', MODERATE, 'noun'),
+  w('rotator', MODERATE, 'noun'),
+  w('redder', MODERATE, 'adjective'),
+  w('deified', MODERATE, 'verb'),
+  w('reviver', LESS_COMMON, 'noun'),
+  w('repaper', LESS_COMMON, 'verb'),
+  w('minim', LESS_COMMON, 'noun'),
+  w('solos', MODERATE, 'noun'),
+  w('sagas', MODERATE, 'noun'),
+  w('sees', COMMON, 'verb'),
+  w('wow', COMMON, 'verb'),
+
+  // --- hosts for near-floor hidden-word targets ---
+  // eel/lip/hen/owl each sat just under the 25-word coverage floor, so these
+  // host words are what promote them to real rules on the next
+  // `content:build-rule-params` run. Only words absent from the corpus bank
+  // are listed — the obvious hosts (eclipse, tulip, strengthen, growl,
+  // knowledge...) are already in it and would just be duplicates.
+  w('cartwheel', MODERATE, 'noun'), // eel
+  w('genteel', LESS_COMMON, 'adjective'),
+  w('lipid', LESS_COMMON, 'noun'), // lip
+  w('ellipse', LESS_COMMON, 'noun'),
+  w('elliptical', LESS_COMMON, 'adjective'),
+  w('caliper', LESS_COMMON, 'noun'),
+  w('tulips', MODERATE, 'noun'),
+  w('flippant', LESS_COMMON, 'adjective'),
+  w('lengthen', MODERATE, 'verb'), // hen
+  w('henchman', LESS_COMMON, 'noun'),
+  w('henna', LESS_COMMON, 'noun'),
+  w('chenille', LESS_COMMON, 'noun'),
+  w('hyphen', MODERATE, 'noun'),
+  w('lichen', LESS_COMMON, 'noun'),
+  w('toughen', MODERATE, 'verb'),
+  w('scowl', MODERATE, 'verb'), // owl
+  w('owlet', LESS_COMMON, 'noun'),
+  w('jowl', LESS_COMMON, 'noun'),
+  w('yowl', LESS_COMMON, 'verb'),
+  w('knowledgeable', MODERATE, 'adjective'),
+  w('growled', MODERATE, 'verb'),
+  w('scowled', MODERATE, 'verb'),
+  w('prowled', LESS_COMMON, 'verb'),
+
+  // --- fruit (thinnest semantic category) ---
+  w('guava', LESS_COMMON, 'noun', ['category:fruit']),
+  w('lychee', LESS_COMMON, 'noun', ['category:fruit']),
+  w('nectarine', LESS_COMMON, 'noun', ['category:fruit']),
+  w('pomegranate', LESS_COMMON, 'noun', ['category:fruit']),
+  w('mulberry', LESS_COMMON, 'noun', ['category:fruit']),
+  w('elderberry', LESS_COMMON, 'noun', ['category:fruit']),
+  w('plantain', LESS_COMMON, 'noun', ['category:fruit']),
+  w('persimmon', LESS_COMMON, 'noun', ['category:fruit']),
 ]

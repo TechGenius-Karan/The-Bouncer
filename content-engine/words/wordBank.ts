@@ -1,3 +1,4 @@
+import { BLOCKED_WORDS } from './blockedWords'
 import { BULK_SEED_WORDS } from './bulkSeedWords'
 import { withParentCategories } from './categoryHierarchy'
 import { buildLetterFeatures } from './features'
@@ -27,7 +28,7 @@ export function buildWordBank(): Word[] {
     tags: withParentCategories([
       ...new Set([...(seed.tags ?? []), ...(TAG_OVERRIDES[seed.spelling] ?? [])]),
     ]),
-    safety: { blocked: false, needsReview: false },
+    safety: { blocked: BLOCKED_WORDS.has(seed.spelling), needsReview: false },
   }))
 
   // Anagram partners can only be found bank-wide, not from a single spelling
