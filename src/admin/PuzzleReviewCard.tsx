@@ -4,14 +4,17 @@ import type { AdminPuzzleDetail } from './types'
 interface Props {
   puzzle: AdminPuzzleDetail
   onApprove: () => Promise<void>
-  /** Sends the reviewer's free-text reasoning to AI review (admin-ai-review), which decides and executes the remediation. */
+  /** Sends the reviewer's feedback to the AI, which must improve the puzzle — it is never thrown away by this path. */
+  onRefine: (reason: string) => Promise<void>
+  /** Plain reject, no AI — for when the rule/concept itself is bad. */
   onReject: (reason: string) => Promise<void>
 }
 
-// ai-feedback-plan.md §8: the word-picker dropdown from Phase 10.6 item 2 is
-// gone — the AI now infers word-vs-concept itself from the puzzle + reasoning,
-// so the reviewer just writes why and lets the model decide.
-export function PuzzleReviewCard({ puzzle, onApprove, onReject }: Props) {
+// Two separate outcomes, deliberately: the reviewer decides whether a puzzle is
+// worth saving, not the AI. Refine always tries to improve and never discards;
+// Reject discards immediately with no AI call. Previously one button did both,
+// so asking for a fix could silently lose the puzzle.
+export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Props) {
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -27,11 +30,21 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject }: Props) {
     }
   }
 
-  const handleReject = async () => {
+  const handleRefine = async () => {
     if (!reason.trim()) return
     setBusy(true)
     try {
-      await onReject(reason.trim())
+      await onRefine(reason.trim())
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!window.confirm(`Reject this ${puzzle.ruleName} puzzle? It will be discarded, not refined.`)) return
+    setBusy(true)
+    try {
+      await onReject(reason.trim() || 'Rejected by reviewer.')
     } finally {
       setBusy(false)
     }
@@ -102,12 +115,21 @@ export function PuzzleReviewCard({ puzzle, onApprove, onReject }: Props) {
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Why is this being rejected? The AI reads this and acts on it…"
+            placeholder="What should change? The AI reads this and rewrites the puzzle…"
             className="min-w-[180px] flex-1 rounded-card border border-line bg-screen px-3 py-2 font-sans text-sm"
           />
           <button
-            onClick={handleReject}
+            onClick={handleRefine}
             disabled={busy || !reason.trim()}
+            title="The AI improves this puzzle using your notes. It is never discarded."
+            className="rounded-bin bg-ink px-4 py-2 font-display text-sm font-bold text-screen disabled:opacity-50"
+          >
+            Refine
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={busy}
+            title="Discard this puzzle entirely. No AI involved."
             className="rounded-bin bg-miss px-4 py-2 font-display text-sm font-bold text-white disabled:opacity-50"
           >
             Reject

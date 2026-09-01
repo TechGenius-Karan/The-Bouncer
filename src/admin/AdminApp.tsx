@@ -6,6 +6,7 @@ import {
   clearStoredCode,
   getBufferHealth,
   listPending,
+  reject,
   loadStoredCode,
   login,
   storeCode,
@@ -29,15 +30,17 @@ function errorMessage(err: unknown): string {
 function aiBannerHeadline(result: AdminAiReviewResponse): string {
   switch (result.action) {
     case 'swap-word':
-      return 'AI swapped a word and re-validated — this puzzle is back in the queue.'
+      return result.changed
+        ? 'Swapped one word and re-validated — the puzzle is updated below.'
+        : 'Could not swap that word; the puzzle is unchanged.'
     case 'rewrite-puzzle':
-      return result.stillPending
-        ? 'AI rewrote the puzzle to address the feedback — it is back in the queue.'
-        : 'AI tried to rewrite the puzzle but its version did not validate, so this puzzle was rejected.'
+      return result.changed
+        ? 'Rewrote the puzzle to address your notes — it is updated below.'
+        : 'The rewrite did not pass validation, so the puzzle is unchanged.'
     case 'adjust-difficulty':
-      return 'AI recalibrated the rule’s difficulty and rejected this puzzle.'
+      return 'Recalibrated the rule’s difficulty for future puzzles. This puzzle is unchanged.'
     case 'agree-reject':
-      return 'AI agreed there was nothing to salvage and rejected this puzzle.'
+      return 'Could not act on that feedback — the puzzle is unchanged and still in the queue.'
   }
 }
 
@@ -97,14 +100,19 @@ export function AdminApp() {
     setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
   }
 
-  const handleReject = async (puzzleId: string, reason: string) => {
+  const handleRefine = async (puzzleId: string, reason: string) => {
     if (!code) return
-    // The reviewer's reasoning goes to AI review, which decides and executes
-    // the remediation server-side; the outcome may leave the puzzle pending
-    // (swapped/rewritten) or rejected, so reload rather than hand-patch state.
+    // The puzzle stays in the queue either way — refine can rewrite its words
+    // but never discards it — so reload to pick up whatever changed.
     const result = await aiReview(code, puzzleId, reason)
     setAiBanner(result)
     await loadQueue(code)
+  }
+
+  const handleReject = async (puzzleId: string, reason: string) => {
+    if (!code) return
+    await reject(code, puzzleId, reason)
+    setPuzzles((prev) => prev.filter((p) => p.puzzleId !== puzzleId))
   }
 
   const handleLogout = () => {
@@ -176,7 +184,7 @@ export function AdminApp() {
         {aiBanner && (
           <div
             className={`flex items-start justify-between gap-3 rounded-bin border p-4 font-sans text-sm ${
-              aiBanner.stillPending
+              aiBanner.changed
                 ? 'border-bin-in bg-bin-in-chip text-bin-in-text'
                 : 'border-line bg-slip text-ink'
             }`}
@@ -209,6 +217,7 @@ export function AdminApp() {
             key={puzzle.puzzleId}
             puzzle={puzzle}
             onApprove={() => handleApprove(puzzle.puzzleId)}
+            onRefine={(reason) => handleRefine(puzzle.puzzleId, reason)}
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
           />
         ))}

@@ -101,6 +101,12 @@ export default async (req: Request): Promise<Response> => {
     })
   }
 
+  // Refine never destroys a puzzle. The reviewer has a separate Reject button
+  // and already decided this one is worth saving, so a refinement that can't
+  // be applied leaves the puzzle exactly as it was, in the queue, with the
+  // rationale explaining what went wrong. (Previously this rejected it, which
+  // meant asking for a fix could silently lose the puzzle.)
+  const changed = plan.puzzleMutation.kind === 'update-content'
   if (plan.puzzleMutation.kind === 'update-content') {
     await puzzles.updateOne(
       { _id: doc._id },
@@ -112,11 +118,6 @@ export default async (req: Request): Promise<Response> => {
         },
       }
     )
-  } else {
-    await puzzles.updateOne(
-      { _id: doc._id, status: 'pending_approval' },
-      { $set: { status: 'rejected', rejectionReason: trimmedReason } }
-    )
   }
 
   const reviewDoc: AiReviewDoc = {
@@ -126,7 +127,7 @@ export default async (req: Request): Promise<Response> => {
     aiAction: decision.action,
     aiRationale: decision.rationale,
     aiRawResponse: rawResponse,
-    resultingPuzzleId: plan.stillPending ? puzzleId : null,
+    resultingPuzzleId: changed ? puzzleId : null,
     createdAt: new Date(),
     humanOutcome: null,
   }
@@ -136,7 +137,7 @@ export default async (req: Request): Promise<Response> => {
     ok: true,
     action: decision.action,
     rationale: decision.rationale,
-    stillPending: plan.stillPending,
+    changed,
   }
   return jsonResponse(response)
 }

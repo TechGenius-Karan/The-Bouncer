@@ -92,8 +92,8 @@ export interface AdminAiReviewResponse {
   ok: true
   action: AiReviewActionType
   rationale: string
-  /** True when the puzzle survived (word swapped or redrafted) and is back in the review queue; false when it was rejected. */
-  stillPending: boolean
+  /** True when the puzzle's words were actually changed. False means refinement couldn't be applied and the puzzle is unchanged — it stays in the queue either way. */
+  changed: boolean
 }
 
 export interface AdminBufferHealthResponse {

@@ -114,15 +114,32 @@ ${decoyLines}
 THE REVIEWER REJECTED THIS PUZZLE AND WROTE:
 "${reason}"
 ${fewShotExamples ? `\nPAST EXAMPLES OF SIMILAR DECISIONS:\n${fewShotExamples}\n` : ''}
+The reviewer has asked you to REFINE this puzzle. They have a separate button for
+throwing it away, so they have already decided it is worth saving — your job is to
+improve it, not to judge whether it deserves to exist.
+
 Decide exactly ONE action:
 - swap-word: only ONE specific word is the problem (a proper name, something ambiguous or awkward) — the rule/concept itself is fine. Set badWordId to that word's id from the lists above.
-- rewrite-puzzle: the rule is fine but the WORD CHOICES need to change to address the reviewer's feedback (e.g. more variety, better/harder examples). YOU pick the replacement words — see the rewrite instructions below. Prefer this over agree-reject whenever the feedback is about which words appear.
-- adjust-difficulty: the rule itself is sound but miscalibrated (too easy to guess by elimination, or surprisingly hard for its tier). Set newSubtlety to a better 1-5 rating.
-- agree-reject: the reviewer gave no usable reasoning, or nothing here is worth fixing.
+- rewrite-puzzle: the word choices need to change to address the feedback. YOU pick the words — see the rewrite instructions below. This is usually the right answer.
+- adjust-difficulty: the rule is sound but miscalibrated for its tier. Set newSubtlety to a better 1-5 rating. Note this does NOT change the puzzle, so only use it when the feedback is purely about difficulty.
+- agree-reject: use ONLY when the feedback is impossible to act on. The puzzle is kept either way — say plainly in your rationale what you could not do and why.
+
+CHANGE AS LITTLE AS POSSIBLE. If the reviewer objects to one specific thing, fix
+that and keep every other word exactly as it is. Do not reshuffle words the
+feedback did not mention — a reviewer who asked for one change and got a
+completely different puzzle cannot tell whether you understood them.
+
+If the reviewer asks for a SPECIFIC word that does not appear in the menus below,
+you cannot use it — the word is not in the game's word bank and any answer
+containing it will be discarded. Do not silently substitute a different word as if
+you had complied: name the missing word in your rationale so the reviewer knows
+why their request could not be met, and make only the rest of the change.
 
 REWRITE-PUZZLE INSTRUCTIONS (only if you choose that action):
-Author a brand-new set of words that directly addresses the reviewer's feedback, choosing ONLY from
-the menus below (do not invent words — words not in these menus will be rejected).
+Give the puzzle's FULL word list as it should end up — including every word you are
+keeping unchanged, which should be most of them. Choose ONLY from the current puzzle's
+own words (listed above) and the menus below; any word from neither is not in the game's
+word bank and will cause your whole answer to be discarded.
 - clues: EXACTLY ${clueCountIn} words labeled "IN" and EXACTLY ${clueCountOut} labeled "OUT".
 - guests: EXACTLY ${poolSize} words, a genuine mix of IN and OUT (never all one side).
 - IN words (satisfy the rule — use for IN clues/guests)${hasVariants ? ', each shown with WHY it matches in brackets' : ''}: ${inMenuText}

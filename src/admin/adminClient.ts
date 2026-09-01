@@ -62,6 +62,16 @@ export async function approve(code: string, puzzleId: string): Promise<void> {
   if (!res.ok) throw new Error(`Failed to approve (${res.status})`)
 }
 
+/** Plain reject — no AI. For when the rule/concept itself is bad and the puzzle isn't worth saving. */
+export async function reject(code: string, puzzleId: string, reason: string): Promise<void> {
+  const res = await adminFetch('/api/admin-reject', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ puzzleId, reason }),
+  })
+  if (!res.ok) throw new Error(`Failed to reject (${res.status})`)
+}
+
 export async function aiReview(
   code: string,
   puzzleId: string,

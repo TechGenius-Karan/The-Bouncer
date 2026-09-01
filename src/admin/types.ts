@@ -81,7 +81,7 @@ export interface AdminAiReviewResponse {
   ok: true
   action: AiReviewActionType
   rationale: string
-  stillPending: boolean
+  changed: boolean
 }
 
 export interface AdminGuestMissRate {
