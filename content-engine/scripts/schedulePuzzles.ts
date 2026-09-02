@@ -13,8 +13,18 @@
 // Run with: npm run content:schedule -- [count] [startDate]
 
 import 'dotenv/config'
+import {
+  isLexicalRule,
+  MAX_LEXICAL_PER_WEEK,
+  selectForDate,
+  type Placement,
+} from '../scheduling/placement'
 import { getCollections } from '../../netlify/functions/_shared/db'
-import { addDaysToDateString, isSaturday, resolvePuzzleDateString } from '../../netlify/functions/_shared/puzzleDate'
+import {
+  addDaysToDateString,
+  isSaturday,
+  resolvePuzzleDateString,
+} from '../../netlify/functions/_shared/puzzleDate'
 import type { PuzzleDoc } from '../../netlify/functions/_shared/types'
 
 const COUNT = Number(process.argv[2]) || 5
@@ -26,45 +36,16 @@ const START_DATE = process.argv[3] || resolvePuzzleDateString()
 // something is misconfigured rather than looping indefinitely.
 const MAX_DAYS_WALKED = 3650
 
-// Don't put the same rule within this many days of itself, or the same
-// template family (all the "ends with X" rules, say) within this many —
-// families are spaced more tightly since they're a softer kind of sameness.
-const RULE_SPACING_DAYS = 60
-const TEMPLATE_SPACING_DAYS = 6
-
-interface Placement {
-  date: string
-  ruleId: string
-  templateId?: string
-}
-
-function daysBetween(a: string, b: string): number {
-  return Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000
-}
-
-/** True when this puzzle's rule and template family are far enough from every date already placed. */
-function isFreshFor(date: string, puzzle: PuzzleDoc, placements: Placement[]): boolean {
-  return !placements.some((p) => {
-    const gap = daysBetween(date, p.date)
-    if (p.ruleId === puzzle.ruleId && gap < RULE_SPACING_DAYS) return true
-    return (
-      puzzle.templateId !== undefined &&
-      p.templateId === puzzle.templateId &&
-      gap < TEMPLATE_SPACING_DAYS
-    )
-  })
-}
-
 async function main() {
   const { puzzles } = await getCollections()
 
   await puzzles.createIndex(
     { date: 1 },
-    { unique: true, partialFilterExpression: { date: { $type: 'string' } } },
+    { unique: true, partialFilterExpression: { date: { $type: 'string' } } }
   )
   await puzzles.createIndex(
     { number: 1 },
-    { unique: true, partialFilterExpression: { number: { $type: 'number' } } },
+    { unique: true, partialFilterExpression: { number: { $type: 'number' } } }
   )
 
   // FIFO by generation time — `number` doesn't exist pre-schedule anymore,
@@ -87,14 +68,14 @@ async function main() {
   const target = Math.min(COUNT, totalAvailable)
   if (target < COUNT) {
     console.warn(
-      `Only ${totalAvailable} approved-and-unscheduled puzzles available (${mediumQueue.length} medium, ${spicyQueue.length} spicy) — requested ${COUNT}.`,
+      `Only ${totalAvailable} approved-and-unscheduled puzzles available (${mediumQueue.length} medium, ${spicyQueue.length} spicy) — requested ${COUNT}.`
     )
   }
 
   const takenDocs = await puzzles
     .find(
       { status: { $in: ['scheduled', 'live'] }, date: { $ne: null } },
-      { projection: { date: 1, ruleId: 1, templateId: 1 } },
+      { projection: { date: 1, ruleId: 1, templateId: 1 } }
     )
     .toArray()
   const taken = new Set(takenDocs.map((doc) => doc.date as string))
@@ -104,6 +85,7 @@ async function main() {
     date: doc.date as string,
     ruleId: doc.ruleId,
     templateId: doc.templateId,
+    isLexical: isLexicalRule(doc.ruleId),
   }))
 
   let nextNumber = (await puzzles.countDocuments({ status: { $in: ['scheduled', 'live'] } })) + 1
@@ -111,6 +93,9 @@ async function main() {
   let cursor = START_DATE
   let scheduled = 0
   let daysWalked = 0
+  let capBreaches = 0
+  let skippedDates = 0
+  const placedByFamily = { lexical: 0, semantic: 0 }
 
   while (scheduled < target && daysWalked < MAX_DAYS_WALKED) {
     daysWalked += 1
@@ -124,47 +109,77 @@ async function main() {
     const queue = tier === 'spicy' ? spicyQueue : mediumQueue
     // Strict FIFO used to place whatever came next, never looking at ruleId —
     // so a batch that happened to produce the same rule several times landed
-    // those on nearby dates. Prefer the earliest queued puzzle whose rule (and
-    // template family) hasn't been used near this date; fall back to plain FIFO
-    // if the whole queue is in cooldown, since shipping a repeat still beats
-    // leaving the day empty.
-    const freshIndex = queue.findIndex((p) => isFreshFor(cursor, p, placements))
-    const candidate = freshIndex === -1 ? queue.shift() : queue.splice(freshIndex, 1)[0]
+    // those on nearby dates. selectForDate prefers a puzzle that is both fresh
+    // and inside the lexical cap, then a fresh one, then the queue head; every
+    // fallback is reported rather than silently taken.
+    const choice = selectForDate(cursor, queue, placements)
+    const candidate = choice.index === -1 ? undefined : queue.splice(choice.index, 1)[0]
+    // Counted, not warned per-date: with the taxonomy currently a little short
+    // on semantic rules this fires often enough that a line each would bury
+    // the rest of the output. The end-of-run summary carries it.
+    if (candidate && choice.overCap) capBreaches += 1
 
     if (!candidate) {
       console.warn(
-        `No approved ${tier} puzzle available for ${cursor}${tier === 'spicy' ? ' (Spicy Saturday)' : ''} — skipping, left unscheduled.`,
+        `No approved ${tier} puzzle available for ${cursor}${tier === 'spicy' ? ' (Spicy Saturday)' : ''} — skipping, left unscheduled.`
       )
+      skippedDates += 1
       cursor = addDaysToDateString(cursor, 1)
       continue
     }
 
     const date = cursor
     taken.add(date)
-    placements.push({ date, ruleId: candidate.ruleId, templateId: candidate.templateId })
+    placements.push({
+      date,
+      ruleId: candidate.ruleId,
+      templateId: candidate.templateId,
+      isLexical: isLexicalRule(candidate.ruleId),
+    })
     cursor = addDaysToDateString(cursor, 1)
 
     const number = nextNumber
     const update = await puzzles.updateOne(
       { _id: candidate._id, status: 'approved', date: null },
-      { $set: { date, status: 'scheduled', number } },
+      { $set: { date, status: 'scheduled', number } }
     )
 
     if (update.matchedCount === 0) {
-      console.warn(`Skipped a ${candidate.difficultyTier} puzzle (${candidate._id}) — it changed before this could apply.`)
+      console.warn(
+        `Skipped a ${candidate.difficultyTier} puzzle (${candidate._id}) — it changed before this could apply.`
+      )
       continue
     }
 
     nextNumber += 1
     scheduled += 1
+    if (isLexicalRule(candidate.ruleId)) placedByFamily.lexical += 1
+    else placedByFamily.semantic += 1
     console.log(`Puzzle #${number} (${candidate.difficultyTier}) -> ${date}`)
   }
 
   if (daysWalked >= MAX_DAYS_WALKED) {
-    console.warn(`Stopped after walking ${MAX_DAYS_WALKED} days without reaching the requested count.`)
+    console.warn(
+      `Stopped after walking ${MAX_DAYS_WALKED} days without reaching the requested count.`
+    )
   }
 
-  console.log(`Done. Scheduled ${scheduled}/${COUNT}.`)
+  const placedTotal = placedByFamily.lexical + placedByFamily.semantic
+  const lexicalShare =
+    placedTotal > 0 ? Math.round((100 * placedByFamily.lexical) / placedTotal) : 0
+  console.log(`
+Done. Scheduled ${scheduled}/${COUNT}.`)
+  console.log(
+    `  lexical ${placedByFamily.lexical} / semantic ${placedByFamily.semantic} (${lexicalShare}% lexical)`
+  )
+  // Surfaced every run: a starving scheduler otherwise looks identical to a
+  // working one until someone notices the gaps weeks later.
+  if (skippedDates > 0)
+    console.warn(`  ${skippedDates} date(s) left empty — the approved pool ran dry for that tier.`)
+  if (capBreaches > 0)
+    console.warn(
+      `  ${capBreaches} placement(s) exceeded the ${MAX_LEXICAL_PER_WEEK}/week lexical cap — approve more semantic puzzles.`
+    )
   process.exit(0)
 }
 
