@@ -33,6 +33,8 @@ export interface AdminPuzzleDetail {
   status: PuzzleStatus
   ruleId: string
   ruleName: string
+  /** Present only when the validator accepted a collision and the reveal names a different rule than the one that generated the puzzle. `ruleDescription` is already that rule's text. */
+  revealRuleName?: string
   ruleDescription: string
   clues: AdminClueDetail[]
   guests: AdminGuestDetail[]

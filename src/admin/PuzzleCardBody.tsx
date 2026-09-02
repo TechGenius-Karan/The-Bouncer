@@ -15,6 +15,12 @@ export function PuzzleCardBody({ puzzle }: Props) {
   return (
     <>
       <div className="font-sans text-sm">{puzzle.ruleDescription}</div>
+      {puzzle.revealRuleName && (
+        <div className="font-sans text-xs text-ink-soft">
+          Reveals as “{puzzle.revealRuleName}” — generated from {puzzle.ruleName}, which fits this
+          board equally well.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 font-sans text-sm">
         <div>

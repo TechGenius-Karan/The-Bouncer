@@ -64,7 +64,13 @@ export default async (req: Request): Promise<Response> => {
   const newDocs: PuzzleDoc[] = []
 
   for (const { tier, count } of tiersToGenerate) {
-    const batch = generateBatchCore(count, [tier], rejectCounts, effectiveRules, recentUsage.ruleIds)
+    const batch = generateBatchCore(
+      count,
+      [tier],
+      rejectCounts,
+      effectiveRules,
+      recentUsage.ruleIds
+    )
     if (batch.length < count) {
       console.warn(`Only generated ${batch.length}/${count} ${tier} candidates.`)
     }
@@ -74,7 +80,8 @@ export default async (req: Request): Promise<Response> => {
         number: null,
         difficultyTier: candidate.difficultyTier,
         ruleId: candidate.ruleId,
-    ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
+        ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
+        ...(candidate.revealRuleId ? { revealRuleId: candidate.revealRuleId } : {}),
         status: 'pending_approval',
         date: null,
         clues: candidate.clues,

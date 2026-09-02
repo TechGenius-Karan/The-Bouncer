@@ -40,7 +40,8 @@ export default async (req: Request): Promise<Response> => {
   if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
     return jsonResponse({ error: `count must be an integer between 1 and ${MAX_COUNT}` }, 400)
   }
-  const tiers: ('medium' | 'spicy')[] = body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
+  const tiers: ('medium' | 'spicy')[] =
+    body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
 
   const { puzzles } = await getCollections()
   const [rejectCounts, ruleOverrides, recentUsage] = await Promise.all([
@@ -57,6 +58,7 @@ export default async (req: Request): Promise<Response> => {
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
     ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
+    ...(candidate.revealRuleId ? { revealRuleId: candidate.revealRuleId } : {}),
     status: 'pending_approval',
     date: null,
     clues: candidate.clues,

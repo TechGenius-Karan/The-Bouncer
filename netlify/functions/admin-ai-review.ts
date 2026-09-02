@@ -71,10 +71,15 @@ export default async (req: Request): Promise<Response> => {
   const inWordMenu = rule
     ? shuffle(available.filter((w) => rule.evaluate(w)))
         .slice(0, IN_MENU_SIZE)
-        .map((w) => ({ word: w.spelling, ...(rule.variantOf?.(w) ? { variant: rule.variantOf(w)! } : {}) }))
+        .map((w) => ({
+          word: w.spelling,
+          ...(rule.variantOf?.(w) ? { variant: rule.variantOf(w)! } : {}),
+        }))
     : []
   const outWordMenu = rule
-    ? shuffle(available.filter((w) => !rule.evaluate(w))).slice(0, OUT_MENU_SIZE).map((w) => w.spelling)
+    ? shuffle(available.filter((w) => !rule.evaluate(w)))
+        .slice(0, OUT_MENU_SIZE)
+        .map((w) => w.spelling)
     : []
 
   const { decision, rawResponse } = await getAiReviewDecision({
@@ -112,6 +117,7 @@ export default async (req: Request): Promise<Response> => {
   // meant asking for a fix could silently lose the puzzle.)
   const changed = plan.puzzleMutation.kind === 'update-content'
   if (plan.puzzleMutation.kind === 'update-content') {
+    const { revealRuleId } = plan.puzzleMutation
     await puzzles.updateOne(
       { _id: doc._id },
       {
@@ -119,7 +125,12 @@ export default async (req: Request): Promise<Response> => {
           clues: plan.puzzleMutation.clues,
           guests: plan.puzzleMutation.guests,
           liveDecoys: plan.puzzleMutation.liveDecoys,
+          ...(revealRuleId ? { revealRuleId } : {}),
         },
+        // Unset rather than skip: the rewritten board may no longer collide
+        // with whatever set the previous override, and leaving it would reveal
+        // a rule that no longer describes the puzzle.
+        ...(revealRuleId ? {} : { $unset: { revealRuleId: '' } }),
       }
     )
   }

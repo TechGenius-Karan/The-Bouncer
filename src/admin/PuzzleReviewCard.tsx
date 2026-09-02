@@ -41,7 +41,10 @@ export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Prop
   }
 
   const handleReject = async () => {
-    if (!window.confirm(`Reject this ${puzzle.ruleName} puzzle? It will be discarded, not refined.`)) return
+    if (
+      !window.confirm(`Reject this ${puzzle.ruleName} puzzle? It will be discarded, not refined.`)
+    )
+      return
     setBusy(true)
     try {
       await onReject(reason.trim() || 'Rejected by reviewer.')
@@ -54,12 +57,20 @@ export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Prop
     <div className="flex flex-col gap-4 rounded-bin border border-line bg-slip p-5">
       <div className="flex items-baseline justify-between">
         <div className="font-display text-lg font-bold capitalize">{puzzle.difficultyTier}</div>
-        <div className="font-sans text-xs uppercase tracking-wide text-ink-soft">{puzzle.ruleId}</div>
+        <div className="font-sans text-xs uppercase tracking-wide text-ink-soft">
+          {puzzle.ruleId}
+        </div>
       </div>
 
       <div className="rounded-card border border-line bg-screen p-3 font-display text-base font-bold">
         {puzzle.ruleDescription}
       </div>
+      {puzzle.revealRuleName && (
+        <div className="font-sans text-xs text-ink-soft">
+          Reveals as “{puzzle.revealRuleName}” — generated from {puzzle.ruleName}, which fits this
+          board equally well.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 font-sans text-sm">
         <div>
@@ -99,8 +110,9 @@ export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Prop
       </div>
 
       <div className="font-sans text-xs text-ink-soft">
-        Knobs: {puzzle.knobValues.tier}, {puzzle.knobValues.clueCountIn}+{puzzle.knobValues.clueCountOut} clues,
-        pool {puzzle.knobValues.poolSize}, {puzzle.knobValues.trapGuestCount} traps
+        Knobs: {puzzle.knobValues.tier}, {puzzle.knobValues.clueCountIn}+
+        {puzzle.knobValues.clueCountOut} clues, pool {puzzle.knobValues.poolSize},{' '}
+        {puzzle.knobValues.trapGuestCount} traps
       </div>
 
       <div className="flex flex-col gap-2 border-t border-line pt-3">

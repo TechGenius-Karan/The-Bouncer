@@ -5,7 +5,8 @@ import type { ObjectId } from 'mongodb'
 // so seeding is a near-direct copy, not a reshape.
 
 export type Label = 'IN' | 'OUT'
-export type PuzzleStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'live'
+export type PuzzleStatus =
+  'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'live'
 
 export interface WordDoc {
   _id: string // spelling
@@ -66,6 +67,14 @@ export interface PuzzleDoc {
   ruleId: string
   /** The rule's template family, when it came from one — used for scheduling cooldown. */
   templateId?: string
+  /**
+   * Set only when the validator accepted a collision and another rule
+   * describes the board better than the one that generated it. The reveal
+   * (check-swipe.ts) resolves through this; cooldown, scheduling spacing and
+   * reject stats deliberately keep reading `ruleId`. Server-side only — it is
+   * resolved to rule text before anything reaches the player.
+   */
+  revealRuleId?: string
   status: PuzzleStatus
   /** UTC calendar date ("YYYY-MM-DD") this puzzle is scheduled for, or null if not yet scheduled. */
   date: string | null
@@ -98,7 +107,8 @@ export interface ResultDoc {
   completedAt: Date | null
 }
 
-export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
+export type AiReviewActionType =
+  'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
 
 /** ai-feedback-plan.md §7.1 — audit trail for every AI-assisted reject review, and the source material for §5's few-shot library growth. */
 export interface AiReviewDoc {

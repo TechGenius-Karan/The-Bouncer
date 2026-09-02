@@ -20,6 +20,12 @@ export type AiReviewPuzzleMutation =
       clues: CandidatePuzzle['clues']
       guests: CandidatePuzzle['guests']
       liveDecoys: CandidatePuzzle['liveDecoys']
+      /**
+       * Undefined means "no override" and must be written as an unset, not
+       * skipped — a rewritten board may no longer collide with whatever
+       * produced the puzzle's previous reveal override.
+       */
+      revealRuleId?: string
     }
   | { kind: 'reject' }
 
@@ -129,6 +135,7 @@ export function planAiReviewDispatch(
           clues: result.candidate.clues,
           guests: result.candidate.guests,
           liveDecoys: result.candidate.liveDecoys,
+          revealRuleId: result.candidate.revealRuleId,
         },
         ruleOverride: null,
         stillPending: true,
@@ -138,7 +145,13 @@ export function planAiReviewDispatch(
       // Option A: the AI authored the replacement words to address specific
       // content feedback; validateAuthoredPuzzle gates them hard, and a
       // failed rewrite falls back to a plain reject so the click resolves.
-      const candidate = validateAuthoredPuzzle(puzzle, decision.clues, decision.guests, rules, wordBank)
+      const candidate = validateAuthoredPuzzle(
+        puzzle,
+        decision.clues,
+        decision.guests,
+        rules,
+        wordBank
+      )
       if (!candidate) return reject()
       return {
         puzzleMutation: {
@@ -146,6 +159,7 @@ export function planAiReviewDispatch(
           clues: candidate.clues,
           guests: candidate.guests,
           liveDecoys: candidate.liveDecoys,
+          revealRuleId: candidate.revealRuleId,
         },
         ruleOverride: null,
         stillPending: true,

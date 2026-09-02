@@ -11,7 +11,7 @@ import type { GetRoundResponse } from './_shared/api'
 import { getCollections } from './_shared/db'
 import { isValidPuzzleDateString, resolvePuzzleDateString } from './_shared/puzzleDate'
 import { jsonResponse } from './_shared/respond'
-import { buildPool, resolveClueWords } from './_shared/roundView'
+import { buildPool, resolveClueWords, resolveRuleText } from './_shared/roundView'
 import type { PuzzleDoc, ResultDoc } from './_shared/types'
 
 // Lets us simulate a different "today" to manually walk through a
@@ -41,7 +41,7 @@ export default async (req: Request): Promise<Response> => {
   const resultId = url.searchParams.get('resultId')
   const today = resolveToday(url)
 
-  const { puzzles, results, rules } = await getCollections()
+  const { puzzles, results } = await getCollections()
 
   let result: ResultDoc | null = null
   let puzzle: PuzzleDoc | null = null
@@ -80,8 +80,7 @@ export default async (req: Request): Promise<Response> => {
 
   let ruleText: string | null = null
   if (result.roundComplete) {
-    const rule = await rules.findOne({ _id: puzzle.ruleId })
-    ruleText = rule?.descriptionTemplate ?? null
+    ruleText = await resolveRuleText(puzzle)
   }
 
   const [clues, pool] = await Promise.all([resolveClueWords(puzzle), buildPool(puzzle, result)])

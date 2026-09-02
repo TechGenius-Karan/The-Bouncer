@@ -45,6 +45,7 @@ async function main() {
     difficultyTier: candidate.difficultyTier,
     ruleId: candidate.ruleId,
     ...(candidate.templateId ? { templateId: candidate.templateId } : {}),
+    ...(candidate.revealRuleId ? { revealRuleId: candidate.revealRuleId } : {}),
     status: 'pending_approval',
     date: null,
     clues: candidate.clues,

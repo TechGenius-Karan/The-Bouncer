@@ -42,6 +42,13 @@ export interface CandidatePuzzle {
   ruleId: string
   /** The rule's template family ("hidden-word", "ends-with"), when it came from one — lets scheduling space out a kind of puzzle, not just a specific rule. */
   templateId?: string
+  /**
+   * Set only when the validator accepted a collision and some *other* rule
+   * describes this board better than the one that generated it (see
+   * rules/ruleSimilarity.ts). The reveal reads this; everything else —
+   * cooldown, scheduling spacing, reject stats — keeps reading `ruleId`.
+   */
+  revealRuleId?: string
   difficultyTier: DifficultyTier
   knobValues: KnobValues
   status: 'pending_approval'

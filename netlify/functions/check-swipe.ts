@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb'
 import type { CheckSwipeRequest, CheckSwipeResponse } from './_shared/api'
 import { getCollections } from './_shared/db'
 import { jsonResponse } from './_shared/respond'
-import { buildPool } from './_shared/roundView'
+import { buildPool, resolveRuleText } from './_shared/roundView'
 import type { ResultDoc } from './_shared/types'
 
 export default async (req: Request): Promise<Response> => {
@@ -32,7 +32,7 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'Missing or invalid fields' }, 400)
   }
 
-  const { puzzles, results, rules } = await getCollections()
+  const { puzzles, results } = await getCollections()
 
   const result = await results.findOne({ _id: new ObjectId(resultId) })
   if (!result) {
@@ -64,15 +64,21 @@ export default async (req: Request): Promise<Response> => {
 
   await results.updateOne(
     { _id: result._id },
-    { $set: { placements, livesRemaining, roundComplete, score, completedAt } },
+    { $set: { placements, livesRemaining, roundComplete, score, completedAt } }
   )
 
   let ruleText: string | null = null
   let poolReveal: CheckSwipeResponse['poolReveal']
   if (roundComplete) {
-    const rule = await rules.findOne({ _id: puzzle.ruleId })
-    ruleText = rule?.descriptionTemplate ?? null
-    const updatedResult: ResultDoc = { ...result, placements, livesRemaining, roundComplete, score, completedAt }
+    ruleText = await resolveRuleText(puzzle)
+    const updatedResult: ResultDoc = {
+      ...result,
+      placements,
+      livesRemaining,
+      roundComplete,
+      score,
+      completedAt,
+    }
     poolReveal = await buildPool(puzzle, updatedResult)
   }
 
