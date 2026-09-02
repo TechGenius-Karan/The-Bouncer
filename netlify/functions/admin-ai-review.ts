@@ -10,7 +10,7 @@
 import { ObjectId } from 'mongodb'
 import { RULES } from '../../content-engine/rules'
 import { planAiReviewDispatch } from '../../content-engine/generator/aiReviewDispatch'
-import { shuffle } from '../../content-engine/generator/random'
+import { buildReviewMenus } from '../../content-engine/generator/aiReviewMenu'
 import { buildWordBank } from '../../content-engine/words/wordBank'
 import { requireAdmin } from './_shared/adminAuth'
 import type { AdminAiReviewRequest, AdminAiReviewResponse } from './_shared/adminApi'
@@ -58,35 +58,27 @@ export default async (req: Request): Promise<Response> => {
   const detail = await resolveFullPuzzleDetail(doc)
   const wordBank = buildWordBank()
 
-  // Build the rewrite-puzzle menu of real, correctly-sided words. Shuffled
-  // before slicing so skewed rules still surface their rarer words.
-  //
-  // The puzzle's own words are deliberately INCLUDED. They're valid choices —
-  // the model is asked to return the full word list including everything it's
-  // keeping — and excluding them meant a request like "move that pool word
-  // into the clues" came back as "not in the word bank", which is both wrong
-  // and confusing.
+  // Build the rewrite-puzzle menu of real, correctly-sided words — with the
+  // puzzle's own words and anything the reviewer named pinned in, so a direct
+  // instruction can actually be carried out. See aiReviewMenu.ts.
   const rule = RULES.find((r) => r.id === doc.ruleId)
-  const available = wordBank.filter((w) => !w.safety.blocked)
-  const inWordMenu = rule
-    ? shuffle(available.filter((w) => rule.evaluate(w)))
-        .slice(0, IN_MENU_SIZE)
-        .map((w) => ({
-          word: w.spelling,
-          ...(rule.variantOf?.(w) ? { variant: rule.variantOf(w)! } : {}),
-        }))
-    : []
-  const outWordMenu = rule
-    ? shuffle(available.filter((w) => !rule.evaluate(w)))
-        .slice(0, OUT_MENU_SIZE)
-        .map((w) => w.spelling)
-    : []
+  const { inWordMenu, outWordMenu, pinnedNamed, requestedMissing } = rule
+    ? buildReviewMenus(
+        rule,
+        wordBank,
+        trimmedReason,
+        [...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)],
+        { in: IN_MENU_SIZE, out: OUT_MENU_SIZE }
+      )
+    : { inWordMenu: [], outWordMenu: [], pinnedNamed: [], requestedMissing: [] }
 
   const { decision, rawResponse } = await getAiReviewDecision({
     puzzle: detail,
     reason: trimmedReason,
     inWordMenu,
     outWordMenu,
+    pinnedNamed,
+    requestedMissing,
   })
 
   const plan = planAiReviewDispatch(
@@ -148,10 +140,16 @@ export default async (req: Request): Promise<Response> => {
   }
   await aiReviews.insertOne(reviewDoc)
 
+  // Say so when the board isn't exactly what the AI proposed, rather than
+  // letting a silent swap look like the AI having ignored the reviewer.
+  const altered =
+    plan.puzzleMutation.kind === 'update-content' && plan.puzzleMutation.alteredByValidator
   const response: AdminAiReviewResponse = {
     ok: true,
     action: decision.action,
-    rationale: decision.rationale,
+    rationale: altered
+      ? `${decision.rationale} (One pool word was then swapped by the validator to keep the puzzle solvable.)`
+      : decision.rationale,
     changed,
   }
   return jsonResponse(response)

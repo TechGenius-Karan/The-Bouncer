@@ -15,13 +15,23 @@ describe('buildWordBank', () => {
     expect(ids.size).toBe(bank.length)
   })
 
+  // Collects failures in a plain loop and asserts once, rather than running
+  // four expect() calls per word. At 15,000 words that was ~60,000 assertions
+  // and the test intermittently blew the 5s default timeout — a flake that had
+  // nothing to do with the code under test. Also reports which word is wrong
+  // instead of just which assertion.
   it('fully populates features for every word', () => {
-    for (const word of bank) {
-      expect(word.features.firstLetter).toBeTruthy()
-      expect(word.features.lastLetter).toBeTruthy()
-      expect(word.features.vcPattern).toHaveLength(word.length)
-      expect(word.features.anagramSignature).toHaveLength(word.length)
-    }
+    const broken = bank
+      .filter(
+        (word) =>
+          !word.features.firstLetter ||
+          !word.features.lastLetter ||
+          word.features.vcPattern.length !== word.length ||
+          word.features.anagramSignature.length !== word.length
+      )
+      .map((word) => word.spelling)
+
+    expect(broken).toEqual([])
   })
 
   it('is rich enough to exercise every rule (sanity thresholds from the plan)', () => {

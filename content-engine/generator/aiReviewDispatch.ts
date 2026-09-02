@@ -26,6 +26,13 @@ export type AiReviewPuzzleMutation =
        * produced the puzzle's previous reveal override.
        */
       revealRuleId?: string
+      /**
+       * The validator swapped a word the AI had chosen. Rare (~1-3% of
+       * authored boards) but invisible without this: the reviewer asks for a
+       * change, the AI complies, the board is then quietly adjusted to stay
+       * solvable, and the result reads as the AI having ignored them.
+       */
+      alteredByValidator?: boolean
     }
   | { kind: 'reject' }
 
@@ -145,6 +152,7 @@ export function planAiReviewDispatch(
       // Option A: the AI authored the replacement words to address specific
       // content feedback; validateAuthoredPuzzle gates them hard, and a
       // failed rewrite falls back to a plain reject so the click resolves.
+      const authoredGuests = decision.guests.map((g) => g.word).join()
       const candidate = validateAuthoredPuzzle(
         puzzle,
         decision.clues,
@@ -160,6 +168,7 @@ export function planAiReviewDispatch(
           guests: candidate.guests,
           liveDecoys: candidate.liveDecoys,
           revealRuleId: candidate.revealRuleId,
+          alteredByValidator: candidate.guests.map((g) => g.wordId).join() !== authoredGuests,
         },
         ruleOverride: null,
         stillPending: true,

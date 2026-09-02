@@ -1,5 +1,9 @@
 import { GoogleGenAI, Type } from '@google/genai'
-import { parseAiReviewAction, type AiReviewAction } from '../../../content-engine/generator/aiReviewAction'
+import {
+  parseAiReviewAction,
+  type AiReviewAction,
+} from '../../../content-engine/generator/aiReviewAction'
+import type { MenuWord } from '../../../content-engine/generator/aiReviewMenu'
 import type { AdminPuzzleDetail } from './adminApi'
 
 // ai-feedback-plan.md §4/§7.4: Gemini's free tier (no card) is the pick. The
@@ -48,18 +52,26 @@ const RESPONSE_SCHEMA = {
       enum: ['swap-word', 'rewrite-puzzle', 'adjust-difficulty', 'agree-reject'],
     },
     rationale: { type: Type.STRING, description: 'One short sentence explaining the choice.' },
-    badWordId: { type: Type.STRING, description: 'Only for swap-word: the id of the one bad word.' },
-    newSubtlety: { type: Type.INTEGER, description: 'Only for adjust-difficulty: a better 1-5 rating.' },
-    clues: { type: Type.ARRAY, description: 'Only for rewrite-puzzle: the authored clue words.', items: AUTHORED_WORD_ITEM },
-    guests: { type: Type.ARRAY, description: 'Only for rewrite-puzzle: the authored guest words.', items: AUTHORED_WORD_ITEM },
+    badWordId: {
+      type: Type.STRING,
+      description: 'Only for swap-word: the id of the one bad word.',
+    },
+    newSubtlety: {
+      type: Type.INTEGER,
+      description: 'Only for adjust-difficulty: a better 1-5 rating.',
+    },
+    clues: {
+      type: Type.ARRAY,
+      description: 'Only for rewrite-puzzle: the authored clue words.',
+      items: AUTHORED_WORD_ITEM,
+    },
+    guests: {
+      type: Type.ARRAY,
+      description: 'Only for rewrite-puzzle: the authored guest words.',
+      items: AUTHORED_WORD_ITEM,
+    },
   },
   required: ['action', 'rationale'],
-}
-
-/** A menu word plus, where the rule has variants, why it matches ("listening" -> "ten"). */
-export interface MenuWord {
-  word: string
-  variant?: string
 }
 
 export interface AiReviewInput {
@@ -69,6 +81,15 @@ export interface AiReviewInput {
   inWordMenu: MenuWord[]
   /** rewrite-puzzle menu: real bank words that do NOT satisfy the rule. */
   outWordMenu: string[]
+  /**
+   * Words the reviewer named that genuinely aren't in the bank. Passed in so
+   * the prompt can name them exactly — the model used to infer this from the
+   * menu's absence, which made it report in-bank words as missing whenever the
+   * sample happened to skip them.
+   */
+  requestedMissing?: string[]
+  /** Bank words the reviewer mentioned that are guaranteed present in the menus. */
+  pinnedNamed?: string[]
   /** §5's few-shot library — recent (reason -> action -> outcome) examples, formatted as prose. Optional; omitted until aiReviews has real history to draw from. */
   fewShotExamples?: string
 }
@@ -79,10 +100,23 @@ export interface AiReviewResult {
   rawResponse: string
 }
 
-function buildPrompt({ puzzle, reason, inWordMenu, outWordMenu, fewShotExamples }: AiReviewInput): string {
-  const clueLines = puzzle.clues.map((c) => `  - "${c.word}" (${c.label}, id: ${c.wordId})`).join('\n')
+function buildPrompt({
+  puzzle,
+  reason,
+  inWordMenu,
+  outWordMenu,
+  fewShotExamples,
+  requestedMissing,
+  pinnedNamed,
+}: AiReviewInput): string {
+  const clueLines = puzzle.clues
+    .map((c) => `  - "${c.word}" (${c.label}, id: ${c.wordId})`)
+    .join('\n')
   const guestLines = puzzle.guests
-    .map((g) => `  - "${g.word}" (${g.trueLabel}${g.isTrap ? `, trap: ${g.trapType}` : ''}, id: ${g.wordId})`)
+    .map(
+      (g) =>
+        `  - "${g.word}" (${g.trueLabel}${g.isTrap ? `, trap: ${g.trapType}` : ''}, id: ${g.wordId})`
+    )
     .join('\n')
   const decoyLines =
     puzzle.liveDecoys.length > 0
@@ -106,6 +140,21 @@ function buildPrompt({ puzzle, reason, inWordMenu, outWordMenu, fewShotExamples 
     .sort((a, b) => b[1] - a[1])
     .map(([v, n]) => `${v} (${n} words)`)
     .join(', ')
+
+  // Both notes are statements of fact the caller verified against the whole
+  // bank, not guesses. Before this the model inferred "not in the word bank"
+  // from a word's absence in a 100-word random sample of what could be 1,000+
+  // matching words, so it regularly told reviewers that a perfectly real word
+  // didn't exist — the "I asked for X and it refused" complaint.
+  const quote = (words: string[]) => words.map((w) => `"${w}"`).join(', ')
+  const missingNote =
+    requestedMissing && requestedMissing.length > 0
+      ? `\n\nChecked against the full word bank: ${quote(requestedMissing)} ${requestedMissing.length === 1 ? 'is' : 'are'} genuinely not in it, so that part of the request cannot be met.`
+      : ''
+  const pinnedNote =
+    pinnedNamed && pinnedNamed.length > 0
+      ? `\n\nThese words the reviewer mentioned ARE in the bank and are guaranteed to appear in the menus below: ${quote(pinnedNamed)}. Do not report any of them as missing — find them in the lists.`
+      : ''
 
   return `You are reviewing a rejected puzzle from "The Bouncer," a daily word-sorting game. Players see
 IN/OUT clue words for a hidden rule, then sort a pool of guest words against that same rule with
@@ -141,10 +190,10 @@ feedback did not mention — a reviewer who asked for one change and got a
 completely different puzzle cannot tell whether you understood them.
 
 If the reviewer asks for a SPECIFIC word that does not appear in the menus below,
-you cannot use it — the word is not in the game's word bank and any answer
-containing it will be discarded. Do not silently substitute a different word as if
-you had complied: name the missing word in your rationale so the reviewer knows
-why their request could not be met, and make only the rest of the change.
+you cannot use it — any answer containing it will be discarded. Do not silently
+substitute a different word as if you had complied: name it in your rationale so
+the reviewer knows why their request could not be met, and make only the rest of
+the change.${missingNote}${pinnedNote}
 
 REWRITE-PUZZLE INSTRUCTIONS (only if you choose that action):
 Give the puzzle's FULL word list as it should end up — including every word you are
@@ -180,7 +229,10 @@ export async function getAiReviewDecision(input: AiReviewInput): Promise<AiRevie
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
     return {
-      decision: { action: 'agree-reject', rationale: 'AI review unavailable — GEMINI_API_KEY is not configured' },
+      decision: {
+        action: 'agree-reject',
+        rationale: 'AI review unavailable — GEMINI_API_KEY is not configured',
+      },
       rawResponse: '',
     }
   }
@@ -203,7 +255,10 @@ export async function getAiReviewDecision(input: AiReviewInput): Promise<AiRevie
 
     const text = response.text ?? ''
     if (!text) {
-      return { decision: { action: 'agree-reject', rationale: 'AI review unavailable — empty response' }, rawResponse: '' }
+      return {
+        decision: { action: 'agree-reject', rationale: 'AI review unavailable — empty response' },
+        rawResponse: '',
+      }
     }
 
     let parsed: unknown
@@ -211,7 +266,10 @@ export async function getAiReviewDecision(input: AiReviewInput): Promise<AiRevie
       parsed = JSON.parse(text)
     } catch {
       return {
-        decision: { action: 'agree-reject', rationale: 'AI review unavailable — response was not valid JSON' },
+        decision: {
+          action: 'agree-reject',
+          rationale: 'AI review unavailable — response was not valid JSON',
+        },
         rawResponse: text,
       }
     }
@@ -219,6 +277,9 @@ export async function getAiReviewDecision(input: AiReviewInput): Promise<AiRevie
     return { decision: parseAiReviewAction(parsed, { wordIds }), rawResponse: text }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return { decision: { action: 'agree-reject', rationale: `AI review unavailable — ${message}` }, rawResponse: '' }
+    return {
+      decision: { action: 'agree-reject', rationale: `AI review unavailable — ${message}` },
+      rawResponse: '',
+    }
   }
 }
