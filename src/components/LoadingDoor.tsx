@@ -28,6 +28,12 @@ export function LoadingDoor({ ready, onDone }: Props) {
   readyRef.current = ready
   const onDoneRef = useRef(onDone)
   onDoneRef.current = onDone
+  const openTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    const t = openTimers.current
+    return () => t.forEach(clearTimeout)
+  }, [])
 
   // Progress climbs on a fixed ~3.5s pace but is capped just short of 100
   // until the real fetch resolves — the door can't open on fake data.
@@ -39,25 +45,25 @@ export function LoadingDoor({ ready, onDone }: Props) {
       const e = Math.min(1, (performance.now() - t0) / MIN_DURATION_MS)
       const p = readyRef.current ? curve(e) : Math.min(curve(e), HOLD_PROGRESS)
       setProgress(p)
-      if (p >= 100) setPhase('open')
-      else raf = requestAnimationFrame(tick)
+      if (p >= 100) {
+        setPhase('open')
+        // Scheduled here, once, rather than in a `phase`-watching effect:
+        // that pattern re-runs (and tears down) as soon as setPhase('through')
+        // below flips `phase`, cancelling the handoff timer before it fires.
+        openTimers.current.push(
+          setTimeout(() => setPhase('through'), 320),
+          setTimeout(() => {
+            setPhase('handoff')
+            onDoneRef.current()
+          }, 1120),
+        )
+      } else {
+        raf = requestAnimationFrame(tick)
+      }
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [prefersReducedMotion])
-
-  useEffect(() => {
-    if (prefersReducedMotion || phase !== 'open') return
-    const throughTimer = setTimeout(() => setPhase('through'), 320)
-    const handoffTimer = setTimeout(() => {
-      setPhase('handoff')
-      onDoneRef.current()
-    }, 1120)
-    return () => {
-      clearTimeout(throughTimer)
-      clearTimeout(handoffTimer)
-    }
-  }, [phase, prefersReducedMotion])
 
   useEffect(() => {
     if (!prefersReducedMotion || !ready) return
