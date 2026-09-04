@@ -7,7 +7,7 @@ export function LivesDots({ lives, total = 3 }: Props) {
   return (
     <div className="flex items-center gap-2">
       <div className="font-sans text-xs font-semibold tracking-wider text-ink-soft">
-        MISSES LEFT
+        CALLS LEFT
       </div>
       <div className="flex gap-1.5">
         {Array.from({ length: total }, (_, n) => (

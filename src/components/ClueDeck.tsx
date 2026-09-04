@@ -7,7 +7,7 @@ export function ClueDeck({ clueIn, clueOut }: Props) {
   return (
     <div className="mx-5 flex flex-col gap-3 rounded-bin border border-line bg-slip p-4">
       <div className="font-sans text-[11px] font-semibold tracking-wider text-ink-soft">
-        ALREADY FILED — YOUR CLUES
+        THE LIST SO FAR
       </div>
       <ClueRow label="● IN" labelColor="text-bin-in" words={clueIn} chipBg="bg-bin-in-chip" chipText="text-bin-in-text" />
       <div className="h-px bg-skip-chip" />

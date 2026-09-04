@@ -44,6 +44,9 @@ export default function App() {
               setResult(r)
               setScreen('reveal')
             }}
+            onHowToPlay={() => setShowHowTo(true)}
+            onShowStats={() => setShowStats(true)}
+            onShowSettings={() => setShowSettings(true)}
           />
         )}
 
