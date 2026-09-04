@@ -6,8 +6,51 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="The Bouncer — daily word puzzle" />
+
+    <!-- Search + social. The title says what the game IS, not just its name:
+         "The Bouncer" alone competes with films and nightclub-job listings. -->
+    <title>The Bouncer — Daily Word Puzzle Game</title>
+    <meta
+      name="description"
+      content="A free daily word puzzle. Study the guest list, work out the hidden rule, then sort each word IN or OUT. Three lives, one fresh puzzle every day."
+    />
+    <link rel="canonical" href="https://the-bouncer.netlify.app/" />
     <meta name="theme-color" content="#F1E7D5" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="The Bouncer" />
+    <meta property="og:title" content="The Bouncer — Daily Word Puzzle Game" />
+    <meta
+      property="og:description"
+      content="Work out the hidden rule from the guest list, then sort each word IN or OUT. Three lives, one fresh puzzle every day."
+    />
+    <meta property="og:url" content="https://the-bouncer.netlify.app/" />
+    <meta property="og:image" content="https://the-bouncer.netlify.app/pwa-512x512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="The Bouncer — Daily Word Puzzle Game" />
+    <meta
+      name="twitter:description"
+      content="Work out the hidden rule from the guest list, then sort each word IN or OUT. Three lives, one fresh puzzle every day."
+    />
+    <meta name="twitter:image" content="https://the-bouncer.netlify.app/pwa-512x512.png" />
+
+    <!-- Structured data: lets Google show this as a game rather than guessing
+         from prose. Kept in sync by hand with the title/description above. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "The Bouncer",
+        "url": "https://the-bouncer.netlify.app/",
+        "applicationCategory": "GameApplication",
+        "genre": "Word puzzle",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "A free daily word puzzle. Study the guest list, work out the hidden rule, then sort each word IN or OUT. Three lives, one fresh puzzle every day.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+
     <!-- Dark mode is shelved for now (not needed yet) — kept commented out,
          not deleted, so it's a quick re-enable later. See src/theme.ts,
          SettingsModal.tsx, AdminApp.tsx, AdminSchedulePage.tsx for the rest.
@@ -24,7 +67,6 @@
       })()
     </script>
     -->
-    <title>The Bouncer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -33,7 +75,65 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      The markup inside #root is the ONLY content a crawler that doesn't run
+      JavaScript ever sees. This is a client-rendered SPA, so without it the
+      whole document is an empty div — nothing to index, and no reason to rank.
+      React clears the container on mount, so a player sees it only for the
+      moment before the app takes over. It is real, visible content, not a
+      hidden crawler-only block: that would be cloaking.
+
+      Keep it in step with the title/description/JSON-LD above when the copy
+      changes. Inline styles because Tailwind arrives with the JS bundle and
+      this has to stand on its own before any of that loads.
+    -->
+    <div id="root">
+      <main
+        style="
+          max-width: 34rem;
+          margin: 0 auto;
+          padding: 3rem 1.5rem;
+          font-family:
+            'Instrument Sans',
+            system-ui,
+            -apple-system,
+            sans-serif;
+          color: #2b2119;
+          line-height: 1.6;
+        "
+      >
+        <h1
+          style="
+            font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+            font-size: 2rem;
+            margin: 0 0 0.5rem;
+          "
+        >
+          The Bouncer
+        </h1>
+        <p style="margin: 0 0 1.5rem; font-size: 1.05rem">
+          A free daily word puzzle. Every word is a guest. Only some of them get in — your job is to
+          work out why.
+        </p>
+
+        <h2
+          style="
+            font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem;
+          "
+        >
+          How to play
+        </h2>
+        <ol style="margin: 0 0 1.5rem; padding-left: 1.25rem">
+          <li>Study the guest list: a few words already sorted IN, a few sorted OUT.</li>
+          <li>Work out the hidden rule that separates them.</li>
+          <li>Sort each new guest IN or OUT, one at a time.</li>
+          <li>You have three lives. Three wrong calls and the night is over.</li>
+        </ol>
+        <p style="margin: 0">A fresh puzzle every day, with a harder one on Saturdays.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,0 +1,16 @@
+# https://the-bouncer.netlify.app/
+
+User-agent: *
+Allow: /
+
+# Reviewer-only screens. Access is gated server-side (adminAuth.ts) regardless,
+# but there is nothing here worth crawling and nothing that should ever appear
+# in search results.
+Disallow: /admin
+Disallow: /admin/
+
+# The API answers per-round game state, not pages. Crawling it would also leak
+# puzzle data into caches.
+Disallow: /api/
+
+Sitemap: https://the-bouncer.netlify.app/sitemap.xml
