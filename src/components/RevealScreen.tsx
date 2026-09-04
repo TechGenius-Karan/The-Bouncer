@@ -9,15 +9,10 @@ interface Props {
 }
 
 function recapFor(card: CardState) {
-  const status = card.result === 'correct' ? 'correct' : card.result === 'wrong' ? 'wrong' : 'missed'
+  const status = card.result === 'correct' ? 'correct' : 'missed'
   const isIn = card.trueLabel === 'in'
-  const mark = status === 'correct' ? (isIn ? '●' : '▲') : status === 'wrong' ? '✕' : '·'
-  const note =
-    status === 'correct'
-      ? `first try · ${isIn ? 'in' : 'out'}`
-      : status === 'wrong'
-        ? `missed · was ${isIn ? 'in' : 'out'}`
-        : `not reached · was ${isIn ? 'in' : 'out'}`
+  const mark = status === 'correct' ? (isIn ? '●' : '▲') : '✕'
+  const note = status === 'correct' ? `first try · ${isIn ? 'in' : 'out'}` : `missed · was ${isIn ? 'in' : 'out'}`
   return { status, mark, note }
 }
 
@@ -74,13 +69,12 @@ export function RevealScreen({ result, onHome }: Props) {
         <div className="flex flex-col gap-2">
           {cards.map((card) => {
             const { status, mark, note } = recapFor(card)
-            const rowBg =
-              status === 'wrong' ? 'bg-miss-tint border-miss-border' : status === 'missed' ? 'bg-skip-bg border-skip border-dashed' : 'bg-slip border-line'
+            const rowBg = status === 'missed' ? 'bg-miss-tint border-miss-border' : 'bg-slip border-line'
             const markBg =
-              status === 'correct' ? (card.trueLabel === 'in' ? 'bg-bin-in' : 'bg-bin-out') : status === 'wrong' ? 'bg-miss' : 'bg-skip'
-            const markText = status === 'correct' ? 'text-ink' : status === 'wrong' ? 'text-white' : 'text-ink-soft'
-            const textColor = status === 'wrong' ? 'text-miss-text' : status === 'missed' ? 'text-skip-faint' : 'text-ink'
-            const noteColor = status === 'wrong' ? 'text-miss-text/80' : status === 'missed' ? 'text-skip-faint' : 'text-ink-soft'
+              status === 'correct' ? (card.trueLabel === 'in' ? 'bg-bin-in' : 'bg-bin-out') : 'bg-miss'
+            const markText = 'text-white'
+            const textColor = status === 'missed' ? 'text-miss-text' : 'text-ink'
+            const noteColor = status === 'missed' ? 'text-miss-text/80' : 'text-ink-soft'
             return (
               <div
                 key={card.id}

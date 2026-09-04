@@ -11,17 +11,16 @@ interface Props {
 function squareFor(card: CardState) {
   if (card.result === 'correct') {
     return card.trueLabel === 'in'
-      ? { bg: 'bg-bin-in', text: 'text-ink', emoji: '🟩' }
-      : { bg: 'bg-bin-out', text: 'text-ink', emoji: '🟧' }
+      ? { bg: 'bg-bin-in', text: 'text-white', emoji: '🟩' }
+      : { bg: 'bg-bin-out', text: 'text-white', emoji: '🟩' }
   }
-  if (card.result === 'wrong') return { bg: 'bg-miss', text: 'text-white', emoji: '🟥' }
-  return { bg: 'bg-skip-chip', text: 'text-ink', emoji: '⬜' }
+  return { bg: 'bg-miss', text: 'text-white', emoji: '🟥' }
 }
 
 export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
   const [copied, setCopied] = useState(false)
 
-  const shareText = `THE BOUNCER No. ${puzzleNumber} · ${score}/6\n${cards.map((c) => squareFor(c).emoji).join('')}`
+  const shareText = `THE BOUNCER No. ${puzzleNumber} - ${score}/6\n${cards.map((c) => squareFor(c).emoji).join('')}`
 
   const copy = async () => {
     try {
@@ -48,7 +47,9 @@ export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
               THE BOUNCER
             </div>
             <div className="font-display text-3xl font-extrabold tracking-tight">
-              No. {puzzleNumber} &nbsp;·&nbsp; {score}/6
+              No. {puzzleNumber}
+              <span className="ml-2 mr-3 align-middle text-4xl text-ink-soft">-</span>
+              <span className="tracking-wide text-ink-soft">{score}/6</span>
             </div>
           </div>
           <button
@@ -62,8 +63,7 @@ export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
         <div className="flex gap-2.5">
           {cards.map((card) => {
             const sq = squareFor(card)
-            const mark =
-              card.result === 'correct' ? (card.trueLabel === 'in' ? '●' : '▲') : card.result === 'wrong' ? '✕' : '·'
+            const mark = card.result === 'correct' ? (card.trueLabel === 'in' ? '●' : '▲') : '✕'
             return (
               <div
                 key={card.id}
@@ -75,19 +75,13 @@ export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
           })}
         </div>
 
-        <div className="flex flex-wrap gap-3.5 font-sans text-[13px] text-ink-soft">
-          <Legend color="bg-bin-in" label="in, first try" />
-          <Legend color="bg-bin-out" label="out, first try" />
-          <Legend color="bg-miss" label="missed" />
-          <Legend color="bg-skip-chip" label="not reached" />
+        <div className="flex flex-wrap gap-4 font-sans text-base font-medium text-ink-soft">
+          <Legend color="bg-bin-in" label="In" />
+          <Legend color="bg-bin-out" label="Out" />
+          <Legend color="bg-miss" label="Missed" />
         </div>
 
         <div className="h-px bg-skip-chip" />
-
-        <div className="font-sans text-[13px] leading-relaxed text-skip-text">
-          Squares only — the rule and the words never travel with the card, so nobody gets
-          spoiled. Every colour is paired with a shape for colourblind readers.
-        </div>
 
         <button
           onClick={copy}
@@ -103,7 +97,7 @@ export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`h-3.5 w-3.5 rounded ${color}`} />
+      <div className={`h-4 w-4 rounded ${color}`} />
       {label}
     </div>
   )
