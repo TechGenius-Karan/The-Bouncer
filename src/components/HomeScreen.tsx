@@ -75,14 +75,14 @@ export function HomeScreen({ onPlay, onHowToPlay, onShowStats, onShowSettings }:
         </div>
       </div>
 
-      <div className="flex items-end justify-center gap-3">
-        <div className="flex flex-1 flex-col items-center gap-[9px]">
+      <div className="flex items-end justify-center gap-[34px]">
+        <div className="flex flex-col items-center gap-[9px]">
           <DoorIn word="TOENAIL" />
           <div className="font-display text-[14px] font-extrabold tracking-[0.12em] text-bin-in-text">
             WALKS IN
           </div>
         </div>
-        <div className="flex flex-1 flex-col items-center gap-[9px]">
+        <div className="flex flex-col items-center gap-[9px]">
           <DoorOut word="WALNUT" />
           <div className="font-display text-[14px] font-extrabold tracking-[0.12em] text-door-warn">
             TURNED AWAY
@@ -158,7 +158,7 @@ const SHARP_GEAR_PATH = (() => {
   return `${outline} ${hole}`
 })()
 
-function SharpGear({ size }: { size: number }) {
+export function SharpGear({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd">
       <path d={SHARP_GEAR_PATH} />

@@ -37,12 +37,14 @@
   --color-skip-faint: 111 100 70;
   --color-door-in-frame: 233 242 238;
   --color-door-in-threshold: 211 231 224;
-  --color-door-mark-1: 185 168 140;
-  --color-door-mark-2: 203 189 162;
   --color-door-mark-3: 239 184 119;
   --color-door-warn: 185 112 28;
   --color-door-warn-text: 154 91 18;
   --color-door-track: 221 209 184;
+  --color-door-face: 180 113 44;
+  --color-door-panel: 165 100 31;
+  --color-door-knob: 242 194 48;
+  --color-door-open-bg: 239 230 211;
 
   --shadow-card: 0 5px 0 -1px #e9dec9;
   --shadow-card-hover: 0 14px 22px -10px rgba(80, 60, 30, 0.5);
@@ -85,12 +87,14 @@
   --color-skip-faint: 140 130 113;
   --color-door-in-frame: 36 51 46;
   --color-door-in-threshold: 28 46 41;
-  --color-door-mark-1: 107 97 80;
-  --color-door-mark-2: 122 110 88;
   --color-door-mark-3: 201 139 74;
   --color-door-warn: 217 154 78;
   --color-door-warn-text: 239 196 140;
   --color-door-track: 127 121 106;
+  --color-door-face: 150 96 40;
+  --color-door-panel: 132 82 28;
+  --color-door-knob: 217 173 55;
+  --color-door-open-bg: 47 40 32;
 
   --shadow-card: 0 5px 0 -1px #100d09;
   --shadow-card-hover: 0 14px 22px -10px rgba(0, 0, 0, 0.6);

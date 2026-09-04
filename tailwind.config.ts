@@ -49,19 +49,22 @@ const config: Config = {
           text: withOpacity('--color-skip-text'),
           faint: withOpacity('--color-skip-faint'),
         },
-        // Colors specific to the home screen's door/notice-board
-        // illustrations (DoorIllustration.tsx) — kept separate from the
+        // Colors specific to the door illustrations — kept separate from the
         // bin/ink tokens above since they're one-off illustration accents,
-        // not reused UI state colors.
+        // not reused UI state colors. `in-frame`/`in-threshold`/`track` are
+        // the loading-screen door animation's (LoadingDoor.tsx); the rest
+        // are the home screen's brown-door illustration (DoorIllustration.tsx).
         door: {
           'in-frame': withOpacity('--color-door-in-frame'),
           'in-threshold': withOpacity('--color-door-in-threshold'),
-          'mark-1': withOpacity('--color-door-mark-1'),
-          'mark-2': withOpacity('--color-door-mark-2'),
           'mark-3': withOpacity('--color-door-mark-3'),
           warn: withOpacity('--color-door-warn'),
           'warn-text': withOpacity('--color-door-warn-text'),
           track: withOpacity('--color-door-track'),
+          face: withOpacity('--color-door-face'),
+          panel: withOpacity('--color-door-panel'),
+          knob: withOpacity('--color-door-knob'),
+          'open-bg': withOpacity('--color-door-open-bg'),
         },
       },
       borderRadius: {
