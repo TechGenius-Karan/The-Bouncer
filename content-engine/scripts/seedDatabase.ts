@@ -17,7 +17,23 @@ import { RULES } from '../rules'
 import { buildWordBank } from '../words/wordBank'
 
 async function main() {
-  const { words, rules } = await getCollections()
+  const { words, rules, puzzles, results } = await getCollections()
+
+  // Indexes for the two queries on the player hot path. Both were doing full
+  // collection scans, which is invisible at today's size and is exactly the
+  // kind of thing that degrades quietly as the game gets used.
+  //
+  // - puzzles {status, date}: get-round's "today's puzzle" lookup. There is
+  //   already a {date} index, but it's a PARTIAL one (unique, filtered on
+  //   $type string) and MongoDB's planner won't consider a partial index
+  //   unless the query provably matches its filter — so get-round was
+  //   scanning every puzzle on every page load.
+  // - results {puzzleId, roundComplete}: get-crack-rate counts twice over
+  //   this on every completed round, and `results` grows with every game ever
+  //   played. This is the one that would actually hurt later.
+  console.log('Ensuring indexes...')
+  await puzzles.createIndex({ status: 1, date: 1 })
+  await results.createIndex({ puzzleId: 1, roundComplete: 1 })
 
   const wordBank = buildWordBank()
   const wordDocs: WordDoc[] = wordBank.map((w) => ({
@@ -42,7 +58,7 @@ async function main() {
   await words.bulkWrite(
     wordDocs.map((doc) => ({
       replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true },
-    })),
+    }))
   )
 
   console.log(`Upserting ${ruleDocs.length} rules...`)
@@ -53,7 +69,7 @@ async function main() {
   await rules.bulkWrite(
     ruleDocs.map((doc) => ({
       updateOne: { filter: { _id: doc._id }, update: { $set: doc }, upsert: true },
-    })),
+    }))
   )
 
   console.log('Done. Run "npm run content:queue-puzzles" next to generate puzzles for review.')

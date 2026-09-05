@@ -19,15 +19,26 @@ const uri: string = (() => {
 // response") while already-warm instances kept working fine, plus Atlas
 // "approaching connection limit" alerts.
 const CLIENT_OPTIONS = {
-  // 5 per instance. A player request needs 1-2 connections (the queries in
-  // get-round/check-swipe run in sequence), so this is already generous for
-  // the hot path. The admin list endpoints fan out harder — admin-list-pending
-  // maps resolveFullPuzzleDetail over every pending puzzle, 2 queries each, so
-  // ~36 concurrent queries for 18 puzzles — but those queue rather than fail,
-  // and a few hundred milliseconds on a reviewer-only screen is a good trade
-  // for headroom on a 500-connection ceiling shared with local dev and CLI
-  // scripts. Netlify scales by adding containers, not by growing this pool.
-  maxPoolSize: 5,
+  // Sized for the ADMIN fan-out, not the game.
+  //
+  // Netlify Functions (Lambda) serve one request per container, so the only
+  // concurrency inside a single player request is Promise.all — two queries in
+  // get-round, none in check-swipe. Ten simultaneous players means ten
+  // containers with their own pools, not ten connections from this one. So
+  // raising this number cannot make the game faster; the player path can never
+  // use more than about two.
+  //
+  // What it does help is admin-list-pending, which maps
+  // resolveFullPuzzleDetail over every pending puzzle at 2 queries each — ~36
+  // concurrent queries for 18 puzzles. At 20 that resolves in two rounds
+  // instead of eight.
+  //
+  // Ceiling check: ~14 warm function-containers were observed holding 135
+  // connections at maxPoolSize 10, so 20 lands near 270 of Atlas M0's 500 —
+  // leaving real headroom for local dev, CLI scripts and the Atlas UI, which
+  // all draw from the same 500. If connections creep toward the limit again,
+  // this is the number to lower.
+  maxPoolSize: 20,
   // Nothing here is latency-critical enough to justify holding sockets open
   // on an idle instance that Netlify may keep around for a long while.
   minPoolSize: 0,
