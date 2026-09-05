@@ -2,8 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Raster icons first, deliberately. Google's supported favicon formats for
+         Search are BMP, GIF, ICO, PNG, JPEG, PPM and TIFF — SVG is NOT among
+         them, so leading with favicon.svg gave Googlebot-Image nothing it could
+         use and left the default globe next to our result. Google also asks for
+         "larger than 48x48", which the .ico is exactly at, so a 192px PNG leads.
+         Browsers still pick the SVG where they prefer it; the artwork is
+         identical either way. -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
