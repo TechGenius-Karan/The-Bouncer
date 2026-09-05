@@ -20,7 +20,7 @@ function squareFor(card: CardState) {
 export function ShareCardModal({ puzzleNumber, cards, score, onClose }: Props) {
   const [copied, setCopied] = useState(false)
 
-  const shareText = `THE BOUNCER No. ${puzzleNumber} - ${score}/6\n${cards.map((c) => squareFor(c).emoji).join('')}`
+  const shareText = `THE BOUNCER No. ${puzzleNumber} - ${score}/6\nhttps://the-bouncer.netlify.app/\n\n${cards.map((c) => squareFor(c).emoji).join('')}`
 
   const copy = async () => {
     try {
