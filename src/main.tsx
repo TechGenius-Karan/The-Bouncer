@@ -14,12 +14,16 @@ window.addEventListener('unhandledrejection', (e) => reportError('unhandledrejec
 // server-side (adminAuth.ts, checked on every admin function call), not
 // this client-side fork.
 const AdminApp = lazy(() => import('./admin/AdminApp').then((m) => ({ default: m.AdminApp })))
+const AdminApprovedPage = lazy(() =>
+  import('./admin/AdminApprovedPage').then((m) => ({ default: m.AdminApprovedPage }))
+)
 const AdminSchedulePage = lazy(() =>
-  import('./admin/AdminSchedulePage').then((m) => ({ default: m.AdminSchedulePage })),
+  import('./admin/AdminSchedulePage').then((m) => ({ default: m.AdminSchedulePage }))
 )
 const pathname = window.location.pathname
 const isSchedule = pathname.startsWith('/admin/schedule')
-const isAdmin = !isSchedule && pathname.startsWith('/admin')
+const isApproved = !isSchedule && pathname.startsWith('/admin/approved')
+const isAdmin = !isSchedule && !isApproved && pathname.startsWith('/admin')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -27,6 +31,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       {isSchedule ? (
         <Suspense fallback={null}>
           <AdminSchedulePage />
+        </Suspense>
+      ) : isApproved ? (
+        <Suspense fallback={null}>
+          <AdminApprovedPage />
         </Suspense>
       ) : isAdmin ? (
         <Suspense fallback={null}>
@@ -36,5 +44,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <App />
       )}
     </ErrorBoundary>
-  </React.StrictMode>,
+  </React.StrictMode>
 )

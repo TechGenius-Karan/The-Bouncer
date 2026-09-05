@@ -1,17 +1,73 @@
 import { useState } from 'react'
 import { PuzzleCardBody } from './PuzzleCardBody'
-import type { AdminListApprovedResponse, AdminPuzzleDetail } from './types'
+import type {
+  AdminListApprovedResponse,
+  AdminListScheduledResponse,
+  AdminPuzzleDetail,
+} from './types'
 
 interface Props {
   data: AdminListApprovedResponse
+  scheduled: AdminListScheduledResponse
   onSchedule: (puzzleId: string, date: string) => Promise<void>
   onUnapprove: (puzzleId: string) => Promise<void>
 }
 
-export function ApprovedPanel({ data, onSchedule, onUnapprove }: Props) {
+const OPEN_DATES_SHOWN = 7
+
+function addDays(dateString: string, days: number): string {
+  const d = new Date(`${dateString}T00:00:00.000Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatShortDate(dateString: string): string {
+  return new Date(`${dateString}T00:00:00.000Z`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+}
+
+// The first gap in coverage is the urgent one — so scanning starts right
+// after the earliest scheduled date, not the latest, and skips over any
+// dates that already have a puzzle (e.g. a scheduled date past a gap).
+function nextOpenDates(scheduled: AdminListScheduledResponse, count: number): string[] {
+  const scheduledSet = new Set(scheduled.puzzles.map((p) => p.date))
+  let cursor =
+    scheduled.puzzles.length > 0 ? addDays(scheduled.puzzles[0].date, 1) : scheduled.today
+  const openDates: string[] = []
+  while (openDates.length < count) {
+    if (!scheduledSet.has(cursor)) openDates.push(cursor)
+    cursor = addDays(cursor, 1)
+  }
+  return openDates
+}
+
+export function ApprovedPanel({ data, scheduled, onSchedule, onUnapprove }: Props) {
+  const openDates = nextOpenDates(scheduled, OPEN_DATES_SHOWN)
+
   return (
     <div className="flex flex-col gap-4 rounded-bin border border-line bg-slip p-5">
       <div className="font-display text-lg font-bold">Approved, awaiting a date</div>
+
+      <div className="flex flex-col gap-2 rounded-card border border-line bg-screen p-3">
+        <div className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          Next open dates
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {openDates.map((date) => (
+            <span
+              key={date}
+              className={`rounded-card px-2.5 py-1 font-sans text-sm ${
+                isSaturday(date) ? 'bg-amber-100 text-amber-900' : 'bg-slip text-ink'
+              }`}
+            >
+              {formatShortDate(date)}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {data.puzzles.length === 0 && (
         <div className="font-sans text-sm text-ink-soft">Nothing approved and unscheduled.</div>
@@ -19,7 +75,12 @@ export function ApprovedPanel({ data, onSchedule, onUnapprove }: Props) {
 
       <div className="flex flex-col gap-3">
         {data.puzzles.map((puzzle) => (
-          <ApprovedRow key={puzzle.puzzleId} puzzle={puzzle} onSchedule={onSchedule} onUnapprove={onUnapprove} />
+          <ApprovedRow
+            key={puzzle.puzzleId}
+            puzzle={puzzle}
+            onSchedule={onSchedule}
+            onUnapprove={onUnapprove}
+          />
         ))}
       </div>
     </div>
@@ -79,7 +140,9 @@ function ApprovedRow({
     <div className="flex flex-col gap-3 rounded-card border border-line bg-screen p-4">
       <div className="flex items-baseline justify-between">
         <div className="font-display text-base font-bold capitalize">{puzzle.difficultyTier}</div>
-        <span className="font-sans text-xs uppercase tracking-wide text-ink-soft">{puzzle.ruleId}</span>
+        <span className="font-sans text-xs uppercase tracking-wide text-ink-soft">
+          {puzzle.ruleId}
+        </span>
       </div>
 
       <PuzzleCardBody puzzle={puzzle} />

@@ -169,6 +169,9 @@ export function AdminApp() {
               {darkMode ? 'Light mode' : 'Dark mode'}
             </button>
             */}
+            <a href="/admin/approved" className="font-sans text-sm text-ink-soft underline">
+              Approved
+            </a>
             <a href="/admin/schedule" className="font-sans text-sm text-ink-soft underline">
               Schedule
             </a>

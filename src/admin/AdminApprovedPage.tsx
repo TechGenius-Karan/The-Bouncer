@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   clearStoredCode,
+  listApproved,
   listScheduled,
   loadStoredCode,
   login,
+  schedulePuzzle,
   storeCode,
-  unschedule,
+  unapprove,
 } from './adminClient'
-import { SchedulePanel } from './SchedulePanel'
-import type { AdminListScheduledResponse } from './types'
+import { ApprovedPanel } from './ApprovedPanel'
+import type { AdminListApprovedResponse, AdminListScheduledResponse } from './types'
 
 type Status = 'checking' | 'gate' | 'loading' | 'ready' | 'error'
 
@@ -17,18 +19,26 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong.'
 }
 
-export function AdminSchedulePage() {
+export function AdminApprovedPage() {
   const [code, setCode] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>('checking')
   const [error, setError] = useState<string | null>(null)
+  const [approved, setApproved] = useState<AdminListApprovedResponse | null>(null)
   const [scheduled, setScheduled] = useState<AdminListScheduledResponse | null>(null)
   const [codeInput, setCodeInput] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
 
-  const loadSchedule = async (activeCode: string) => {
+  const loadApproved = async (activeCode: string) => {
     setStatus('loading')
     try {
-      setScheduled(await listScheduled(activeCode))
+      // Fetched alongside the approved queue purely to compute "next open
+      // dates" below — the schedule itself lives on /admin/schedule.
+      const [approvedQueue, scheduleQueue] = await Promise.all([
+        listApproved(activeCode),
+        listScheduled(activeCode),
+      ])
+      setApproved(approvedQueue)
+      setScheduled(scheduleQueue)
       setStatus('ready')
     } catch (err) {
       setError(errorMessage(err))
@@ -43,7 +53,7 @@ export function AdminSchedulePage() {
       return
     }
     setCode(stored)
-    void loadSchedule(stored)
+    void loadApproved(stored)
   }, [])
 
   const handleLogin = async (e: FormEvent) => {
@@ -56,18 +66,25 @@ export function AdminSchedulePage() {
     }
     storeCode(codeInput)
     setCode(codeInput)
-    await loadSchedule(codeInput)
+    await loadApproved(codeInput)
   }
 
-  const handleUnschedule = async (puzzleId: string) => {
+  const handleSchedulePuzzle = async (puzzleId: string, date: string) => {
     if (!code) return
-    await unschedule(code, puzzleId)
-    await loadSchedule(code)
+    await schedulePuzzle(code, puzzleId, date)
+    await loadApproved(code)
+  }
+
+  const handleUnapprove = async (puzzleId: string) => {
+    if (!code) return
+    await unapprove(code, puzzleId)
+    await loadApproved(code)
   }
 
   const handleLogout = () => {
     clearStoredCode()
     setCode(null)
+    setApproved(null)
     setScheduled(null)
     setStatus('gate')
   }
@@ -108,13 +125,13 @@ export function AdminSchedulePage() {
     <div className="min-h-screen bg-canvas px-6 py-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-5">
         <div className="flex items-center justify-between">
-          <div className="font-display text-2xl font-bold">Schedule</div>
+          <div className="font-display text-2xl font-bold">Approved</div>
           <div className="flex items-center gap-4">
             <a href="/admin" className="font-sans text-sm text-ink-soft underline">
               Review queue
             </a>
-            <a href="/admin/approved" className="font-sans text-sm text-ink-soft underline">
-              Approved
+            <a href="/admin/schedule" className="font-sans text-sm text-ink-soft underline">
+              Schedule
             </a>
             <button onClick={handleLogout} className="font-sans text-sm text-ink-soft underline">
               Log out
@@ -122,11 +139,18 @@ export function AdminSchedulePage() {
           </div>
         </div>
 
-        {status === 'loading' && <div className="font-sans text-ink-soft">Loading schedule…</div>}
+        {status === 'loading' && (
+          <div className="font-sans text-ink-soft">Loading approved queue…</div>
+        )}
         {status === 'error' && <div className="font-sans text-miss-text">{error}</div>}
 
-        {status === 'ready' && scheduled && (
-          <SchedulePanel data={scheduled} onPull={handleUnschedule} />
+        {status === 'ready' && approved && scheduled && (
+          <ApprovedPanel
+            data={approved}
+            scheduled={scheduled}
+            onSchedule={handleSchedulePuzzle}
+            onUnapprove={handleUnapprove}
+          />
         )}
       </div>
     </div>
