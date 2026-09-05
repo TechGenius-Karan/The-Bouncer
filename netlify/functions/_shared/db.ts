@@ -19,9 +19,15 @@ const uri: string = (() => {
 // response") while already-warm instances kept working fine, plus Atlas
 // "approaching connection limit" alerts.
 const CLIENT_OPTIONS = {
-  // 10 per instance against a 500-connection ceiling leaves room for every
-  // function to scale out, plus local scripts and the Atlas UI.
-  maxPoolSize: 10,
+  // 5 per instance. A player request needs 1-2 connections (the queries in
+  // get-round/check-swipe run in sequence), so this is already generous for
+  // the hot path. The admin list endpoints fan out harder — admin-list-pending
+  // maps resolveFullPuzzleDetail over every pending puzzle, 2 queries each, so
+  // ~36 concurrent queries for 18 puzzles — but those queue rather than fail,
+  // and a few hundred milliseconds on a reviewer-only screen is a good trade
+  // for headroom on a 500-connection ceiling shared with local dev and CLI
+  // scripts. Netlify scales by adding containers, not by growing this pool.
+  maxPoolSize: 5,
   // Nothing here is latency-critical enough to justify holding sockets open
   // on an idle instance that Netlify may keep around for a long while.
   minPoolSize: 0,
@@ -30,6 +36,11 @@ const CLIENT_OPTIONS = {
   // could never surface as anything but a 502 with an empty body. Failing at
   // 8s lets the function return a real error the client can show instead.
   serverSelectionTimeoutMS: 8_000,
+  // With a small pool, a fan-out can exhaust it briefly. Default is to wait
+  // forever, which on Netlify means hanging until the 26s kill and returning
+  // an empty-body 502 — the exact symptom that made the outage hard to read.
+  // Failing at 10s surfaces a real error instead.
+  waitQueueTimeoutMS: 10_000,
 }
 
 let cachedClient: MongoClient | null = null
