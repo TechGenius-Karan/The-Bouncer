@@ -10,6 +10,25 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Server-rendered pages, so they must be matched BEFORE the SPA catch-all
+# below — order matters here, Netlify takes the first rule that matches.
+[[redirects]]
+  from = "/archive"
+  to = "/.netlify/functions/archive"
+  status = 200
+
+[[redirects]]
+  from = "/archive/*"
+  to = "/.netlify/functions/archive"
+  status = 200
+
+# Replaces the old static public/sitemap.xml, which could only list the home
+# page. The static file was deleted; a real file would win over this rule.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
