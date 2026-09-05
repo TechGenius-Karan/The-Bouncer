@@ -8,9 +8,17 @@ import { SharpGear } from './HomeScreen'
 import { LivesDots } from './LivesDots'
 import { LoadingDoor } from './LoadingDoor'
 import { SlipCard } from './SlipCard'
+import { stackHeightFor } from './traySize'
 import { TrayBin } from './TrayBin'
 
 const TILT = [-1.5, 2, -2.5, 1.2, -1, 2.4]
+
+// The queue box's reserved bottom space (originally a flat pb-44/176px)
+// has to grow in step with the trays below, or a fully-filed tray would
+// overlap the card queue. 112px is that 176px baseline minus the trays'
+// own original 64px stack height — the fixed chrome (labels, padding,
+// borders) around the stack that doesn't change as it grows.
+const TRAY_CHROME_HEIGHT = 112
 
 interface Props {
   onDone: (result: RoundResult) => void
@@ -69,6 +77,7 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
   const hasSelection = state.selected !== null
   const draggingIn = liveDragDx !== null && liveDragDx > 64
   const draggingOut = liveDragDx !== null && liveDragDx < -64
+  const trayAreaHeight = Math.max(stackHeightFor(inStack.length), stackHeightFor(outStack.length))
 
   return (
     // `h-screen sm:h-[820px]` (not h-full) deliberately mirrors the shell's
@@ -142,50 +151,57 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
         </div>
       </div>
 
-      {/* `pb-44` reserves exactly the space the absolutely-positioned tray
-          block below takes up, so this box's own `h-full` fills the rest —
-          fixed for the whole round, from 6 cards down to 1, never reflowing
-          as the pool empties, and never fighting the trays for space. No
-          horizontal padding/margin here either: it spans the exact same
-          width as the app shell in App.tsx, so the edge accents inside can
-          sit at literal left-0/right-0 and land on the physical screen edge,
-          not just the card grid's own px-5. `mt-6` shifts just the card
-          queue itself down, independent of the header/clue-deck above. */}
-      <div className="relative mt-6 flex-1 pb-44">
-        {/* No h-full here on purpose: this wrapper is left to size itself to
-            its one in-flow child (the card grid) — SwipeHint below is
-            absolutely positioned so it doesn't add to that height, and it
-            extends its own top/bottom edges past this wrapper's bounds
-            (see its -top/-bottom offsets) rather than stretching down
-            through the empty space above the trays. */}
-        <div className="relative">
-          <div className="flex flex-wrap content-start gap-2.5 px-8">
-            {pool.map((card, index) => (
-              <div key={card.id} className="flex-[0_0_calc(50%-5px)] motion-safe:animate-slipIn">
-                <SlipCard
-                  card={card}
-                  tilt={TILT[index % TILT.length]}
-                  selected={state.selected === card.id}
-                  interactive={card.result === null && !state.pendingIds.includes(card.id)}
-                  onSelect={() => select(card.id)}
-                  onCommit={(side) => commit(card.id, side)}
-                  onDragChange={setLiveDragDx}
-                />
-              </div>
-            ))}
-          </div>
-          {pool.length > 0 && (
-            <>
-              <SwipeHint side="out" />
-              <SwipeHint side="in" />
-            </>
-          )}
+      {/* Reserves exactly the space the absolutely-positioned tray block
+          below takes up, so this box's own `h-full` fills the rest. This is
+          no longer a flat constant — as filed words stack up, a tray's own
+          height grows (TrayBin.stackHeightFor) to keep every word fully
+          readable rather than covered, so the reserved space here grows
+          with it. That's a fair trade: whatever height the trays take from
+          this box, the pool grid above has that many fewer cards left to
+          show anyway. No horizontal padding/margin here either: it spans
+          the exact same width as the app shell in App.tsx, so the edge
+          accents inside can sit at literal left-0/right-0 and land on the
+          physical screen edge, not just the card grid's own px-5. `mt-6`
+          shifts just the card queue itself down, independent of the
+          header/clue-deck above. */}
+      <div
+        className="relative mt-6 flex-1 transition-[padding-bottom] duration-200 ease-out"
+        style={{ paddingBottom: TRAY_CHROME_HEIGHT + trayAreaHeight }}
+      >
+        <div className="flex flex-wrap content-start gap-2.5 px-8">
+          {pool.map((card, index) => (
+            <div key={card.id} className="flex-[0_0_calc(50%-5px)] motion-safe:animate-slipIn">
+              <SlipCard
+                card={card}
+                tilt={TILT[index % TILT.length]}
+                selected={state.selected === card.id}
+                interactive={card.result === null && !state.pendingIds.includes(card.id)}
+                onSelect={() => select(card.id)}
+                onCommit={(side) => commit(card.id, side)}
+                onDragChange={setLiveDragDx}
+              />
+            </div>
+          ))}
         </div>
+        {/* Anchored to this outer box, not a wrapper sized to the card grid
+            — that box's height is fixed by `flex-1` regardless of how many
+            pool rows remain, so the hint no longer shrinks as cards get
+            swiped away. Its own height is a flat constant (SwipeHint's
+            QUEUE_ROWS math), not tied to reservedBottom/row count either —
+            it only ever needs to cover the pool's own max layout (3 rows),
+            not the full box down to the trays. */}
+        {pool.length > 0 && (
+          <>
+            <SwipeHint side="out" />
+            <SwipeHint side="in" />
+          </>
+        )}
       </div>
 
       {/* Absolute and pinned to the very bottom of the screen, independent
-          of the queue box above — the trays never move as the round plays
-          out, regardless of how flex-1 above happens to resolve. */}
+          of the queue box above — the trays stay pinned to the bottom edge
+          as they grow with each filed word, rather than pushing content
+          below them (there is none). */}
       <div className="absolute inset-x-0 bottom-0 flex gap-3 px-5 pb-8 pt-3">
         <TrayBin
           side="out"
@@ -204,6 +220,19 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
   )
 }
 
+// The pool grid never lays out more than 3 rows (6 cards, 2 per row) — see
+// SlipCard's own h-[66px] and this grid's gap-2.5 (10px). The hint is sized
+// to that fixed 3-row layout, not the current row count or the tray-reserved
+// space below it, so it neither shrinks as cards are swiped away nor grows
+// with the trays.
+const QUEUE_ROWS = 3
+const CARD_HEIGHT = 66
+const ROW_GAP = 10
+const TOP_BLEED = 8
+const BOTTOM_BLEED = 32
+const QUEUE_CONTENT_HEIGHT = QUEUE_ROWS * CARD_HEIGHT + (QUEUE_ROWS - 1) * ROW_GAP
+const HINT_HEIGHT = TOP_BLEED + QUEUE_CONTENT_HEIGHT + BOTTOM_BLEED
+
 function SwipeHint({ side }: { side: 'out' | 'in' }) {
   const isIn = side === 'in'
   return (
@@ -213,25 +242,26 @@ function SwipeHint({ side }: { side: 'out' | 'in' }) {
           rather than something fighting for attention: no animation, low
           opacity throughout. rounded-md (down from rounded-xl, then
           rounded-3xl before that) keeps the corners just barely softened
-          instead of reading as rounded at all. -bottom-8 is the main
-          "past the last row" extension; -top-2 is a much smaller nudge on
-          the top edge. Opacity uses bracketed /[18%], not bare /18 — bare
-          numeric opacity modifiers only work for values in Tailwind's
-          default opacity scale (0,5,10,20,25,30,40,50,60,70,75,80,90,95,100),
-          so /18 (and the earlier /15) silently compiled to no CSS at all. */}
+          instead of reading as rounded at all. Opacity uses bracketed
+          /[18%], not bare /18 — bare numeric opacity modifiers only work
+          for values in Tailwind's default opacity scale
+          (0,5,10,20,25,30,40,50,60,70,75,80,90,95,100), so /18 (and the
+          earlier /15) silently compiled to no CSS at all. */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute -top-2 -bottom-8 w-6 rounded-md ${
+        className={`pointer-events-none absolute w-6 rounded-md ${
           isIn
             ? 'right-0 bg-gradient-to-l from-[#14b8a6]/[18%] to-transparent'
             : 'left-0 bg-gradient-to-r from-[#f59e0b]/[18%] to-transparent'
         }`}
+        style={{ top: -TOP_BLEED, height: HINT_HEIGHT }}
       />
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-0.5 ${
+        className={`pointer-events-none absolute flex -translate-y-1/2 flex-col items-center gap-0.5 ${
           isIn ? 'right-1.5 text-bin-in-text' : 'left-1.5 text-bin-out-label'
         }`}
+        style={{ top: QUEUE_CONTENT_HEIGHT / 2 }}
       >
         <span className="text-sm leading-none">{isIn ? '▶' : '◀'}</span>
         <span className="font-display text-[9px] font-extrabold tracking-wider">
