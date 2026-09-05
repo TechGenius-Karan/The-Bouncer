@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BarChart, QuestionCircle } from 'react-bootstrap-icons'
+import { BarChart } from 'react-bootstrap-icons'
 import { useGame } from '../game/useGame'
 import { derivedEndedEarly, type RoundResult } from '../game/types'
 import { recordResult } from '../game/playHistory'
@@ -87,7 +87,13 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
           aria-label="How to play"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-skip-bg text-ink"
         >
-          <QuestionCircle size={24} />
+          {/* Hand-built instead of react-bootstrap-icons' QuestionCircle —
+              that icon's ring is a fixed-thickness vector path with no way
+              to adjust its stroke weight, same reason SharpGear (below,
+              HomeScreen.tsx) is hand-built rather than using a library gear. */}
+          <span className="flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-current text-base font-bold leading-none">
+            ?
+          </span>
         </button>
         <div className="flex items-center gap-0.5">
           <button
@@ -106,6 +112,11 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
           </button>
         </div>
       </div>
+
+      {/* Separates the icon row from the puzzle number/lives row below it —
+          w-4/5 mx-auto instead of a full-bleed border-b so it doesn't run
+          to the physical screen edges. */}
+      <div className="mx-auto mt-3 w-4/5 border-b border-line" />
 
       <div className="flex items-center justify-between px-5 pt-2">
         <div className="font-display text-[17px] font-bold">No. {state.puzzleNumber}</div>
@@ -138,10 +149,17 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
           horizontal padding/margin here either: it spans the exact same
           width as the app shell in App.tsx, so the edge accents inside can
           sit at literal left-0/right-0 and land on the physical screen edge,
-          not just the card grid's own px-5. */}
-      <div className="relative flex-1 pb-44">
-        <div className="relative h-full">
-          <div className="flex flex-wrap content-start gap-2.5 px-5">
+          not just the card grid's own px-5. `mt-6` shifts just the card
+          queue itself down, independent of the header/clue-deck above. */}
+      <div className="relative mt-6 flex-1 pb-44">
+        {/* No h-full here on purpose: this wrapper is left to size itself to
+            its one in-flow child (the card grid) — SwipeHint below is
+            absolutely positioned so it doesn't add to that height, and it
+            extends its own top/bottom edges past this wrapper's bounds
+            (see its -top/-bottom offsets) rather than stretching down
+            through the empty space above the trays. */}
+        <div className="relative">
+          <div className="flex flex-wrap content-start gap-2.5 px-8">
             {pool.map((card, index) => (
               <div key={card.id} className="flex-[0_0_calc(50%-5px)] motion-safe:animate-slipIn">
                 <SlipCard
@@ -190,28 +208,33 @@ function SwipeHint({ side }: { side: 'out' | 'in' }) {
   const isIn = side === 'in'
   return (
     <>
-      {/* The color itself: thin (8px), flush against the screen's physical
-          edge (not the card grid's px-5 — see the `relative` wrapper
-          above), full height with no vertical fade. It fades inward
-          (horizontally, edge → transparent) instead, and only across its
-          own 8px, so it reads as an edge marker rather than bleeding into
-          the card grid. */}
+      {/* Purely decorative at this point — the IN/OUT tag below already
+          carries the actual direction cue, so this is a quiet, static wash
+          rather than something fighting for attention: no animation, low
+          opacity throughout. rounded-md (down from rounded-xl, then
+          rounded-3xl before that) keeps the corners just barely softened
+          instead of reading as rounded at all. -bottom-8 is the main
+          "past the last row" extension; -top-2 is a much smaller nudge on
+          the top edge. Opacity uses bracketed /[18%], not bare /18 — bare
+          numeric opacity modifiers only work for values in Tailwind's
+          default opacity scale (0,5,10,20,25,30,40,50,60,70,75,80,90,95,100),
+          so /18 (and the earlier /15) silently compiled to no CSS at all. */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-y-0 w-2 ${
+        className={`pointer-events-none absolute -top-2 -bottom-8 w-6 rounded-md ${
           isIn
-            ? 'right-0 bg-gradient-to-l from-[#0d9488]/80 to-transparent'
-            : 'left-0 bg-gradient-to-r from-bin-out/80 to-transparent'
+            ? 'right-0 bg-gradient-to-l from-[#14b8a6]/[18%] to-transparent'
+            : 'left-0 bg-gradient-to-r from-[#f59e0b]/[18%] to-transparent'
         }`}
       />
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-0.5 ${
-          isIn ? 'right-3 text-bin-in-text' : 'left-3 text-bin-out-label'
+          isIn ? 'right-1.5 text-bin-in-text' : 'left-1.5 text-bin-out-label'
         }`}
       >
-        <span className="text-base leading-none">{isIn ? '▶' : '◀'}</span>
-        <span className="font-display text-[11px] font-extrabold tracking-wider">
+        <span className="text-sm leading-none">{isIn ? '▶' : '◀'}</span>
+        <span className="font-display text-[9px] font-extrabold tracking-wider">
           {isIn ? 'IN' : 'OUT'}
         </span>
       </div>
