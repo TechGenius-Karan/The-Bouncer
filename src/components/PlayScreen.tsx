@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BarChart } from 'react-bootstrap-icons'
-import { useGame } from '../game/useGame'
+import type { useGame } from '../game/useGame'
 import { derivedEndedEarly, type RoundResult } from '../game/types'
 import { recordResult } from '../game/playHistory'
 import { ClueDeck } from './ClueDeck'
@@ -21,16 +21,28 @@ const TILT = [-1.5, 2, -2.5, 1.2, -1, 2.4]
 const TRAY_CHROME_HEIGHT = 112
 
 interface Props {
+  /**
+   * Owned by App, not by this screen. When PlayScreen owned the hook, the
+   * round was only fetched once the player pressed Play, and leaving to the
+   * home screen unmounted it — so every visit paid a fresh round trip AND a
+   * fresh door animation. Lifting it means the fetch starts on app mount,
+   * while the player is still reading the home screen.
+   */
+  game: ReturnType<typeof useGame>
   onDone: (result: RoundResult) => void
   onHowToPlay: () => void
   onShowStats: () => void
   onShowSettings: () => void
 }
 
-export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }: Props) {
-  const { state, commit, select, fileSelected, score } = useGame()
+export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSettings }: Props) {
+  const { state, commit, select, fileSelected, score } = game
   const [liveDragDx, setLiveDragDx] = useState<number | null>(null)
-  const [showLoader, setShowLoader] = useState(true)
+  // Only worth a door animation when there is actually something to wait for.
+  // If the round already arrived while the player was on the home screen, or
+  // they are coming back from a screen they already loaded it on, the loader
+  // is pure delay between them and the puzzle.
+  const [showLoader, setShowLoader] = useState(() => state.phase === 'loading')
 
   useEffect(() => {
     if (state.phase === 'done' && state.ruleText) {
@@ -147,7 +159,9 @@ export function PlayScreen({ onDone, onHowToPlay, onShowStats, onShowSettings }:
           IN THE QUEUE
         </div>
         <div className="font-sans text-[13px] text-ink-soft">
-          {hasSelection ? 'tap a tray to make the call' : `${pool.length} left · swipe ← out / in →`}
+          {hasSelection
+            ? 'tap a tray to make the call'
+            : `${pool.length} left · swipe ← out / in →`}
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { RevealScreen } from './components/RevealScreen'
 import { SettingsModal } from './components/SettingsModal'
 import { StatsModal } from './components/StatsModal'
 import { UpdateBanner } from './components/UpdateBanner'
+import { useGame } from './game/useGame'
 import type { RoundResult } from './game/types'
 
 type Screen = 'home' | 'play' | 'reveal'
@@ -26,6 +27,12 @@ export default function App() {
     updateServiceWorker,
   } = useRegisterSW()
 
+  // Mounted here rather than inside PlayScreen so today's round is fetched
+  // once, on app start, and survives the player moving between screens. It
+  // also means the request overlaps with them reading the home screen instead
+  // of starting after they press Play.
+  const game = useGame()
+
   return (
     <div className="min-h-screen bg-canvas py-0 sm:py-10">
       <div className="mx-auto flex min-h-screen w-full max-w-[440px] flex-col overflow-hidden bg-screen sm:min-h-[820px] sm:rounded-screen sm:shadow-screen">
@@ -40,6 +47,7 @@ export default function App() {
 
         {screen === 'play' && (
           <PlayScreen
+            game={game}
             onDone={(r) => {
               setResult(r)
               setScreen('reveal')
@@ -70,7 +78,9 @@ export default function App() {
           onShowStats={() => setShowStats(true)}
         />
       )}
-      {needRefresh && screen !== 'play' && <UpdateBanner onRefresh={() => updateServiceWorker(true)} />}
+      {needRefresh && screen !== 'play' && (
+        <UpdateBanner onRefresh={() => updateServiceWorker(true)} />
+      )}
     </div>
   )
 }
