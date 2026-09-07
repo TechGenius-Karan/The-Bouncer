@@ -15,21 +15,25 @@ export const TEMPLATE_SPACING_DAYS = 6
 /**
  * Templates whose members don't actually feel alike, with their own spacing.
  *
- * The default assumes "same template = same puzzle to a player". That holds
- * for `ends-with-g` versus `ends-with-m` — identical mechanic, different
- * letter. It is plainly false for `category-bird` versus `category-vehicle`,
- * which share nothing but an implementation detail.
+ * The default assumes "same template = same puzzle to a player". That holds for
+ * `ends-with-g` versus `ends-with-m` — identical mechanic, different letter. It
+ * is plainly false for `category-bird` versus `category-vehicle`, which share
+ * nothing but an implementation detail.
  *
- * Leaving them lumped together had a real cost. 24 of the 27 medium-eligible
- * semantic rules are `category`, so a 6-day spacing capped semantic puzzles at
- * about two per six days, while lexical rules spread across four templates got
- * roughly four. The heuristic was quietly pushing the calendar toward exactly
- * the letter-spotting puzzles MAX_LEXICAL_PER_WEEK exists to hold back. At 2
- * days apart a category puzzle can land every other day, which is what the
- * lexical cap needs on the other side of the ledger.
+ * Getting this wrong is expensive, and it has bitten twice. Both times a
+ * template held most of the good rules and the default spacing throttled it
+ * below what the calendar needed:
+ *
+ *   category     33 quality rules, but 6-day spacing allowed only ~1.2/week
+ *   hidden-word  25 quality rules, same problem
+ *
+ * `hidden-word` gets 3 rather than category's 2 because the mechanic — hunt for
+ * a word inside a word — is more recognisable on repetition than "these all
+ * name a bird" versus "these all name a tool", even though the targets differ.
  */
 export const TEMPLATE_SPACING_OVERRIDES: Record<string, number> = {
   category: 2,
+  'hidden-word': 3,
 }
 
 export function templateSpacingFor(templateId: string): number {
@@ -37,44 +41,51 @@ export function templateSpacingFor(templateId: string): number {
 }
 
 /**
- * Most days should turn on knowing a thing, not on spotting a letter.
+ * A rule at or below this `aha` is filler: technically valid, rarely enjoyed.
  *
- * 79% of the taxonomy is lexical (starts-with, ends-with, hidden-word), so left
- * alone the calendar drifts that way too. This caps how many land close
- * together.
- *
- * Three, not two, and the difference is supply rather than taste.
- *
- * The sustainable semantic rate is (number of semantic rules) /
- * RULE_SPACING_DAYS, since each rule is usable once per that window. With 27
- * medium-eligible semantic rules that is 27/60 = 0.45/day ≈ 3.2 per week. A
- * 2/week lexical cap would need 5 semantic a week and simply cannot be fed;
- * even this 3 needs 4 and so runs slightly ahead of supply.
- *
- * Deliberately left slightly ahead rather than lowered to a comfortable 4.
- * The cap is a soft target — selectForDate places a lexical puzzle rather than
- * leave a day empty — so overshooting costs a warning, not a gap, and the
- * warning is the signal that the taxonomy needs more semantic rules. Setting
- * it to 4 would silence the warning by abandoning the goal.
- *
- * Roughly 35 medium-eligible semantic rules would hold 3/week cleanly (8 more
- * than today). Tagging words in near-threshold categories gets there:
- * buildRuleParams promotes a category to a rule automatically once its
- * coverage clears the floor.
+ * The ratings are not guesses — they were set from the rejection record. The
+ * templates sitting at 1 are the ones reviewers threw away 80-88% of the time.
  */
-export const MAX_LEXICAL_PER_WEEK = 3
+export const FILLER_AHA_THRESHOLD = 2
 
 /**
- * Rolling, not calendar weeks: a Monday reset would happily allow three on
- * Fri-Sun and three more on Mon-Tue, which is six in five days.
+ * Cap on filler puzzles per rolling week.
+ *
+ * This used to cap the *lexical* family, which was the wrong axis and actively
+ * harmful. Family says nothing about quality: `hidden-word` is lexical and the
+ * best-reviewed template there is (25% rejected), while `starts-with` is
+ * lexical and the worst (88%). Capping by family throttled both equally, so
+ * promoting the good template into the weekday pool would have run it straight
+ * into a cap meant for the bad one. `aha` already encodes the difference; the
+ * scheduler should read that instead of a structural label.
+ *
+ * Two, derived rather than picked. Weekly supply of quality medium rules, under
+ * BOTH the rule cooldown and template spacing:
+ *
+ *   category     33 rules -> min(3.9 cooldown, 3.5 spacing) = 3.5/week
+ *   hidden-word  25 rules -> min(2.9 cooldown, 2.3 spacing) = 2.3/week
+ *   hand-written 14 rules -> 1.6/week   (untemplated, so no spacing limit)
+ *                                       total ~7.4/week
+ *
+ * Six medium days a week need filling, so filler is not strictly needed at all
+ * and this could be 1 — or 0. It is 2 for slack: that arithmetic assumes a
+ * perfectly stocked approved pool, and the real pool is only ever whatever got
+ * reviewed. Drop it to 1 once a few months of scheduling runs report no cap
+ * breaches.
  */
-export const LEXICAL_WINDOW_DAYS = 7
+export const MAX_FILLER_PER_WEEK = 2
+
+/**
+ * Rolling, not calendar weeks: a Monday reset would happily allow the cap on
+ * Fri-Sun and the cap again on Mon-Tue, which is double in five days.
+ */
+export const FILLER_WINDOW_DAYS = 7
 
 export interface Placement {
   date: string
   ruleId: string
   templateId?: string
-  isLexical: boolean
+  isFiller: boolean
 }
 
 /** The bits of a puzzle that placement cares about — keeps this free of PuzzleDoc/Mongo types. */
@@ -83,16 +94,17 @@ export interface PlaceablePuzzle {
   templateId?: string
 }
 
-const FAMILY_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.family]))
+const AHA_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.aha ?? 3]))
 
 /**
- * A rule id that's no longer in the taxonomy (an older puzzle, a renamed rule)
- * counts as non-lexical. The cap exists to hold lexical puzzles back, and
- * guessing "lexical" for an unknown id would restrict the schedule on no
- * evidence — risking empty days for nothing.
+ * A rule id no longer in the taxonomy (an older puzzle, a renamed rule) counts
+ * as non-filler. The cap exists to hold filler back, and guessing "filler" for
+ * an unknown id would restrict the calendar on no evidence — risking empty days
+ * for nothing.
  */
-export function isLexicalRule(ruleId: string): boolean {
-  return FAMILY_BY_RULE_ID.get(ruleId) === 'lexical-structural'
+export function isFillerRule(ruleId: string): boolean {
+  const aha = AHA_BY_RULE_ID.get(ruleId)
+  return aha !== undefined && aha <= FILLER_AHA_THRESHOLD
 }
 
 export function daysBetween(a: string, b: string): number {
@@ -117,30 +129,30 @@ export function isFreshFor(
 }
 
 /**
- * Whether a lexical puzzle can go on this date without making some 7-day span
- * hold more than MAX_LEXICAL_PER_WEEK.
+ * Whether a filler puzzle can go on this date without making some 7-day span
+ * hold more than MAX_FILLER_PER_WEEK.
  *
  * Counts the trailing window (the six days before `date`) rather than a
  * symmetric one. The scheduler places dates in increasing order, so trailing is
  * what actually bounds any 7 consecutive days; a ±6-day check would really span
  * 13 days and roughly halve the effective cap.
  */
-export function lexicalCapAllows(
+export function fillerCapAllows(
   date: string,
   puzzle: PlaceablePuzzle,
   placements: Placement[]
 ): boolean {
-  if (!isLexicalRule(puzzle.ruleId)) return true
+  if (!isFillerRule(puzzle.ruleId)) return true
   const recent = placements.filter(
-    (p) => p.isLexical && p.date < date && daysBetween(date, p.date) < LEXICAL_WINDOW_DAYS
+    (p) => p.isFiller && p.date < date && daysBetween(date, p.date) < FILLER_WINDOW_DAYS
   )
-  return recent.length < MAX_LEXICAL_PER_WEEK
+  return recent.length < MAX_FILLER_PER_WEEK
 }
 
 export interface Selection {
   /** Index into the queue, or -1 when the queue is empty. */
   index: number
-  /** Placed despite the lexical cap because nothing else was left. */
+  /** Placed despite the filler cap because nothing else was left. */
   overCap: boolean
   /** Placed despite rule/template spacing because the whole queue was in cooldown. */
   repeat: boolean
@@ -163,7 +175,7 @@ export function selectForDate(
   if (queue.length === 0) return { index: -1, overCap: false, repeat: false }
 
   const ideal = queue.findIndex(
-    (p) => isFreshFor(date, p, placements) && lexicalCapAllows(date, p, placements)
+    (p) => isFreshFor(date, p, placements) && fillerCapAllows(date, p, placements)
   )
   if (ideal !== -1) return { index: ideal, overCap: false, repeat: false }
 
@@ -171,5 +183,5 @@ export function selectForDate(
   if (fresh !== -1) return { index: fresh, overCap: true, repeat: false }
 
   // Whole queue is in cooldown — take the head, the long-standing behaviour.
-  return { index: 0, overCap: !lexicalCapAllows(date, queue[0], placements), repeat: true }
+  return { index: 0, overCap: !fillerCapAllows(date, queue[0], placements), repeat: true }
 }

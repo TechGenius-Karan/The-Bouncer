@@ -3,83 +3,109 @@ import { RULES } from '../rules'
 import {
   daysBetween,
   isFreshFor,
-  isLexicalRule,
-  lexicalCapAllows,
-  MAX_LEXICAL_PER_WEEK,
+  isFillerRule,
+  fillerCapAllows,
+  MAX_FILLER_PER_WEEK,
   RULE_SPACING_DAYS,
   selectForDate,
   type Placement,
 } from './placement'
 
-const lexicalRule = RULES.find((r) => r.family === 'lexical-structural')!
-const semanticRule = RULES.find((r) => r.family === 'semantic-knowledge')!
+// Chosen by rating, not family — that is the whole point of the filler cap.
+// `hidden-word` is lexical AND high-aha, and it must NOT be treated as filler;
+// picking fixtures by family would hide exactly the bug this cap was changed
+// to fix.
+const fillerRule = RULES.find((r) => (r.aha ?? 3) <= 2)!
+const qualityRule = RULES.find((r) => (r.aha ?? 3) >= 3)!
+const lexicalButGood = RULES.find((r) => r.family === 'lexical-structural' && (r.aha ?? 3) >= 3)!
 
-function lexicalOn(dates: string[]): Placement[] {
-  return dates.map((date) => ({ date, ruleId: lexicalRule.id, isLexical: true }))
+/** A fixed anchor so every cap assertion talks about the same week. */
+const TARGET = '2026-09-20'
+
+/** `count` consecutive dates ending `gap` days before TARGET, oldest first. */
+function daysBefore(count: number, gap = 1): string[] {
+  const end = Date.parse(`${TARGET}T00:00:00Z`) - gap * 86_400_000
+  return Array.from({ length: count }, (_, i) =>
+    new Date(end - (count - 1 - i) * 86_400_000).toISOString().slice(0, 10)
+  )
 }
 
-describe('isLexicalRule', () => {
-  it('classifies known rules by family', () => {
-    expect(isLexicalRule(lexicalRule.id)).toBe(true)
-    expect(isLexicalRule(semanticRule.id)).toBe(false)
+function fillerOn(dates: string[]): Placement[] {
+  return dates.map((date) => ({ date, ruleId: fillerRule.id, isFiller: true }))
+}
+
+describe('isFillerRule', () => {
+  it('classifies by rating, not by family', () => {
+    expect(isFillerRule(fillerRule.id)).toBe(true)
+    expect(isFillerRule(qualityRule.id)).toBe(false)
   })
 
-  // An unknown id must not be assumed lexical — that would restrict the
+  // The regression this cap exists to prevent: hidden-word is lexical and is
+  // the best-reviewed template in the taxonomy. Capping it alongside
+  // starts-with is what kept the good material off weekdays.
+  it('does not treat a high-aha lexical rule as filler', () => {
+    expect(lexicalButGood.family).toBe('lexical-structural')
+    expect(isFillerRule(lexicalButGood.id)).toBe(false)
+  })
+
+  // An unknown id must not be assumed filler — that would restrict the
   // calendar on no evidence and risk empty days for nothing.
-  it('treats a rule missing from the taxonomy as non-lexical', () => {
-    expect(isLexicalRule('rule-that-no-longer-exists')).toBe(false)
+  it('treats a rule missing from the taxonomy as non-filler', () => {
+    expect(isFillerRule('rule-that-no-longer-exists')).toBe(false)
   })
 })
 
-describe('lexicalCapAllows', () => {
-  it('never blocks a non-lexical puzzle, however crowded the week', () => {
-    const placements = lexicalOn(['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'])
-    expect(lexicalCapAllows('2026-09-05', { ruleId: semanticRule.id }, placements)).toBe(true)
+describe('fillerCapAllows', () => {
+  it('never blocks a quality puzzle, however crowded the week', () => {
+    const placements = fillerOn(['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'])
+    expect(fillerCapAllows('2026-09-05', { ruleId: qualityRule.id }, placements)).toBe(true)
   })
 
-  it(`allows up to ${MAX_LEXICAL_PER_WEEK} lexical puzzles in a week and blocks the next`, () => {
-    const puzzle = { ruleId: lexicalRule.id }
-    expect(lexicalCapAllows('2026-09-04', puzzle, lexicalOn(['2026-09-01', '2026-09-02']))).toBe(
+  it(`allows up to ${MAX_FILLER_PER_WEEK} filler puzzles in a week and blocks the next`, () => {
+    const puzzle = { ruleId: fillerRule.id }
+    // Derived from the constant rather than hardcoded: these assertions were
+    // written when the cap was 3 and silently became wrong when it moved to 2.
+    expect(fillerCapAllows(TARGET, puzzle, fillerOn(daysBefore(MAX_FILLER_PER_WEEK - 1)))).toBe(
       true
     )
-    expect(
-      lexicalCapAllows('2026-09-04', puzzle, lexicalOn(['2026-09-01', '2026-09-02', '2026-09-03']))
-    ).toBe(false)
+    expect(fillerCapAllows(TARGET, puzzle, fillerOn(daysBefore(MAX_FILLER_PER_WEEK)))).toBe(false)
   })
 
   // The reason the window is rolling rather than calendar-week: three on
   // Fri/Sat/Sun must still block Monday.
   it('blocks across a week boundary', () => {
     // 2026-09-04/05/06 are Fri/Sat/Sun; 2026-09-07 is the following Monday.
-    const weekend = lexicalOn(['2026-09-04', '2026-09-05', '2026-09-06'])
-    expect(lexicalCapAllows('2026-09-07', { ruleId: lexicalRule.id }, weekend)).toBe(false)
+    const weekend = fillerOn(['2026-09-05', '2026-09-06'].slice(0, MAX_FILLER_PER_WEEK))
+    expect(fillerCapAllows('2026-09-07', { ruleId: fillerRule.id }, weekend)).toBe(false)
   })
 
   it('lets the window roll past — the cap frees up once the run is 7 days behind', () => {
-    const early = lexicalOn(['2026-09-01', '2026-09-02', '2026-09-03'])
-    expect(lexicalCapAllows('2026-09-08', { ruleId: lexicalRule.id }, early)).toBe(true)
+    // A full cap's worth, all of it more than FILLER_WINDOW_DAYS before the
+    // target, so none of it should still be counted.
+    const early = fillerOn(daysBefore(MAX_FILLER_PER_WEEK, 14))
+    expect(fillerCapAllows(TARGET, { ruleId: fillerRule.id }, early)).toBe(true)
   })
 
   it('ignores placements after the date being filled', () => {
     // Trailing window only: dates the scheduler has not reached yet must not
     // consume this date's budget.
-    const future = lexicalOn(['2026-09-10', '2026-09-11', '2026-09-12'])
-    expect(lexicalCapAllows('2026-09-05', { ruleId: lexicalRule.id }, future)).toBe(true)
+    const future = fillerOn(['2026-09-10', '2026-09-11', '2026-09-12'])
+    expect(fillerCapAllows('2026-09-05', { ruleId: fillerRule.id }, future)).toBe(true)
   })
 
-  it('does not count non-lexical placements toward the cap', () => {
+  it('does not count quality placements toward the cap', () => {
     const semantic: Placement[] = ['2026-09-01', '2026-09-02', '2026-09-03'].map((date) => ({
       date,
-      ruleId: semanticRule.id,
-      isLexical: false,
+      ruleId: qualityRule.id,
+      isFiller: false,
     }))
-    expect(lexicalCapAllows('2026-09-04', { ruleId: lexicalRule.id }, semantic)).toBe(true)
+    expect(fillerCapAllows('2026-09-04', { ruleId: fillerRule.id }, semantic)).toBe(true)
   })
 })
 
 describe('isFreshFor', () => {
   it('keeps the same rule apart by the full spacing window', () => {
-    const placements: Placement[] = [{ date: '2026-09-01', ruleId: 'rule-a', isLexical: true }]
+    const placements: Placement[] = [{ date: '2026-09-01', ruleId: 'rule-a', isFiller: true }]
     expect(isFreshFor('2026-09-20', { ruleId: 'rule-a' }, placements)).toBe(false)
     const wellPast = `2026-${String(11).padStart(2, '0')}-15` // > 60 days later
     expect(daysBetween(wellPast, '2026-09-01')).toBeGreaterThan(RULE_SPACING_DAYS)
@@ -88,7 +114,7 @@ describe('isFreshFor', () => {
 
   it('spaces template families more tightly than individual rules', () => {
     const placements: Placement[] = [
-      { date: '2026-09-01', ruleId: 'ends-with-a', templateId: 'ends-with', isLexical: true },
+      { date: '2026-09-01', ruleId: 'ends-with-a', templateId: 'ends-with', isFiller: true },
     ]
     const sameFamily = { ruleId: 'ends-with-b', templateId: 'ends-with' }
     expect(isFreshFor('2026-09-04', sameFamily, placements)).toBe(false)
@@ -97,7 +123,7 @@ describe('isFreshFor', () => {
 
   it('lets an untemplated rule sit next to a templated one', () => {
     const placements: Placement[] = [
-      { date: '2026-09-01', ruleId: 'ends-with-a', templateId: 'ends-with', isLexical: true },
+      { date: '2026-09-01', ruleId: 'ends-with-a', templateId: 'ends-with', isFiller: true },
     ]
     expect(isFreshFor('2026-09-02', { ruleId: 'palindrome' }, placements)).toBe(true)
   })
@@ -147,7 +173,7 @@ describe('90-day schedule simulation', () => {
         date,
         ruleId: picked.ruleId,
         templateId: picked.templateId,
-        isLexical: isLexicalRule(picked.ruleId),
+        isFiller: isFillerRule(picked.ruleId),
       })
     }
     return { placements, skipped, overCap }
@@ -168,21 +194,21 @@ describe('90-day schedule simulation', () => {
     const { placements } = run()
     for (const anchor of placements) {
       const inWindow = placements.filter(
-        (p) => p.isLexical && daysBetween(anchor.date, p.date) < 7 && p.date >= anchor.date
+        (p) => p.isFiller && daysBetween(anchor.date, p.date) < 7 && p.date >= anchor.date
       )
-      expect(inWindow.length).toBeLessThanOrEqual(MAX_LEXICAL_PER_WEEK + 2)
+      expect(inWindow.length).toBeLessThanOrEqual(MAX_FILLER_PER_WEEK + 2)
     }
   })
 
-  it('brings the lexical share down well below the taxonomy’s 79%', () => {
+  it('brings the filler share down well below the taxonomy’s 79%', () => {
     const { placements } = run()
-    const share = placements.filter((p) => p.isLexical).length / placements.length
-    // 3 of 7 days would be 43%. Saturdays draw from a lexical-heavy spicy pool
-    // and supply is tight, so the realistic landing zone is around 49% — but
-    // it must stay far below the 79% an untouched taxonomy produces, and below
-    // the 57% the same pool gives with no cap at all.
-    expect(share).toBeGreaterThan(0.25)
-    expect(share).toBeLessThan(0.55)
+    const share = placements.filter((p) => p.isFiller).length / placements.length
+    // No lower bound on purpose. Quality supply now covers all six medium days
+    // (~7.4/week against 6 needed), so a schedule with zero filler is a valid
+    // and desirable outcome — an earlier floor of 25% started failing the
+    // moment the re-rating worked, which is the wrong way round for a test.
+    // Measured after Phases 1-2: ~21%, against 79% for the raw taxonomy.
+    expect(share).toBeLessThan(0.35)
   })
 })
 
@@ -203,13 +229,13 @@ describe('supply supports the cap', () => {
       (r) => r.subtlety >= 2 && r.subtlety <= 3 && r.family === 'semantic-knowledge'
     ).length
 
-    const semanticNeededPerWeek = 7 - MAX_LEXICAL_PER_WEEK
+    const semanticNeededPerWeek = 7 - MAX_FILLER_PER_WEEK
     const sustainablePerWeek = (mediumSemantic / RULE_SPACING_DAYS) * 7
     const rulesForCleanCap = Math.ceil((semanticNeededPerWeek / 7) * RULE_SPACING_DAYS)
 
     expect(
       sustainablePerWeek,
-      `MAX_LEXICAL_PER_WEEK=${MAX_LEXICAL_PER_WEEK} wants ${semanticNeededPerWeek} semantic puzzles a week; ` +
+      `MAX_FILLER_PER_WEEK=${MAX_FILLER_PER_WEEK} wants ${semanticNeededPerWeek} semantic puzzles a week; ` +
         `${mediumSemantic} medium-eligible semantic rules sustain ${sustainablePerWeek.toFixed(1)}. ` +
         `Either raise the cap or grow the taxonomy to ~${rulesForCleanCap} semantic rules.`
     ).toBeGreaterThan(semanticNeededPerWeek - 1)

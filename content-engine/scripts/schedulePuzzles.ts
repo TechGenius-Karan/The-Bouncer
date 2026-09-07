@@ -14,8 +14,8 @@
 
 import 'dotenv/config'
 import {
-  isLexicalRule,
-  MAX_LEXICAL_PER_WEEK,
+  isFillerRule,
+  MAX_FILLER_PER_WEEK,
   selectForDate,
   type Placement,
 } from '../scheduling/placement'
@@ -85,7 +85,7 @@ async function main() {
     date: doc.date as string,
     ruleId: doc.ruleId,
     templateId: doc.templateId,
-    isLexical: isLexicalRule(doc.ruleId),
+    isFiller: isFillerRule(doc.ruleId),
   }))
 
   let nextNumber = (await puzzles.countDocuments({ status: { $in: ['scheduled', 'live'] } })) + 1
@@ -95,7 +95,7 @@ async function main() {
   let daysWalked = 0
   let capBreaches = 0
   let skippedDates = 0
-  const placedByFamily = { lexical: 0, semantic: 0 }
+  const placed = { filler: 0, quality: 0 }
 
   while (scheduled < target && daysWalked < MAX_DAYS_WALKED) {
     daysWalked += 1
@@ -110,7 +110,7 @@ async function main() {
     // Strict FIFO used to place whatever came next, never looking at ruleId —
     // so a batch that happened to produce the same rule several times landed
     // those on nearby dates. selectForDate prefers a puzzle that is both fresh
-    // and inside the lexical cap, then a fresh one, then the queue head; every
+    // and inside the filler cap, then a fresh one, then the queue head; every
     // fallback is reported rather than silently taken.
     const choice = selectForDate(cursor, queue, placements)
     const candidate = choice.index === -1 ? undefined : queue.splice(choice.index, 1)[0]
@@ -134,7 +134,7 @@ async function main() {
       date,
       ruleId: candidate.ruleId,
       templateId: candidate.templateId,
-      isLexical: isLexicalRule(candidate.ruleId),
+      isFiller: isFillerRule(candidate.ruleId),
     })
     cursor = addDaysToDateString(cursor, 1)
 
@@ -153,8 +153,8 @@ async function main() {
 
     nextNumber += 1
     scheduled += 1
-    if (isLexicalRule(candidate.ruleId)) placedByFamily.lexical += 1
-    else placedByFamily.semantic += 1
+    if (isFillerRule(candidate.ruleId)) placed.filler += 1
+    else placed.quality += 1
     console.log(`Puzzle #${number} (${candidate.difficultyTier}) -> ${date}`)
   }
 
@@ -164,13 +164,12 @@ async function main() {
     )
   }
 
-  const placedTotal = placedByFamily.lexical + placedByFamily.semantic
-  const lexicalShare =
-    placedTotal > 0 ? Math.round((100 * placedByFamily.lexical) / placedTotal) : 0
+  const placedTotal = placed.filler + placed.quality
+  const fillerShare = placedTotal > 0 ? Math.round((100 * placed.filler) / placedTotal) : 0
   console.log(`
 Done. Scheduled ${scheduled}/${COUNT}.`)
   console.log(
-    `  lexical ${placedByFamily.lexical} / semantic ${placedByFamily.semantic} (${lexicalShare}% lexical)`
+    `  quality ${placed.quality} / filler ${placed.filler} (${fillerShare}% filler)`
   )
   // Surfaced every run: a starving scheduler otherwise looks identical to a
   // working one until someone notices the gaps weeks later.
@@ -178,7 +177,7 @@ Done. Scheduled ${scheduled}/${COUNT}.`)
     console.warn(`  ${skippedDates} date(s) left empty — the approved pool ran dry for that tier.`)
   if (capBreaches > 0)
     console.warn(
-      `  ${capBreaches} placement(s) exceeded the ${MAX_LEXICAL_PER_WEEK}/week lexical cap — approve more semantic puzzles.`
+      `  ${capBreaches} placement(s) exceeded the ${MAX_FILLER_PER_WEEK}/week filler cap — approve more high-aha puzzles.`
     )
   process.exit(0)
 }
