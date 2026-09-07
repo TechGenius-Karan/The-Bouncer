@@ -28,7 +28,12 @@ export function hiddenWordRule(target: string): Rule {
     templateId: 'hidden-word',
     descriptionTemplate: `The word hides "${target}" inside it.`,
     family: 'lexical-structural',
-    subtlety: 4,
+    // Was 4, which made every hidden-word rule spicy-only — one day a week.
+    // It is the best-performing template in the whole taxonomy: 25% of its
+    // puzzles get rejected, against 80% for ends-with and 88% for starts-with.
+    // Locking the good material to Saturdays while filler carried the weekdays
+    // was backwards. 3 keeps it spicy-eligible and adds it to medium.
+    subtlety: 3,
     aha: 4,
     evaluate: (word) => word.features.hiddenWordHits.includes(target),
   }
@@ -62,7 +67,11 @@ export function startsWithRule(prefix: string): Rule {
     descriptionTemplate: `The word starts with "${prefix.toUpperCase()}".`,
     family: 'lexical-structural',
     subtlety: prefix.length > 1 ? 3 : 2,
-    aha: 2,
+    // 88% of starts-with puzzles have been rejected — the worst rate of any
+    // template. aha is a selection weight (pickTrueRule uses aha / (1 +
+    // rejectCount)), so rating it as filler is what stops it filling the
+    // review queue with puzzles nobody wants.
+    aha: 1,
     evaluate: (word) => word.spelling.startsWith(prefix),
   }
 }
@@ -75,7 +84,9 @@ export function endsWithRule(suffix: string): Rule {
     descriptionTemplate: `The word ends with "${suffix.toUpperCase()}".`,
     family: 'lexical-structural',
     subtlety: suffix.length > 1 ? 3 : 2,
-    aha: 3,
+    // 80% rejected, yet rated neutral — the rating disagreed with every review
+    // decision ever made about it. Same reasoning as startsWithRule.
+    aha: 1,
     evaluate: (word) => word.spelling.endsWith(suffix),
   }
 }
@@ -109,7 +120,9 @@ export function partOfSpeechRule(pos: PartOfSpeech): Rule {
     descriptionTemplate: `The word is ${POS_LABEL[pos] ?? pos}.`,
     family: 'semantic-knowledge',
     subtlety: 3,
-    aha: 3,
+    // 83% rejected. "Is a verb" is a grammar question, not an observation
+    // about the word — it reads as a quiz rather than a puzzle.
+    aha: 1,
     evaluate: (word) => word.partOfSpeech === pos,
   }
 }
