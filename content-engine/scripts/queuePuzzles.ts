@@ -10,14 +10,14 @@
 // Run with: npm run content:queue-puzzles -- [count]
 
 import 'dotenv/config'
-import { getCollections } from '../../netlify/functions/_shared/db'
-import { resolveRejectCounts } from '../../netlify/functions/_shared/rejectStats'
-import { resolveRuleOverrides } from '../../netlify/functions/_shared/ruleOverrides'
-import { resolveRecentRuleUsage } from '../../netlify/functions/_shared/ruleUsage'
-import type { PuzzleDoc } from '../../netlify/functions/_shared/types'
-import { RULES } from '../rules'
-import { applyRuleOverrides } from '../rules/ruleOverrides'
-import { generateBatchCore } from '../generator/batch'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
+import { resolveRejectCounts } from '../../netlify/functions/_shared/rejectStats.js'
+import { resolveRuleOverrides } from '../../netlify/functions/_shared/ruleOverrides.js'
+import { resolveRecentRuleUsage } from '../../netlify/functions/_shared/ruleUsage.js'
+import type { PuzzleDoc } from '../../netlify/functions/_shared/types.js'
+import { RULES } from '../rules/index.js'
+import { applyRuleOverrides } from '../rules/ruleOverrides.js'
+import { generateBatchCore } from '../generator/batch.js'
 
 const PUZZLE_COUNT = Number(process.argv[2]) || 5
 
@@ -31,7 +31,13 @@ async function main() {
   const effectiveRules = applyRuleOverrides(RULES, ruleOverrides)
 
   console.log(`Generating ${PUZZLE_COUNT} candidate puzzles...`)
-  const batch = generateBatchCore(PUZZLE_COUNT, ['medium', 'spicy'], rejectCounts, effectiveRules, recentUsage.ruleIds)
+  const batch = generateBatchCore(
+    PUZZLE_COUNT,
+    ['medium', 'spicy'],
+    rejectCounts,
+    effectiveRules,
+    recentUsage.ruleIds
+  )
   if (batch.length < PUZZLE_COUNT) {
     console.warn(`Only generated ${batch.length}/${PUZZLE_COUNT} candidates.`)
   }

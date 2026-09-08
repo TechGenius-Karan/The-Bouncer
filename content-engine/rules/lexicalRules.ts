@@ -1,5 +1,5 @@
-import { VOWELS } from '../words/fixedLists'
-import type { Rule } from './types'
+import { VOWELS } from '../words/fixedLists.js'
+import type { Rule } from './types.js'
 
 // Letters with enough word-bank coverage (>=15 matches) to support real
 // day-to-day puzzle variety. The old list excluded j/x/z citing "j:2, x:8,

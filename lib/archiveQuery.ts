@@ -1,5 +1,5 @@
 import type { Filter } from 'mongodb'
-import type { PuzzleDoc } from './types'
+import type { PuzzleDoc } from './types.js'
 
 // The archive's spoiler boundary, in one place.
 //

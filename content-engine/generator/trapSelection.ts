@@ -1,9 +1,9 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { trapAllocation } from './difficulty'
-import { mustFind } from './lookup'
-import { pickRandom, pickWeighted, shuffle } from './random'
-import type { DecoyResult, GuestEntry, KnobValues } from './types'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { trapAllocation } from './difficulty.js'
+import { mustFind } from './lookup.js'
+import { pickRandom, pickWeighted, shuffle } from './random.js'
+import type { DecoyResult, GuestEntry, KnobValues } from './types.js'
 
 /**
  * IN-count distribution for the 6-guest pool. 6:0 and 0:6 are excluded

@@ -3,10 +3,10 @@ import type {
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
   AdminPuzzleStatsResponse,
-} from './adminApi'
-import { getCollections } from './db'
-import { addDaysToDateString, isSaturday, resolvePuzzleDateString } from './puzzleDate'
-import type { PuzzleDoc } from './types'
+} from './adminApi.js'
+import { getCollections } from './db.js'
+import { addDaysToDateString, isSaturday, resolvePuzzleDateString } from './puzzleDate.js'
+import type { PuzzleDoc } from './types.js'
 
 // planning.md §4's target average (~4-5/6) — a puzzle only gets flagged
 // once it has a real completed attempt to judge; see resolveBatchStats.

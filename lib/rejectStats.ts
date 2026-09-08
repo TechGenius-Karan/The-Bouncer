@@ -1,4 +1,4 @@
-import { getCollections } from './db'
+import { getCollections } from './db.js'
 
 // Phase 10.6 item 2 (build-plan.md): a reviewer's reject reason used to be
 // stored and forgotten (PuzzleDoc.rejectionReason, admin-reject.ts). The

@@ -13,7 +13,8 @@
 // uniqueness validator) in aiReviewDispatch — the AI proposes, the validator
 // disposes.
 
-export type AiReviewActionType = 'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
+export type AiReviewActionType =
+  'swap-word' | 'rewrite-puzzle' | 'adjust-difficulty' | 'agree-reject'
 
 export interface AiAuthoredWord {
   word: string
@@ -22,7 +23,12 @@ export interface AiAuthoredWord {
 
 export type AiReviewAction =
   | { action: 'swap-word'; badWordId: string; rationale: string }
-  | { action: 'rewrite-puzzle'; clues: AiAuthoredWord[]; guests: AiAuthoredWord[]; rationale: string }
+  | {
+      action: 'rewrite-puzzle'
+      clues: AiAuthoredWord[]
+      guests: AiAuthoredWord[]
+      rationale: string
+    }
   | { action: 'adjust-difficulty'; newSubtlety: 1 | 2 | 3 | 4 | 5; rationale: string }
   | { action: 'agree-reject'; rationale: string }
 
@@ -82,7 +88,9 @@ export function parseAiReviewAction(raw: unknown, context: ParseContext): AiRevi
     case 'swap-word': {
       if (!isNonEmptyString(obj.badWordId)) return fallback('swap-word missing badWordId')
       if (!context.wordIds.has(obj.badWordId)) {
-        return fallback(`swap-word referenced "${obj.badWordId}", which isn't a word in this puzzle`)
+        return fallback(
+          `swap-word referenced "${obj.badWordId}", which isn't a word in this puzzle`
+        )
       }
       return { action: 'swap-word', badWordId: obj.badWordId, rationale }
     }
@@ -94,7 +102,8 @@ export function parseAiReviewAction(raw: unknown, context: ParseContext): AiRevi
       return { action: 'rewrite-puzzle', clues, guests, rationale }
     }
     case 'adjust-difficulty': {
-      if (!isValidSubtlety(obj.newSubtlety)) return fallback('adjust-difficulty missing a valid newSubtlety (1-5)')
+      if (!isValidSubtlety(obj.newSubtlety))
+        return fallback('adjust-difficulty missing a valid newSubtlety (1-5)')
       return { action: 'adjust-difficulty', newSubtlety: obj.newSubtlety, rationale }
     }
     case 'agree-reject':

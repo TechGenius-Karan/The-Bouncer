@@ -1,5 +1,5 @@
-import type { RuleOverride } from '../content-engine/rules/ruleOverrides'
-import { getCollections } from './db'
+import type { RuleOverride } from '../content-engine/rules/ruleOverrides.js'
+import { getCollections } from './db.js'
 
 // ai-feedback-plan.md §7.2/§11 phase 1: fetches the live rule overrides
 // (subtletyOverride) that a generation run should merge onto the

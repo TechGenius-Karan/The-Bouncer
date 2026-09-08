@@ -1,4 +1,4 @@
-import type { Word } from '../words/types'
+import type { Word } from '../words/types.js'
 
 export type RuleFamily = 'lexical-structural' | 'semantic-knowledge'
 

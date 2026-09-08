@@ -16,10 +16,15 @@ import 'dotenv/config'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { GoogleGenAI, Type } from '@google/genai'
-import { buildTaggingPrompt, parseTaggingResponse, toTagRecord, type TaggedWord } from '../words/aiTagging'
-import { CATEGORY_IDS } from '../words/categories'
-import { TAG_OVERRIDES } from '../words/tagOverrides'
-import { buildWordBank } from '../words/wordBank'
+import {
+  buildTaggingPrompt,
+  parseTaggingResponse,
+  toTagRecord,
+  type TaggedWord,
+} from '../words/aiTagging.js'
+import { CATEGORY_IDS } from '../words/categories.js'
+import { TAG_OVERRIDES } from '../words/tagOverrides.js'
+import { buildWordBank } from '../words/wordBank.js'
 
 const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash-lite'
 const BATCH_SIZE = 60
@@ -129,9 +134,12 @@ async function main() {
   for (const t of tagged) for (const c of t.categories) counts.set(c, (counts.get(c) ?? 0) + 1)
   console.log(`\nTagged ${tagged.length} words. Per-category counts (before parent expansion):`)
   for (const [c, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
-    console.log(`  ${c.padEnd(14)} ${String(n).padStart(5)}${n < 25 ? '   (below the 25-word rule floor)' : ''}`)
+    console.log(
+      `  ${c.padEnd(14)} ${String(n).padStart(5)}${n < 25 ? '   (below the 25-word rule floor)' : ''}`
+    )
   }
-  for (const id of CATEGORY_IDS) if (!counts.has(id)) console.log(`  ${id.padEnd(14)}     0   (below the 25-word rule floor)`)
+  for (const id of CATEGORY_IDS)
+    if (!counts.has(id)) console.log(`  ${id.padEnd(14)}     0   (below the 25-word rule floor)`)
 
   if (DRY_RUN) {
     // Counts alone can't show whether the tags are RIGHT. Print the actual

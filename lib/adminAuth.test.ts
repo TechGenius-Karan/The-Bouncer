@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { requireAdmin } from './adminAuth'
+import { requireAdmin } from './adminAuth.js'
 
 const ORIGINAL_ENV = process.env.ADMIN_ACCESS_CODE
 

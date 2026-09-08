@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildTaggingPrompt, parseTaggingResponse, toTagRecord } from './aiTagging'
+import { buildTaggingPrompt, parseTaggingResponse, toTagRecord } from './aiTagging.js'
 
 const requested = ['eagle', 'hammer', 'sofa', 'running', 'plant', 'room', 'job', 'time', 'body']
 
@@ -63,14 +63,23 @@ describe('parseTaggingResponse', () => {
   })
 
   it('keeps a valid second category when only the self-referential one is dropped', () => {
-    const result = parseTaggingResponse([{ word: 'plant', categories: ['plant', 'food'] }], requested)
+    const result = parseTaggingResponse(
+      [{ word: 'plant', categories: ['plant', 'food'] }],
+      requested
+    )
     expect(result).toEqual([{ word: 'plant', categories: ['food'] }])
   })
 
   it('drops generic terms that name categories rather than belonging to them', () => {
-    expect(parseTaggingResponse([{ word: 'job', categories: ['profession'] }], requested)).toEqual([])
-    expect(parseTaggingResponse([{ word: 'time', categories: ['time-period'] }], requested)).toEqual([])
-    expect(parseTaggingResponse([{ word: 'body', categories: ['body-part'] }], requested)).toEqual([])
+    expect(parseTaggingResponse([{ word: 'job', categories: ['profession'] }], requested)).toEqual(
+      []
+    )
+    expect(
+      parseTaggingResponse([{ word: 'time', categories: ['time-period'] }], requested)
+    ).toEqual([])
+    expect(parseTaggingResponse([{ word: 'body', categories: ['body-part'] }], requested)).toEqual(
+      []
+    )
   })
 
   it('returns an empty list for malformed shapes rather than throwing', () => {

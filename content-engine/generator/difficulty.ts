@@ -1,4 +1,4 @@
-import type { DifficultyTier, KnobValues } from './types'
+import type { DifficultyTier, KnobValues } from './types.js'
 
 // Defaults straight from planning.md §7.4's knob table.
 // planning.md §7.1's suggested launch mix: skew toward lexical/structural

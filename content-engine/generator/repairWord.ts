@@ -1,8 +1,8 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { buildRuleIndex, mustFind } from './lookup'
-import type { CandidatePuzzle } from './types'
-import { validateAndRepair } from './validator'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { buildRuleIndex, mustFind } from './lookup.js'
+import type { CandidatePuzzle } from './types.js'
+import { validateAndRepair } from './validator.js'
 
 export interface RepairWordInput {
   ruleId: string
@@ -42,7 +42,10 @@ export function repairWord(
   if (!clueSlot && !guestSlot) return { repaired: false }
 
   const wantIn = clueSlot ? clueSlot.label === 'IN' : guestSlot!.trueLabel === 'IN'
-  const usedIds = new Set([...input.clues.map((c) => c.wordId), ...input.guests.map((g) => g.wordId)])
+  const usedIds = new Set([
+    ...input.clues.map((c) => c.wordId),
+    ...input.guests.map((g) => g.wordId),
+  ])
 
   const replacements = wordBank
     .filter((w) => !usedIds.has(w.id) && !w.safety.blocked && trueRule.evaluate(w) === wantIn)
@@ -54,7 +57,9 @@ export function repairWord(
       difficultyTier: input.difficultyTier,
       knobValues: input.knobValues,
       status: 'pending_approval',
-      clues: input.clues.map((c) => (c.wordId === badWordId ? { ...c, wordId: replacement.id } : c)),
+      clues: input.clues.map((c) =>
+        c.wordId === badWordId ? { ...c, wordId: replacement.id } : c
+      ),
       guests: input.guests.map((g) =>
         g.wordId === badWordId ? { ...g, wordId: replacement.id, isTrap: false, trapType: null } : g
       ),

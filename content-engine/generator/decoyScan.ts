@@ -1,7 +1,7 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { buildWordIndex, mustFind } from './lookup'
-import type { ClueEntry, DecoyResult } from './types'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { buildWordIndex, mustFind } from './lookup.js'
+import type { ClueEntry, DecoyResult } from './types.js'
 
 /**
  * Step 2 of planning.md §7.6 / §7.2's mechanism: which OTHER rules also fit
@@ -14,7 +14,7 @@ export function scanDecoys(
   trueRule: Rule,
   clues: ClueEntry[],
   wordBank: Word[],
-  allRules: Rule[],
+  allRules: Rule[]
 ): DecoyResult[] {
   const wordIndex = buildWordIndex(wordBank)
   const clueItems = clues.map((c) => ({

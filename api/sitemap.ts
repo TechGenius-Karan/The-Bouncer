@@ -6,10 +6,10 @@
 // sitemap entry for today's puzzle would advertise the answer page before the
 // day is over.
 
-import { pastPuzzleFilter } from '../lib/archiveQuery'
-import { renderSitemap } from '../lib/archiveView'
-import { getCollections } from '../lib/db'
-import { resolvePuzzleDateString } from '../lib/puzzleDate'
+import { pastPuzzleFilter } from '../lib/archiveQuery.js'
+import { renderSitemap } from '../lib/archiveView.js'
+import { getCollections } from '../lib/db.js'
+import { resolvePuzzleDateString } from '../lib/puzzleDate.js'
 
 function xml(body: string): Response {
   return new Response(body, {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
-import { MEDIUM_KNOBS } from './difficulty'
-import { planAiReviewDispatch } from './aiReviewDispatch'
-import type { RepairWordInput } from './repairWord'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { MEDIUM_KNOBS } from './difficulty.js'
+import { planAiReviewDispatch } from './aiReviewDispatch.js'
+import type { RepairWordInput } from './repairWord.js'
 
 const wordBank = buildWordBank()
 
@@ -89,19 +89,31 @@ describe('planAiReviewDispatch', () => {
   })
 
   it('rewrite-puzzle: rejects when a word is not in the bank', () => {
-    const bad = { ...validRewrite, clues: [{ word: 'zzqqxx', label: 'IN' as const }, ...validRewrite.clues.slice(1)] }
-    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+    const bad = {
+      ...validRewrite,
+      clues: [{ word: 'zzqqxx', label: 'IN' as const }, ...validRewrite.clues.slice(1)],
+    }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe(
+      'reject'
+    )
   })
 
   it('rewrite-puzzle: rejects when a clue is mislabeled against the real rule', () => {
     // "cat" has no q, so labeling it IN for contains-q is a lie the server catches.
-    const bad = { ...validRewrite, clues: [{ word: 'cat', label: 'IN' as const }, ...validRewrite.clues.slice(1)] }
-    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+    const bad = {
+      ...validRewrite,
+      clues: [{ word: 'cat', label: 'IN' as const }, ...validRewrite.clues.slice(1)],
+    }
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe(
+      'reject'
+    )
   })
 
   it('rewrite-puzzle: rejects when the counts do not match the tier knobs', () => {
     const bad = { ...validRewrite, clues: validRewrite.clues.slice(0, 4) }
-    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe(
+      'reject'
+    )
   })
 
   it('rewrite-puzzle: rejects an all-one-side giveaway guest pool', () => {
@@ -116,7 +128,9 @@ describe('planAiReviewDispatch', () => {
         { word: 'queen', label: 'IN' as const },
       ],
     }
-    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe('reject')
+    expect(planAiReviewDispatch(bad, containsQInput(), RULES, wordBank).puzzleMutation.kind).toBe(
+      'reject'
+    )
   })
 
   it('adjust-difficulty: rejects this instance and carries a subtletyOverride', () => {

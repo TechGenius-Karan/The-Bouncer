@@ -7,9 +7,9 @@
 // this project's existing risk posture (planning.md §8.4).
 
 import { ObjectId } from 'mongodb'
-import type { GetCrackRateResponse } from '../lib/api'
-import { getCollections } from '../lib/db'
-import { jsonResponse } from '../lib/respond'
+import type { GetCrackRateResponse } from '../lib/api.js'
+import { getCollections } from '../lib/db.js'
+import { jsonResponse } from '../lib/respond.js'
 
 export default {
   fetch: async (req: Request): Promise<Response> => {

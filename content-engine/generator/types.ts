@@ -1,4 +1,4 @@
-import type { Subtlety } from '../rules/types'
+import type { Subtlety } from '../rules/types.js'
 
 // Field names follow planning.md §8.2's Mongo schema (label/trueLabel/
 // displayOrder/isTrap, uppercase IN/OUT) so Phase 4 can load this JSON

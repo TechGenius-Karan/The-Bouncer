@@ -1,9 +1,9 @@
-import { classifyCollision, pickRevealRule } from '../rules/ruleSimilarity'
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { scanDecoys } from './decoyScan'
-import { buildWordIndex, mustFind } from './lookup'
-import type { CandidatePuzzle, ValidationResult } from './types'
+import { classifyCollision, pickRevealRule } from '../rules/ruleSimilarity.js'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { scanDecoys } from './decoyScan.js'
+import { buildWordIndex, mustFind } from './lookup.js'
+import type { CandidatePuzzle, ValidationResult } from './types.js'
 
 const MAX_REPAIR_ATTEMPTS = 5
 

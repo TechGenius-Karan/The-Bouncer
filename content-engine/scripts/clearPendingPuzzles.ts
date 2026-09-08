@@ -12,8 +12,8 @@
 // Run with: npm run content:clear-pending -- --yes [--stale]
 
 import 'dotenv/config'
-import { RULES } from '../rules'
-import { getCollections } from '../../netlify/functions/_shared/db'
+import { RULES } from '../rules/index.js'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
 
 const CONFIRMED = process.argv.includes('--yes')
 const INCLUDE_STALE = process.argv.includes('--stale')
@@ -28,7 +28,10 @@ async function main() {
   let staleIds: unknown[] = []
   if (INCLUDE_STALE) {
     const others = await puzzles
-      .find({ status: { $ne: 'pending_approval' } }, { projection: { ruleId: 1, status: 1, number: 1 } })
+      .find(
+        { status: { $ne: 'pending_approval' } },
+        { projection: { ruleId: 1, status: 1, number: 1 } }
+      )
       .toArray()
     const stale = others.filter((p) => !knownRuleIds.has(p.ruleId))
     staleIds = stale.map((p) => p._id)

@@ -4,7 +4,7 @@ import {
   isSaturday,
   isValidPuzzleDateString,
   resolvePuzzleDateString,
-} from './puzzleDate'
+} from './puzzleDate.js'
 
 describe('resolvePuzzleDateString', () => {
   it('resolves the exact UTC midnight boundary correctly', () => {

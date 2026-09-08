@@ -7,7 +7,7 @@ import {
   renderNotFound,
   renderSitemap,
   type ArchivePuzzle,
-} from './archiveView'
+} from './archiveView.js'
 
 const puzzle: ArchivePuzzle = {
   date: '2026-09-03',

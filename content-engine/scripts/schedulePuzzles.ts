@@ -18,14 +18,14 @@ import {
   MAX_FILLER_PER_WEEK,
   selectForDate,
   type Placement,
-} from '../scheduling/placement'
-import { getCollections } from '../../netlify/functions/_shared/db'
+} from '../scheduling/placement.js'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
 import {
   addDaysToDateString,
   isSaturday,
   resolvePuzzleDateString,
-} from '../../netlify/functions/_shared/puzzleDate'
-import type { PuzzleDoc } from '../../netlify/functions/_shared/types'
+} from '../../netlify/functions/_shared/puzzleDate.js'
+import type { PuzzleDoc } from '../../netlify/functions/_shared/types.js'
 
 const COUNT = Number(process.argv[2]) || 5
 const START_DATE = process.argv[3] || resolvePuzzleDateString()
@@ -168,9 +168,7 @@ async function main() {
   const fillerShare = placedTotal > 0 ? Math.round((100 * placed.filler) / placedTotal) : 0
   console.log(`
 Done. Scheduled ${scheduled}/${COUNT}.`)
-  console.log(
-    `  quality ${placed.quality} / filler ${placed.filler} (${fillerShare}% filler)`
-  )
+  console.log(`  quality ${placed.quality} / filler ${placed.filler} (${fillerShare}% filler)`)
   // Surfaced every run: a starving scheduler otherwise looks identical to a
   // working one until someone notices the gaps weeks later.
   if (skippedDates > 0)

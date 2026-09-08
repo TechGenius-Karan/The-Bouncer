@@ -1,4 +1,4 @@
-import type { Rule } from './types'
+import type { Rule } from './types.js'
 
 // Category-membership rules used to be hand-written here, one per category,
 // covering the 7 categories that 227 hand-reviewed words supported. They're now

@@ -1,5 +1,5 @@
-import type { Word } from '../words/types'
-import type { Rule } from './types'
+import type { Word } from '../words/types.js'
+import type { Rule } from './types.js'
 
 /**
  * Why two rules that both separate a board can still be different things.

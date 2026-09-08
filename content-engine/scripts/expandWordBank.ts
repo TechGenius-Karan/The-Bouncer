@@ -16,9 +16,9 @@ import { Filter } from 'bad-words'
 // on that package's dynamic CJS exports) but a plain, statically-analyzable
 // named export at this specific path — imports cleanly on its own.
 import { words as STOPWORDS } from 'natural/lib/natural/util/stopwords.js'
-import { fetchWordnetProfile, type WordnetProfile } from '../words/dictionarySources'
-import { SEED_WORDS } from '../words/seedWords'
-import type { SeedWord } from '../words/types'
+import { fetchWordnetProfile, type WordnetProfile } from '../words/dictionarySources.js'
+import { SEED_WORDS } from '../words/seedWords.js'
+import type { SeedWord } from '../words/types.js'
 
 const require = createRequire(import.meta.url)
 const subtlex = require('subtlex-word-frequencies') as { word: string; count: number }[]
@@ -122,7 +122,7 @@ function writeOutput(words: SeedWord[]): void {
     '// Sourced from subtlex-word-frequencies, filtered to words WordNet knows.',
     '// No `tags` yet — run content:tag-words + human review to populate them,',
     '// same rhythm as the hand-curated words in seedWords.ts.',
-    "import type { SeedWord } from './types'",
+    "import type { SeedWord } from './types.js'",
     '',
     'export const BULK_SEED_WORDS: SeedWord[] = [',
     ...words.map(

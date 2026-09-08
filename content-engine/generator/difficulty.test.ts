@@ -5,7 +5,7 @@ import {
   resolveKnobs,
   subtletyRangeFor,
   trapAllocation,
-} from './difficulty'
+} from './difficulty.js'
 
 describe('resolveKnobs', () => {
   it('returns the medium defaults', () => {

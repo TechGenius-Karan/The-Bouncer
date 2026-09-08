@@ -1,4 +1,4 @@
-import type { Rule, Subtlety } from './types'
+import type { Rule, Subtlety } from './types.js'
 
 // ai-feedback-plan.md §7.2/§11 phase 1: live, no-deploy overrides on top of
 // the static RULES array — a rule's subtlety can be recalibrated by
@@ -19,11 +19,10 @@ export interface RuleOverride {
  */
 export function applyRuleOverrides(baseRules: Rule[], overrides: RuleOverride[]): Rule[] {
   const overrideById = new Map(overrides.map((o) => [o.ruleId, o]))
-  return baseRules
-    .map((r) => {
-      const override = overrideById.get(r.id)
-      return override?.subtletyOverride !== undefined
-        ? { ...r, subtlety: override.subtletyOverride as Subtlety }
-        : r
-    })
+  return baseRules.map((r) => {
+    const override = overrideById.get(r.id)
+    return override?.subtletyOverride !== undefined
+      ? { ...r, subtlety: override.subtletyOverride as Subtlety }
+      : r
+  })
 }

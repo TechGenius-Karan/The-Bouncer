@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
-import { resolveKnobs, subtletyRangeFor } from './difficulty'
-import { buildRuleIndex } from './lookup'
-import { generateCandidate } from './orchestrator'
-import { validateAndRepair } from './validator'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { resolveKnobs, subtletyRangeFor } from './difficulty.js'
+import { buildRuleIndex } from './lookup.js'
+import { generateCandidate } from './orchestrator.js'
+import { validateAndRepair } from './validator.js'
 
 const wordBank = buildWordBank()
 const ruleIndex = buildRuleIndex(RULES)
@@ -28,7 +28,10 @@ describe.each(['medium', 'spicy'] as const)('generateCandidate(%s)', (tier) => {
       expect(candidate.clues.filter((c) => c.label === 'OUT')).toHaveLength(knobs.clueCountOut)
       expect(candidate.guests).toHaveLength(knobs.poolSize)
 
-      const allIds = [...candidate.clues.map((c) => c.wordId), ...candidate.guests.map((g) => g.wordId)]
+      const allIds = [
+        ...candidate.clues.map((c) => c.wordId),
+        ...candidate.guests.map((g) => g.wordId),
+      ]
       expect(new Set(allIds).size).toBe(allIds.length) // no word reused across clues+pool
 
       // Round-trip: re-validating an emitted candidate should need zero further repairs.

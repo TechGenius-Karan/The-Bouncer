@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Rule } from '../rules/types'
-import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection'
+import type { Rule } from '../rules/types.js'
+import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection.js'
 
 function rule(id: string, family: Rule['family'], subtlety: Rule['subtlety']): Rule {
   return {

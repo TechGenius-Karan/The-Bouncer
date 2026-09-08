@@ -1,6 +1,6 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { shuffle } from './random'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { shuffle } from './random.js'
 
 // ai-feedback-plan.md Phase 3: the pure, Mongo-free core of the word menus
 // admin-ai-review.ts hands the model. Same testable-core / thin-wrapper split

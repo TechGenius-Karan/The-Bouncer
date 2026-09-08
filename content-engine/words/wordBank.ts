@@ -1,11 +1,12 @@
-import { AI_TAGS } from './aiTags'
-import { BLOCKED_WORDS } from './blockedWords'
-import { BULK_SEED_WORDS } from './bulkSeedWords'
-import { withParentCategories } from './categories'
-import { buildLetterFeatures } from './features'
-import { SEED_WORDS } from './seedWords'
-import { TAG_OVERRIDES } from './tagOverrides'
-import type { Word } from './types'
+import { AI_TAGS } from './aiTags.js'
+import { BLOCKED_WORDS } from './blockedWords.js'
+import { BULK_SEED_WORDS } from './bulkSeedWords.js'
+import { withParentCategories } from './categories.js'
+import { buildLetterFeatures } from './features.js'
+import { PHONETICS } from './phonetics.js'
+import { SEED_WORDS } from './seedWords.js'
+import { TAG_OVERRIDES } from './tagOverrides.js'
+import type { Word } from './types.js'
 
 // SEED_WORDS is hand-curated (its words carry human-reviewed category tags,
 // Phase 10.5 §2); BULK_SEED_WORDS is corpus-sourced (Phase 10.6, no tags of
@@ -20,6 +21,8 @@ export function buildWordBank(): Word[] {
     spelling: seed.spelling,
     length: seed.spelling.length,
     features: buildLetterFeatures(seed.spelling),
+    // Null for the ~2% CMUdict has no entry for; sound rules treat that as OUT.
+    phonetics: PHONETICS[seed.spelling] ?? null,
     frequencyScore: seed.frequencyScore,
     partOfSpeech: seed.partOfSpeech,
     properNoun: seed.properNoun ?? false,
@@ -43,7 +46,10 @@ export function buildWordBank(): Word[] {
   // pass rather than living in buildLetterFeatures.
   const bySignature = new Map<string, number>()
   for (const w of words) {
-    bySignature.set(w.features.anagramSignature, (bySignature.get(w.features.anagramSignature) ?? 0) + 1)
+    bySignature.set(
+      w.features.anagramSignature,
+      (bySignature.get(w.features.anagramSignature) ?? 0) + 1
+    )
   }
   for (const w of words) {
     if ((bySignature.get(w.features.anagramSignature) ?? 0) > 1) w.tags.push('lexical:has-anagram')

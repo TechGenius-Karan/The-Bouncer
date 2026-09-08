@@ -10,7 +10,7 @@
  * notes on why neither source is trustworthy enough to write directly into
  * the word bank without a human review pass (Step 4).
  */
-import { fetchDatamuseRelations, fetchWordnetHyponymsDeep } from './dictionarySources'
+import { fetchDatamuseRelations, fetchWordnetHyponymsDeep } from './dictionarySources.js'
 
 export interface TagSuggestion {
   tag: string

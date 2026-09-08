@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateBatchCore } from './batch'
+import { generateBatchCore } from './batch.js'
 
 describe('generateBatchCore', () => {
   it('produces the requested number of structurally valid candidates across both tiers', () => {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { makeWord } from '../generator/testUtils'
-import { buildWordBank } from '../words/wordBank'
-import { RULES } from './index'
-import { classifyCollision, pickRevealRule } from './ruleSimilarity'
-import type { Rule } from './types'
+import { makeWord } from '../generator/testUtils.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { RULES } from './index.js'
+import { classifyCollision, pickRevealRule } from './ruleSimilarity.js'
+import type { Rule } from './types.js'
 
 const bank = buildWordBank()
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
+import { RULES } from '../rules/index.js'
 import {
   daysBetween,
   isFreshFor,
@@ -9,7 +9,7 @@ import {
   RULE_SPACING_DAYS,
   selectForDate,
   type Placement,
-} from './placement'
+} from './placement.js'
 
 // Chosen by rating, not family — that is the whole point of the filler cap.
 // `hidden-word` is lexical AND high-aha, and it must NOT be treated as filler;

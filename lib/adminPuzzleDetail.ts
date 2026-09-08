@@ -1,6 +1,6 @@
-import type { AdminPuzzleDetail } from './adminApi'
-import { getCollections } from './db'
-import type { PuzzleDoc } from './types'
+import type { AdminPuzzleDetail } from './adminApi.js'
+import { getCollections } from './db.js'
+import type { PuzzleDoc } from './types.js'
 
 /**
  * Resolves everything a reviewer needs and a player must never see: true

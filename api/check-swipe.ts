@@ -4,12 +4,12 @@
 // changes — never trust anything the client claims about either.
 
 import { ObjectId } from 'mongodb'
-import type { CheckSwipeRequest, CheckSwipeResponse } from '../lib/api'
-import { getCollections } from '../lib/db'
-import { getPuzzleCached } from '../lib/puzzleCache'
-import { jsonResponse } from '../lib/respond'
-import { buildPool, resolveRuleText } from '../lib/roundView'
-import type { ResultPlacementDoc } from '../lib/types'
+import type { CheckSwipeRequest, CheckSwipeResponse } from '../lib/api.js'
+import { getCollections } from '../lib/db.js'
+import { getPuzzleCached } from '../lib/puzzleCache.js'
+import { jsonResponse } from '../lib/respond.js'
+import { buildPool, resolveRuleText } from '../lib/roundView.js'
+import type { ResultPlacementDoc } from '../lib/types.js'
 
 export default {
   fetch: async (req: Request): Promise<Response> => {

@@ -15,7 +15,7 @@
  * (Step 3) doesn't die partway through on one bad entry.
  */
 import naturalPkg from 'natural'
-import type { PartOfSpeech } from './types'
+import type { PartOfSpeech } from './types.js'
 
 // `natural` builds its CJS export map dynamically, so Node's ESM interop
 // can't see named exports statically — import the default and destructure.

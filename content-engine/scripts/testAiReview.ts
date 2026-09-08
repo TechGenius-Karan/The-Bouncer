@@ -19,12 +19,12 @@
 //   npm run content:test-ai-review -- --rule=hidden-word --count=3 vary which number is hidden
 
 import 'dotenv/config'
-import { RULES } from '../rules'
-import { buildReviewMenus } from '../generator/aiReviewMenu'
-import { buildWordBank } from '../words/wordBank'
-import { getCollections } from '../../netlify/functions/_shared/db'
-import { resolveFullPuzzleDetail } from '../../netlify/functions/_shared/adminPuzzleDetail'
-import { getAiReviewDecision } from '../../netlify/functions/_shared/aiReview'
+import { RULES } from '../rules/index.js'
+import { buildReviewMenus } from '../generator/aiReviewMenu.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
+import { resolveFullPuzzleDetail } from '../../netlify/functions/_shared/adminPuzzleDetail.js'
+import { getAiReviewDecision } from '../../netlify/functions/_shared/aiReview.js'
 
 const args = process.argv.slice(2)
 const flag = (name: string): string | undefined =>

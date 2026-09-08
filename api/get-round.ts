@@ -7,12 +7,12 @@
 // would be served forever instead of today's puzzle.
 
 import { ObjectId } from 'mongodb'
-import type { GetRoundResponse } from '../lib/api'
-import { getCollections } from '../lib/db'
-import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate'
-import { jsonResponse } from '../lib/respond'
-import { buildPool, resolveClueWords, resolveRuleText } from '../lib/roundView'
-import type { PuzzleDoc, ResultDoc } from '../lib/types'
+import type { GetRoundResponse } from '../lib/api.js'
+import { getCollections } from '../lib/db.js'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
+import { jsonResponse } from '../lib/respond.js'
+import { buildPool, resolveClueWords, resolveRuleText } from '../lib/roundView.js'
+import type { PuzzleDoc, ResultDoc } from '../lib/types.js'
 
 // Lets us simulate a different "today" to manually walk through a
 // multi-day schedule without touching the system clock. Fails closed: local

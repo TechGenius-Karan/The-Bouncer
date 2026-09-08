@@ -1,10 +1,10 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import type { AiAuthoredWord, AiReviewAction } from './aiReviewAction'
-import { buildRuleIndex } from './lookup'
-import { repairWord, type RepairWordInput } from './repairWord'
-import type { CandidatePuzzle } from './types'
-import { validateAndRepair } from './validator'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import type { AiAuthoredWord, AiReviewAction } from './aiReviewAction.js'
+import { buildRuleIndex } from './lookup.js'
+import { repairWord, type RepairWordInput } from './repairWord.js'
+import type { CandidatePuzzle } from './types.js'
+import { validateAndRepair } from './validator.js'
 
 // ai-feedback-plan.md §7.5/§10: the pure, Mongo-free core of admin-ai-review.ts.
 // Given a *validated* AiReviewAction (parseAiReviewAction already ran) plus the

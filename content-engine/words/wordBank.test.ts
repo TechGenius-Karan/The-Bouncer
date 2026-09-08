@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { BULK_SEED_WORDS } from './bulkSeedWords'
-import { SEED_WORDS } from './seedWords'
-import { buildWordBank } from './wordBank'
+import { BULK_SEED_WORDS } from './bulkSeedWords.js'
+import { SEED_WORDS } from './seedWords.js'
+import { buildWordBank } from './wordBank.js'
 
 describe('buildWordBank', () => {
   const bank = buildWordBank()

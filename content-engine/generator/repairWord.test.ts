@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
-import { MEDIUM_KNOBS } from './difficulty'
-import { repairWord, type RepairWordInput } from './repairWord'
-import { makeWord } from './testUtils'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { MEDIUM_KNOBS } from './difficulty.js'
+import { repairWord, type RepairWordInput } from './repairWord.js'
+import { makeWord } from './testUtils.js'
 
 const wordBank = buildWordBank()
 

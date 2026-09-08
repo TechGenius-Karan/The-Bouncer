@@ -1,4 +1,4 @@
-import type { SeedWord } from './types'
+import type { SeedWord } from './types.js'
 
 // Phase 2/3 development fixture — NOT the production word bank.
 // ~400 hand-picked common words (grown from an original ~230 — see the

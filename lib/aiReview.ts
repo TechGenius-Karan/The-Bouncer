@@ -2,9 +2,9 @@ import { GoogleGenAI, Type } from '@google/genai'
 import {
   parseAiReviewAction,
   type AiReviewAction,
-} from '../content-engine/generator/aiReviewAction'
-import type { MenuWord } from '../content-engine/generator/aiReviewMenu'
-import type { AdminPuzzleDetail } from './adminApi'
+} from '../content-engine/generator/aiReviewAction.js'
+import type { MenuWord } from '../content-engine/generator/aiReviewMenu.js'
+import type { AdminPuzzleDetail } from './adminApi.js'
 
 // ai-feedback-plan.md §4/§7.4: Gemini's free tier (no card) is the pick. The
 // model lineup shifted fast under us (all empirical, 2026-08-30): 3.5-flash's

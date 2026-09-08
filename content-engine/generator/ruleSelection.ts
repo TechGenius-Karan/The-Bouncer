@@ -1,5 +1,5 @@
-import type { Rule } from '../rules/types'
-import { pickWeighted } from './random'
+import type { Rule } from '../rules/types.js'
+import { pickWeighted } from './random.js'
 
 /**
  * Rules of a given family whose subtlety falls within [minSubtlety, maxSubtlety].

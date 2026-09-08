@@ -5,8 +5,8 @@ vi.mock('./dictionarySources', () => ({
   fetchDatamuseRelations: vi.fn(),
 }))
 
-import { fetchDatamuseRelations, fetchWordnetHyponymsDeep } from './dictionarySources'
-import { suggestCategoryTag, suggestPropertyTag } from './tagSuggestion'
+import { fetchDatamuseRelations, fetchWordnetHyponymsDeep } from './dictionarySources.js'
+import { suggestCategoryTag, suggestPropertyTag } from './tagSuggestion.js'
 
 const mockFetchWordnetHyponyms = vi.mocked(fetchWordnetHyponymsDeep)
 const mockFetchDatamuseRelations = vi.mocked(fetchDatamuseRelations)

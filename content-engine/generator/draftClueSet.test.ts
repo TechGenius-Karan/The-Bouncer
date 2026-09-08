@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import type { Rule } from '../rules/types'
-import { buildWordBank } from '../words/wordBank'
-import { MEDIUM_KNOBS } from './difficulty'
-import { draftClueSet } from './draftClueSet'
+import { RULES } from '../rules/index.js'
+import type { Rule } from '../rules/types.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { MEDIUM_KNOBS } from './difficulty.js'
+import { draftClueSet } from './draftClueSet.js'
 
 const wordBank = buildWordBank()
 const bySpelling = new Map(wordBank.map((w) => [w.spelling, w]))

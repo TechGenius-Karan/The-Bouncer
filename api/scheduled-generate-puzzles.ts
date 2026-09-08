@@ -16,16 +16,16 @@
 // human review a distinct, non-collapsible stage of the locked pipeline
 // (generate -> validate -> human-approve -> schedule).
 
-import { generateBatchCore } from '../content-engine/generator/batch'
-import { RULES } from '../content-engine/rules'
-import { applyRuleOverrides } from '../content-engine/rules/ruleOverrides'
-import { getCollections } from '../lib/db'
-import { resolveBufferHealth } from '../lib/puzzleStats'
-import { resolveRejectCounts } from '../lib/rejectStats'
-import { resolveRuleOverrides } from '../lib/ruleOverrides'
-import { resolveRecentRuleUsage } from '../lib/ruleUsage'
-import type { PuzzleDoc } from '../lib/types'
-import { jsonResponse } from '../lib/respond'
+import { generateBatchCore } from '../content-engine/generator/batch.js'
+import { RULES } from '../content-engine/rules/index.js'
+import { applyRuleOverrides } from '../content-engine/rules/ruleOverrides.js'
+import { getCollections } from '../lib/db.js'
+import { resolveBufferHealth } from '../lib/puzzleStats.js'
+import { resolveRejectCounts } from '../lib/rejectStats.js'
+import { resolveRuleOverrides } from '../lib/ruleOverrides.js'
+import { resolveRecentRuleUsage } from '../lib/ruleUsage.js'
+import type { PuzzleDoc } from '../lib/types.js'
+import { jsonResponse } from '../lib/respond.js'
 
 const MEDIUM_MIN_DAYS = 14
 const MEDIUM_TARGET_DAYS = 28

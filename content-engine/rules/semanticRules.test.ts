@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildWordBank } from '../words/wordBank'
-import { buildLetterFeatures } from '../words/features'
-import { RULES } from './index'
-import type { Word } from '../words/types'
+import { buildWordBank } from '../words/wordBank.js'
+import { buildLetterFeatures } from '../words/features.js'
+import { PHONETICS } from '../words/phonetics.js'
+import { RULES } from './index.js'
+import type { Word } from '../words/types.js'
 
 function wordFor(spelling: string): Word {
   const bank = buildWordBank()
@@ -13,6 +14,7 @@ function wordFor(spelling: string): Word {
     spelling,
     length: spelling.length,
     features: buildLetterFeatures(spelling),
+    phonetics: PHONETICS[spelling] ?? null,
     frequencyScore: 0.5,
     partOfSpeech: 'other',
     properNoun: false,
@@ -52,7 +54,10 @@ describe('registry sanity', () => {
     const bank = buildWordBank()
     for (const rule of CATEGORY_RULES) {
       const matchCount = bank.filter((w) => rule.evaluate(w)).length
-      expect(matchCount, `category rule "${rule.id}" only matches ${matchCount} words`).toBeGreaterThanOrEqual(25)
+      expect(
+        matchCount,
+        `category rule "${rule.id}" only matches ${matchCount} words`
+      ).toBeGreaterThanOrEqual(25)
     }
   })
 })

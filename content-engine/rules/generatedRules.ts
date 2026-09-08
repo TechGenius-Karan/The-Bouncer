@@ -1,8 +1,8 @@
-import { CATEGORY_DEFINITIONS, categoryTag } from '../words/categories'
-import { HIDDEN_WORD_GROUPS } from '../words/fixedLists'
-import type { PartOfSpeech } from '../words/types'
-import { RULE_PARAMS } from './ruleParams'
-import type { Rule } from './types'
+import { CATEGORY_DEFINITIONS, categoryTag } from '../words/categories.js'
+import { HIDDEN_WORD_GROUPS } from '../words/fixedLists.js'
+import type { PartOfSpeech } from '../words/types.js'
+import { RULE_PARAMS } from './ruleParams.js'
+import type { Rule } from './types.js'
 
 // Rules built from a parameter list rather than hand-written one at a time.
 // This is what takes the taxonomy from ~19 usable rules (a repeat every two
@@ -162,4 +162,91 @@ export const GENERATED_RULES: Rule[] = [
   ...RULE_PARAMS.endsWith.map(endsWithRule),
   ...RULE_PARAMS.wordLengths.map(wordLengthRule),
   ...RULE_PARAMS.partsOfSpeech.map((p) => partOfSpeechRule(p as PartOfSpeech)),
+  ...RULE_PARAMS.syllableCounts.map(syllableCountRule),
+  ...RULE_PARAMS.rhymes.map(rhymeRule),
+  silentLettersRule(RULE_PARAMS.silentThreshold),
+  homophoneRule(),
 ]
+
+// --- sound rules -------------------------------------------------------------
+//
+// A third axis. Every other rule in the taxonomy asks about spelling or about
+// meaning; these ask what the word sounds like, which a player has to reach for
+// differently — often by saying the word under their breath.
+//
+// All of them read `word.phonetics`, precomputed from CMUdict into
+// words/phonetics.ts. It is null for the ~2% of the bank with no pronunciation,
+// and every rule below treats that as OUT. Never as a match: a word the game
+// cannot pronounce silently becoming an IN answer is a wrong answer the player
+// has no way to reason about.
+
+/** "Three syllables when you say it out loud." */
+export function syllableCountRule(count: number): Rule {
+  return {
+    id: `syllables-${count}`,
+    name: `${count} Syllable${count === 1 ? '' : 's'}`,
+    templateId: 'syllable-count',
+    descriptionTemplate: `The word has exactly ${count} syllable${count === 1 ? '' : 's'} when spoken.`,
+    family: 'lexical-structural',
+    subtlety: 3,
+    // Counting, like word-length — but counting something you can only get at
+    // by pronouncing the word, which is a different act from counting letters.
+    aha: 3,
+    evaluate: (word) => word.phonetics?.syllables === count,
+  }
+}
+
+/**
+ * "Longer written than spoken." The player has to notice the gap between how a
+ * word looks and how it sounds.
+ *
+ * Named for what it actually measures. The count is letters minus phonemes, so
+ * digraphs land in it too — "cheese" scores 3 without having three silent
+ * letters in the way anyone means that phrase. Calling it "Silent Letters"
+ * would promise something the evaluator doesn't deliver, and the reveal text is
+ * the one thing a player checks their reasoning against.
+ */
+export function silentLettersRule(minSilent: number): Rule {
+  return {
+    id: `silent-letters-${minSilent}`,
+    name: 'More Letters Than Sounds',
+    templateId: 'silent-letters',
+    descriptionTemplate: `The word has at least ${minSilent} more letters than it has sounds.`,
+    family: 'lexical-structural',
+    subtlety: 3,
+    aha: 4,
+    evaluate: (word) => (word.phonetics?.silent ?? 0) >= minSilent,
+  }
+}
+
+/** "Sounds exactly like another word" — great/grate, throne/thrown, pear/pair. */
+export function homophoneRule(): Rule {
+  return {
+    id: 'has-homophone',
+    name: 'Sounds Like Another Word',
+    templateId: 'homophone',
+    descriptionTemplate: 'The word sounds exactly like a different word.',
+    family: 'lexical-structural',
+    subtlety: 3,
+    aha: 4,
+    evaluate: (word) => word.phonetics?.homophone === true,
+  }
+}
+
+/**
+ * "They all rhyme." The rhyme key is the last vowel sound onward, so it groups
+ * by how words END in speech rather than in spelling — "eight" rhymes with
+ * "late" here, which no ends-with rule can express.
+ */
+export function rhymeRule(key: string): Rule {
+  return {
+    id: `rhyme-${key.toLowerCase()}`,
+    name: `Rhymes (${key})`,
+    templateId: 'rhyme',
+    descriptionTemplate: 'The words all rhyme with each other.',
+    family: 'lexical-structural',
+    subtlety: 3,
+    aha: 3,
+    evaluate: (word) => word.phonetics?.rhyme === key,
+  }
+}

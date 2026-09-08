@@ -4,10 +4,10 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { generateBatchCore } from '../generator/batch'
-import type { CandidatePuzzle } from '../generator/types'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
+import { generateBatchCore } from '../generator/batch.js'
+import type { CandidatePuzzle } from '../generator/types.js'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
 
 const COUNT = Number(process.argv[2]) || 20
 const OUTPUT_DIR = join(process.cwd(), 'content-engine', 'output')
@@ -56,6 +56,6 @@ console.log(`Generated ${batch.length}/${COUNT} candidates.`)
 console.log(`Written to ${join(OUTPUT_DIR, 'candidates.json')} and candidates.md`)
 if (batch.length < COUNT) {
   console.warn(
-    `Warning: only ${batch.length} of ${COUNT} requested candidates could be generated — the seed word bank may be running low for some rules.`,
+    `Warning: only ${batch.length} of ${COUNT} requested candidates could be generated — the seed word bank may be running low for some rules.`
   )
 }

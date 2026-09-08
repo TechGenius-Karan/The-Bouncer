@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { makeWord } from './testUtils'
-import { scanDecoys } from './decoyScan'
-import type { ClueEntry } from './types'
+import { RULES } from '../rules/index.js'
+import { makeWord } from './testUtils.js'
+import { scanDecoys } from './decoyScan.js'
+import type { ClueEntry } from './types.js'
 
 const doubledLetter = RULES.find((r) => r.id === 'doubled-letter')!
 const sameStartEnd = RULES.find((r) => r.id === 'same-start-end')!

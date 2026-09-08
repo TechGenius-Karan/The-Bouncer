@@ -1,7 +1,7 @@
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { shuffle } from './random'
-import type { ClueEntry, KnobValues } from './types'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { shuffle } from './random.js'
+import type { ClueEntry, KnobValues } from './types.js'
 
 // Clues are the evidence a player anchors on hardest — hold them to a
 // higher commonness bar than trap guests (planning.md §7.5).
@@ -66,10 +66,14 @@ export function draftClueSet(
   rule: Rule,
   wordBank: Word[],
   knobs: KnobValues,
-  excludeIds: Set<string> = new Set(),
+  excludeIds: Set<string> = new Set()
 ): ClueEntry[] {
-  const inCandidates = wordBank.filter((w) => !excludeIds.has(w.id) && !w.safety.blocked && rule.evaluate(w))
-  const outCandidates = wordBank.filter((w) => !excludeIds.has(w.id) && !w.safety.blocked && !rule.evaluate(w))
+  const inCandidates = wordBank.filter(
+    (w) => !excludeIds.has(w.id) && !w.safety.blocked && rule.evaluate(w)
+  )
+  const outCandidates = wordBank.filter(
+    (w) => !excludeIds.has(w.id) && !w.safety.blocked && !rule.evaluate(w)
+  )
 
   if (inCandidates.length < knobs.clueCountIn || outCandidates.length < knobs.clueCountOut) {
     throw new Error(`Not enough words in the bank to draft a clue set for rule "${rule.id}"`)

@@ -1,4 +1,4 @@
-import type { AiReviewActionType, KnobValues, Label, PuzzleStatus } from './types'
+import type { AiReviewActionType, KnobValues, Label, PuzzleStatus } from './types.js'
 
 // Wire contract for the admin-only endpoints. Kept separate from api.ts,
 // which is explicitly scoped to "the two player-facing endpoints" — these

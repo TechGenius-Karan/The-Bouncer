@@ -17,10 +17,10 @@ import {
   renderNotFound,
   type ArchiveEntry,
   type ArchivePuzzle,
-} from '../lib/archiveView'
-import { pastPuzzleFilter } from '../lib/archiveQuery'
-import { getCollections } from '../lib/db'
-import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate'
+} from '../lib/archiveView.js'
+import { pastPuzzleFilter } from '../lib/archiveQuery.js'
+import { getCollections } from '../lib/db.js'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
 
 // A past puzzle never changes, so these are safe to cache hard. Keeps crawler
 // traffic off Mongo — Atlas's free tier connection budget is shared with the

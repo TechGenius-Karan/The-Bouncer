@@ -1,4 +1,4 @@
-import { RULES } from '../rules'
+import { RULES } from '../rules/index.js'
 
 // The pure half of content-engine/scripts/schedulePuzzles.ts: everything that
 // decides WHICH approved puzzle may go on a given date, with no Mongo and no

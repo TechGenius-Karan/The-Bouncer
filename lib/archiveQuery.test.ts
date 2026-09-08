@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pastPuzzleFilter } from './archiveQuery'
+import { pastPuzzleFilter } from './archiveQuery.js'
 
 describe('pastPuzzleFilter', () => {
   it('restricts to finished puzzles dated before today', () => {

@@ -4,7 +4,7 @@
 // ponytail: no persistence or alerting, upgrade to a real sink (Sentry, a
 // `errorReports` collection) if volume/triage needs ever outgrow log-reading.
 
-import { jsonResponse } from '../lib/respond'
+import { jsonResponse } from '../lib/respond.js'
 
 export default {
   fetch: async (req: Request): Promise<Response> => {

@@ -10,7 +10,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { buildWordBank } from '../words/wordBank'
+import { buildWordBank } from '../words/wordBank.js'
 
 const OUTPUT_DIR = join(process.cwd(), 'content-engine', 'output')
 

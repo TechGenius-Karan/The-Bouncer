@@ -1,8 +1,8 @@
-import { RULES } from '../rules'
-import type { Rule } from '../rules/types'
-import { buildWordBank } from '../words/wordBank'
-import { generateCandidate } from './orchestrator'
-import type { CandidatePuzzle, DifficultyTier } from './types'
+import { RULES } from '../rules/index.js'
+import type { Rule } from '../rules/types.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { generateCandidate } from './orchestrator.js'
+import type { CandidatePuzzle, DifficultyTier } from './types.js'
 
 /**
  * Pure batch generation — no file I/O — so it's directly testable and
@@ -43,7 +43,7 @@ export function generateBatchCore(
   tiers: DifficultyTier[] = ['medium', 'spicy'],
   rejectCounts: Map<string, number> = new Map(),
   rules: Rule[] = RULES,
-  recentlyUsedRuleIds: Set<string> = new Set(),
+  recentlyUsedRuleIds: Set<string> = new Set()
 ): CandidatePuzzle[] {
   const wordBank = buildWordBank()
   const batch: CandidatePuzzle[] = []

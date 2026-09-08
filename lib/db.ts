@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from 'mongodb'
-import type { AiReviewDoc, PuzzleDoc, ResultDoc, RuleDoc, WordDoc } from './types'
+import type { AiReviewDoc, PuzzleDoc, ResultDoc, RuleDoc, WordDoc } from './types.js'
 
 const uri: string = (() => {
   const value = process.env.MONGODB_URI

@@ -13,7 +13,7 @@
 // Run with: npm run content:reset-puzzles -- --yes
 
 import 'dotenv/config'
-import { getCollections } from '../../netlify/functions/_shared/db'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
 
 const CONFIRMED = process.argv.includes('--yes')
 
@@ -26,15 +26,21 @@ async function main() {
   console.log(`Found ${puzzleCount} puzzle(s) and ${resultCount} result(s).`)
 
   if (!CONFIRMED) {
-    console.log('Dry run only — nothing deleted. Re-run with --yes to actually wipe both collections.')
+    console.log(
+      'Dry run only — nothing deleted. Re-run with --yes to actually wipe both collections.'
+    )
     process.exit(0)
   }
 
   const puzzleDelete = await puzzles.deleteMany({})
   const resultDelete = await results.deleteMany({})
 
-  console.log(`Deleted ${puzzleDelete.deletedCount} puzzle(s) and ${resultDelete.deletedCount} result(s).`)
-  console.log('The next generated puzzle will start at #1. `words` and `rules` were left untouched.')
+  console.log(
+    `Deleted ${puzzleDelete.deletedCount} puzzle(s) and ${resultDelete.deletedCount} result(s).`
+  )
+  console.log(
+    'The next generated puzzle will start at #1. `words` and `rules` were left untouched.'
+  )
   process.exit(0)
 }
 

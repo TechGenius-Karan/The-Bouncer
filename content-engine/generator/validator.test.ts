@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
-import { MEDIUM_KNOBS } from './difficulty'
-import { buildRuleIndex } from './lookup'
-import { makeWord } from './testUtils'
-import { validateAndRepair } from './validator'
-import type { CandidatePuzzle } from './types'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
+import { MEDIUM_KNOBS } from './difficulty.js'
+import { buildRuleIndex } from './lookup.js'
+import { makeWord } from './testUtils.js'
+import { validateAndRepair } from './validator.js'
+import type { CandidatePuzzle } from './types.js'
 
 const ruleIndex = buildRuleIndex(RULES)
 

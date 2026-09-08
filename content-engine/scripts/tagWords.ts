@@ -6,8 +6,12 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { suggestCategoryTag, suggestPropertyTag, type TagSuggestion } from '../words/tagSuggestion'
-import { buildWordBank } from '../words/wordBank'
+import {
+  suggestCategoryTag,
+  suggestPropertyTag,
+  type TagSuggestion,
+} from '../words/tagSuggestion.js'
+import { buildWordBank } from '../words/wordBank.js'
 
 const OUTPUT_DIR = join(process.cwd(), 'content-engine', 'output')
 

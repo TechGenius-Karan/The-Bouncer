@@ -1,4 +1,4 @@
-import type { Label } from './types'
+import type { Label } from './types.js'
 
 // Wire contract for the two player-facing endpoints. Deliberately duplicated
 // (not imported) in src/api/types.ts — the frontend and the functions are

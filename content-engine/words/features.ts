@@ -1,5 +1,5 @@
-import { HIDDEN_WORD_TARGETS, SUBSEQUENCE_TARGETS, VOWELS } from './fixedLists'
-import type { LetterFeatures } from './types'
+import { HIDDEN_WORD_TARGETS, SUBSEQUENCE_TARGETS, VOWELS } from './fixedLists.js'
+import type { LetterFeatures } from './types.js'
 
 export function isPrime(n: number): boolean {
   if (n < 2) return false

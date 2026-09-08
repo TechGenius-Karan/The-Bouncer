@@ -22,7 +22,7 @@ import {
   fetchWordnetHypernyms,
   fetchWordnetHyponyms,
   fetchWordnetHyponymsDeep,
-} from './dictionarySources'
+} from './dictionarySources.js'
 
 describe('fetchDatamuseRelations', () => {
   const originalFetch = global.fetch

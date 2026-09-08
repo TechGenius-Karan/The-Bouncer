@@ -11,10 +11,10 @@
 // Run with: npm run content:seed-db
 
 import 'dotenv/config'
-import { getCollections } from '../../netlify/functions/_shared/db'
-import type { RuleDoc, WordDoc } from '../../netlify/functions/_shared/types'
-import { RULES } from '../rules'
-import { buildWordBank } from '../words/wordBank'
+import { getCollections } from '../../netlify/functions/_shared/db.js'
+import type { RuleDoc, WordDoc } from '../../netlify/functions/_shared/types.js'
+import { RULES } from '../rules/index.js'
+import { buildWordBank } from '../words/wordBank.js'
 
 async function main() {
   const { words, rules, puzzles, results } = await getCollections()

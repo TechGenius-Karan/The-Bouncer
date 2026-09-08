@@ -1,14 +1,14 @@
-import { RULES } from '../rules'
-import type { Rule } from '../rules/types'
-import type { Word } from '../words/types'
-import { resolveKnobs, subtletyRangeFor } from './difficulty'
-import { draftClueSet } from './draftClueSet'
-import { scanDecoys } from './decoyScan'
-import { buildRuleIndex } from './lookup'
-import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection'
-import { selectGuestPool } from './trapSelection'
-import type { CandidatePuzzle, DifficultyTier } from './types'
-import { validateAndRepair } from './validator'
+import { RULES } from '../rules/index.js'
+import type { Rule } from '../rules/types.js'
+import type { Word } from '../words/types.js'
+import { resolveKnobs, subtletyRangeFor } from './difficulty.js'
+import { draftClueSet } from './draftClueSet.js'
+import { scanDecoys } from './decoyScan.js'
+import { buildRuleIndex } from './lookup.js'
+import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection.js'
+import { selectGuestPool } from './trapSelection.js'
+import type { CandidatePuzzle, DifficultyTier } from './types.js'
+import { validateAndRepair } from './validator.js'
 
 const MAX_CLUE_ADJUST_ATTEMPTS = 8
 const MAX_RULE_ATTEMPTS = 10
@@ -74,14 +74,29 @@ export function generateCandidate(
   const eligibleSemantic = haveFreshRule ? freshSemantic : eligibleSemanticAll
 
   const family = pickFamily(eligibleLexical, eligibleSemantic, knobs.semanticRuleWeight)
-  const primaryPool = family === 'semantic-knowledge' ? eligibleSemantic : family === 'lexical-structural' ? eligibleLexical : rules
-  const fallbackPool = family === 'semantic-knowledge' ? eligibleLexical : family === 'lexical-structural' ? eligibleSemantic : rules
+  const primaryPool =
+    family === 'semantic-knowledge'
+      ? eligibleSemantic
+      : family === 'lexical-structural'
+        ? eligibleLexical
+        : rules
+  const fallbackPool =
+    family === 'semantic-knowledge'
+      ? eligibleLexical
+      : family === 'lexical-structural'
+        ? eligibleSemantic
+        : rules
 
   for (let ruleAttempt = 0; ruleAttempt < MAX_RULE_ATTEMPTS; ruleAttempt++) {
     const wantPrimary = ruleAttempt < PRIMARY_FAMILY_ATTEMPTS
     // primaryPool/fallbackPool are never both empty (pickFamily's own
     // contract), so whichever branch this lands on is guaranteed non-empty.
-    const pool = wantPrimary && primaryPool.length > 0 ? primaryPool : fallbackPool.length > 0 ? fallbackPool : primaryPool
+    const pool =
+      wantPrimary && primaryPool.length > 0
+        ? primaryPool
+        : fallbackPool.length > 0
+          ? fallbackPool
+          : primaryPool
     const trueRule = pickTrueRule(pool, rejectCounts)
 
     let clues

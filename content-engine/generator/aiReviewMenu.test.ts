@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { Rule } from '../rules/types'
-import { buildReviewMenus, extractNamedWords } from './aiReviewMenu'
-import { makeWord } from './testUtils'
+import type { Rule } from '../rules/types.js'
+import { buildReviewMenus, extractNamedWords } from './aiReviewMenu.js'
+import { makeWord } from './testUtils.js'
 
 // A rule with a wide IN set, so a plain shuffle-and-slice would routinely miss
 // any particular word — the situation that made the model report real bank

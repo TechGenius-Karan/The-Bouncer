@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { buildWordBank } from '../words/wordBank'
-import { buildLetterFeatures } from '../words/features'
-import { CONTAINS_LETTER_TARGETS, LEXICAL_RULES } from './lexicalRules'
-import { subtletyRangeFor } from '../generator/difficulty'
-import { RULES } from './index'
-import type { Word } from '../words/types'
+import { buildWordBank } from '../words/wordBank.js'
+import { buildLetterFeatures } from '../words/features.js'
+import { PHONETICS } from '../words/phonetics.js'
+import { CONTAINS_LETTER_TARGETS, LEXICAL_RULES } from './lexicalRules.js'
+import { subtletyRangeFor } from '../generator/difficulty.js'
+import { RULES } from './index.js'
+import type { Word } from '../words/types.js'
 
 function wordFor(spelling: string): Word {
   const bank = buildWordBank()
@@ -17,6 +18,7 @@ function wordFor(spelling: string): Word {
     spelling,
     length: spelling.length,
     features: buildLetterFeatures(spelling),
+    phonetics: PHONETICS[spelling] ?? null,
     frequencyScore: 0.5,
     partOfSpeech: 'other',
     properNoun: false,
@@ -60,7 +62,10 @@ describe('registry sanity', () => {
     const windows = (['medium', 'spicy'] as const).map(subtletyRangeFor)
     for (const rule of RULES) {
       const reachable = windows.some(([min, max]) => rule.subtlety >= min && rule.subtlety <= max)
-      expect(reachable, `rule "${rule.id}" (subtlety ${rule.subtlety}) is unreachable by any tier`).toBe(true)
+      expect(
+        reachable,
+        `rule "${rule.id}" (subtlety ${rule.subtlety}) is unreachable by any tier`
+      ).toBe(true)
     }
   })
 
@@ -72,7 +77,10 @@ describe('registry sanity', () => {
     const bank = buildWordBank()
     for (const rule of RULES) {
       const share = bank.filter((w) => rule.evaluate(w)).length / bank.length
-      expect(share, `rule "${rule.id}" matches ${(share * 100).toFixed(0)}% of the bank`).toBeLessThan(0.5)
+      expect(
+        share,
+        `rule "${rule.id}" matches ${(share * 100).toFixed(0)}% of the bank`
+      ).toBeLessThan(0.5)
     }
   })
 })
@@ -139,7 +147,9 @@ describe('category hierarchy', () => {
     const birds = bank.filter((w) => w.tags.includes('category:bird'))
     expect(birds.length).toBeGreaterThan(0)
     for (const bird of birds) {
-      expect(bird.tags, `"${bird.spelling}" is a bird but not an animal`).toContain('category:animal')
+      expect(bird.tags, `"${bird.spelling}" is a bird but not an animal`).toContain(
+        'category:animal'
+      )
     }
   })
 })
@@ -160,9 +170,9 @@ describe('new lexical family coverage floor', () => {
   })
 
   it('has-anagram still has at least 15 matching words', () => {
-    expect(bank.filter((w) => w.tags.includes('lexical:has-anagram')).length).toBeGreaterThanOrEqual(
-      15
-    )
+    expect(
+      bank.filter((w) => w.tags.includes('lexical:has-anagram')).length
+    ).toBeGreaterThanOrEqual(15)
   })
 })
 

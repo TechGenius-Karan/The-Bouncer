@@ -6,10 +6,10 @@
 // endpoint is read-only — no auth, same no-gating footing as
 // get-round.ts/get-crack-rate.ts (planning.md §8.4).
 
-import type { GetPuzzleMetaResponse } from '../lib/api'
-import { getCollections } from '../lib/db'
-import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate'
-import { jsonResponse } from '../lib/respond'
+import type { GetPuzzleMetaResponse } from '../lib/api.js'
+import { getCollections } from '../lib/db.js'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
+import { jsonResponse } from '../lib/respond.js'
 
 // Fails closed: local `vercel dev` leaves VERCEL_ENV unset and preview
 // deploys set it to 'preview' — only a real production deploy sets it to

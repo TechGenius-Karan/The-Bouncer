@@ -1,4 +1,4 @@
-import { getCollections } from './db'
+import { getCollections } from './db.js'
 
 // Cross-run rule cooldown. Before this, the only repetition guard was
 // `usedRuleIdsByTier` — a function-local in generateBatchCore, discarded on

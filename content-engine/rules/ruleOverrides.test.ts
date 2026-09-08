@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Rule } from './types'
-import { applyRuleOverrides } from './ruleOverrides'
+import type { Rule } from './types.js'
+import { applyRuleOverrides } from './ruleOverrides.js'
 
 function rule(id: string, subtlety: Rule['subtlety'] = 2): Rule {
   return {
@@ -33,5 +33,4 @@ describe('applyRuleOverrides', () => {
     const result = applyRuleOverrides(rules, [{ ruleId: 'a', subtletyOverride: 5 }])
     expect(result.find((r) => r.id === 'b')).toEqual(rules[1])
   })
-
 })

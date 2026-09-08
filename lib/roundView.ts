@@ -1,6 +1,6 @@
-import type { PoolItem } from './api'
-import { getCollections } from './db'
-import type { PuzzleDoc, ResultDoc } from './types'
+import type { PoolItem } from './api.js'
+import { getCollections } from './db.js'
+import type { PuzzleDoc, ResultDoc } from './types.js'
 
 export async function buildPool(puzzle: PuzzleDoc, result: ResultDoc): Promise<PoolItem[]> {
   const { words } = await getCollections()

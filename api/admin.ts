@@ -8,13 +8,13 @@
 // needed no changes at all.
 
 import { ObjectId } from 'mongodb'
-import { generateBatchCore } from '../content-engine/generator/batch'
-import { planAiReviewDispatch } from '../content-engine/generator/aiReviewDispatch'
-import { buildReviewMenus } from '../content-engine/generator/aiReviewMenu'
-import { buildWordBank } from '../content-engine/words/wordBank'
-import { RULES } from '../content-engine/rules'
-import { applyRuleOverrides } from '../content-engine/rules/ruleOverrides'
-import { requireAdmin } from '../lib/adminAuth'
+import { generateBatchCore } from '../content-engine/generator/batch.js'
+import { planAiReviewDispatch } from '../content-engine/generator/aiReviewDispatch.js'
+import { buildReviewMenus } from '../content-engine/generator/aiReviewMenu.js'
+import { buildWordBank } from '../content-engine/words/wordBank.js'
+import { RULES } from '../content-engine/rules/index.js'
+import { applyRuleOverrides } from '../content-engine/rules/ruleOverrides.js'
+import { requireAdmin } from '../lib/adminAuth.js'
 import type {
   AdminAiReviewRequest,
   AdminAiReviewResponse,
@@ -31,17 +31,17 @@ import type {
   AdminScheduledPuzzle,
   AdminUnapproveRequest,
   AdminUnscheduleRequest,
-} from '../lib/adminApi'
-import { resolveFullPuzzleDetail } from '../lib/adminPuzzleDetail'
-import { getAiReviewDecision } from '../lib/aiReview'
-import { getCollections } from '../lib/db'
-import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate'
-import { resolveBatchStats, resolveBufferHealth, resolvePuzzleStats } from '../lib/puzzleStats'
-import { resolveRejectCounts } from '../lib/rejectStats'
-import { jsonResponse } from '../lib/respond'
-import { resolveRuleOverrides, writeRuleOverride } from '../lib/ruleOverrides'
-import { resolveRecentRuleUsage } from '../lib/ruleUsage'
-import type { AiReviewDoc, PuzzleDoc } from '../lib/types'
+} from '../lib/adminApi.js'
+import { resolveFullPuzzleDetail } from '../lib/adminPuzzleDetail.js'
+import { getAiReviewDecision } from '../lib/aiReview.js'
+import { getCollections } from '../lib/db.js'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
+import { resolveBatchStats, resolveBufferHealth, resolvePuzzleStats } from '../lib/puzzleStats.js'
+import { resolveRejectCounts } from '../lib/rejectStats.js'
+import { jsonResponse } from '../lib/respond.js'
+import { resolveRuleOverrides, writeRuleOverride } from '../lib/ruleOverrides.js'
+import { resolveRecentRuleUsage } from '../lib/ruleUsage.js'
+import type { AiReviewDoc, PuzzleDoc } from '../lib/types.js'
 
 // How many real, correctly-sided bank words to offer the AI as a menu for the
 // rewrite-puzzle action. IN is generous so skewed rules (e.g. hidden-number,

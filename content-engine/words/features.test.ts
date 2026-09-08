@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildLetterFeatures, isPrime, isSubsequence } from './features'
+import { buildLetterFeatures, isPrime, isSubsequence } from './features.js'
 
 describe('isPrime', () => {
   it.each([

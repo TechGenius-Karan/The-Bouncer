@@ -1,9 +1,9 @@
-import { GENERATED_RULES } from './generatedRules'
-import { LEXICAL_RULES } from './lexicalRules'
-import { SEMANTIC_RULES } from './semanticRules'
-import type { Rule } from './types'
+import { GENERATED_RULES } from './generatedRules.js'
+import { LEXICAL_RULES } from './lexicalRules.js'
+import { SEMANTIC_RULES } from './semanticRules.js'
+import type { Rule } from './types.js'
 
-export type { Rule, RuleFamily, Subtlety } from './types'
+export type { Rule, RuleFamily, Subtlety } from './types.js'
 
 /**
  * The full rule taxonomy (planning.md §7.1).

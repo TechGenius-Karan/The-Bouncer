@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseAiReviewAction } from './aiReviewAction'
+import { parseAiReviewAction } from './aiReviewAction.js'
 
 const context = { wordIds: new Set(['quiet', 'unique', 'cat', 'plan', 'mosque', 'dog']) }
 
@@ -35,22 +35,68 @@ describe('parseAiReviewAction', () => {
   })
 
   it('falls back to agree-reject when rewrite-puzzle has malformed or empty word lists', () => {
-    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [], guests: [{ word: 'a', label: 'IN' }] }, context).action).toBe('agree-reject')
-    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ word: 'a', label: 'IN' }] }, context).action).toBe('agree-reject')
-    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ word: 'a', label: 'MAYBE' }], guests: [{ word: 'b', label: 'OUT' }] }, context).action).toBe('agree-reject')
-    expect(parseAiReviewAction({ action: 'rewrite-puzzle', rationale: 'x', clues: [{ label: 'IN' }], guests: [{ word: 'b', label: 'OUT' }] }, context).action).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        {
+          action: 'rewrite-puzzle',
+          rationale: 'x',
+          clues: [],
+          guests: [{ word: 'a', label: 'IN' }],
+        },
+        context
+      ).action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        { action: 'rewrite-puzzle', rationale: 'x', clues: [{ word: 'a', label: 'IN' }] },
+        context
+      ).action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        {
+          action: 'rewrite-puzzle',
+          rationale: 'x',
+          clues: [{ word: 'a', label: 'MAYBE' }],
+          guests: [{ word: 'b', label: 'OUT' }],
+        },
+        context
+      ).action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        {
+          action: 'rewrite-puzzle',
+          rationale: 'x',
+          clues: [{ label: 'IN' }],
+          guests: [{ word: 'b', label: 'OUT' }],
+        },
+        context
+      ).action
+    ).toBe('agree-reject')
   })
 
   it('accepts a well-formed adjust-difficulty action', () => {
     const result = parseAiReviewAction(
-      { action: 'adjust-difficulty', newSubtlety: 4, rationale: 'too easy to guess by elimination' },
+      {
+        action: 'adjust-difficulty',
+        newSubtlety: 4,
+        rationale: 'too easy to guess by elimination',
+      },
       context
     )
-    expect(result).toEqual({ action: 'adjust-difficulty', newSubtlety: 4, rationale: 'too easy to guess by elimination' })
+    expect(result).toEqual({
+      action: 'adjust-difficulty',
+      newSubtlety: 4,
+      rationale: 'too easy to guess by elimination',
+    })
   })
 
   it('accepts a well-formed agree-reject action', () => {
-    const result = parseAiReviewAction({ action: 'agree-reject', rationale: 'no usable reasoning given' }, context)
+    const result = parseAiReviewAction(
+      { action: 'agree-reject', rationale: 'no usable reasoning given' },
+      context
+    )
     expect(result).toEqual({ action: 'agree-reject', rationale: 'no usable reasoning given' })
   })
 
@@ -66,8 +112,15 @@ describe('parseAiReviewAction', () => {
   })
 
   it('falls back to agree-reject when rationale is missing or empty', () => {
-    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 4 }, context).action).toBe('agree-reject')
-    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 4, rationale: '   ' }, context).action).toBe('agree-reject')
+    expect(
+      parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 4 }, context).action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        { action: 'adjust-difficulty', newSubtlety: 4, rationale: '   ' },
+        context
+      ).action
+    ).toBe('agree-reject')
   })
 
   it('falls back to agree-reject when swap-word references a word not in the puzzle', () => {
@@ -84,17 +137,25 @@ describe('parseAiReviewAction', () => {
   })
 
   it('falls back to agree-reject when adjust-difficulty has an out-of-range or non-integer newSubtlety', () => {
-    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 0, rationale: 'x' }, context).action).toBe(
-      'agree-reject'
-    )
-    expect(parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 6, rationale: 'x' }, context).action).toBe(
-      'agree-reject'
-    )
     expect(
-      parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 2.5, rationale: 'x' }, context).action
+      parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 0, rationale: 'x' }, context)
+        .action
     ).toBe('agree-reject')
     expect(
-      parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: '4', rationale: 'x' }, context).action
+      parseAiReviewAction({ action: 'adjust-difficulty', newSubtlety: 6, rationale: 'x' }, context)
+        .action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        { action: 'adjust-difficulty', newSubtlety: 2.5, rationale: 'x' },
+        context
+      ).action
+    ).toBe('agree-reject')
+    expect(
+      parseAiReviewAction(
+        { action: 'adjust-difficulty', newSubtlety: '4', rationale: 'x' },
+        context
+      ).action
     ).toBe('agree-reject')
   })
 })

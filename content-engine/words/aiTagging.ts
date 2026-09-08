@@ -1,4 +1,4 @@
-import { CATEGORY_DEFINITIONS, CATEGORY_IDS, categoryTag } from './categories'
+import { CATEGORY_DEFINITIONS, CATEGORY_IDS, categoryTag } from './categories.js'
 
 // Pure prompt-building and response validation for the AI category tagger.
 // Kept separate from the script that calls the API so the part that decides

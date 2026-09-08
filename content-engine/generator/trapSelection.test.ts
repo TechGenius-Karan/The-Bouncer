@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { RULES } from '../rules'
-import { buildRuleIndex } from './lookup'
-import { makeWord } from './testUtils'
-import { MEDIUM_KNOBS } from './difficulty'
-import { drawTargetIn, selectGuestPool } from './trapSelection'
-import type { DecoyResult } from './types'
+import { RULES } from '../rules/index.js'
+import { buildRuleIndex } from './lookup.js'
+import { makeWord } from './testUtils.js'
+import { MEDIUM_KNOBS } from './difficulty.js'
+import { drawTargetIn, selectGuestPool } from './trapSelection.js'
+import type { DecoyResult } from './types.js'
 
 const doubledLetter = RULES.find((r) => r.id === 'doubled-letter')!
 const sameStartEnd = RULES.find((r) => r.id === 'same-start-end')!

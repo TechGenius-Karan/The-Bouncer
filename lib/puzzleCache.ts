@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { getCollections } from './db'
-import type { PuzzleDoc } from './types'
+import { getCollections } from './db.js'
+import type { PuzzleDoc } from './types.js'
 
 // A puzzle document never changes after content-engine writes it (before
 // scheduling) — safe to hold in memory for the life of a warm function

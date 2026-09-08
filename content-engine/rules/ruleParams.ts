@@ -10,4 +10,7 @@ export const RULE_PARAMS = {
   wordLengths: [3,4,5,6,7,8,9,10],
   partsOfSpeech: ["verb","adjective","adverb"],
   categories: ["animal","bird","fish","insect","plant","tree","flower","body-part","food","fruit","vegetable","drink","clothing","furniture","tool","weapon","vehicle","container","instrument","toy","building","room","landform","celestial","profession","relative","emotion","weather","color","metal","sport","illness","time-period"],
+  syllableCounts: [1,3,4,5],
+  silentThreshold: 3,
+  rhymes: ["AA","AAK","AAN","AAP","AAR","AARD","AARK","AAT","AEK","AEKT","AEM","AEN","AEND","AET","AH","AHD","AHJH","AHLD","AHM","AHND","AHNS","AHNT","AHNZ","AHP","AHS","AHST","AHT","AOL","AOR","AORD","AWND","AWS","AWT","AY","AYD","AYL","AYM","AYN","AYND","AYT","AYZ","AYZD","EHD","EHKT","EHL","EHND","EHNT","EHR","EHS","EHST","EHT","ERD","ERN","ERT","ERZ","EY","EYD","EYK","EYL","EYN","EYS","EYT","IHD","IHJH","IHK","IHKS","IHL","IHN","IHP","IHR","IHS","IHSH","IHST","IHT","IHV","IYD","IYK","IYL","IYN","IYT","IYZ","OW","OWL","OWN","OWT","OY","UW","UWD","UWM","UWN","UWT"],
 } as const
