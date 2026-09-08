@@ -8,6 +8,7 @@
 
 import { ObjectId } from 'mongodb'
 import type { GetRoundResponse } from '../lib/api.js'
+import { withCors } from '../lib/cors.js'
 import { getCollections } from '../lib/db.js'
 import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
 import { jsonResponse } from '../lib/respond.js'
@@ -29,7 +30,7 @@ function resolveToday(url: URL): string {
 }
 
 export default {
-  fetch: async (req: Request): Promise<Response> => {
+  fetch: withCors(async (req: Request): Promise<Response> => {
     if (req.method !== 'GET') {
       return jsonResponse({ error: 'Method not allowed' }, 405)
     }
@@ -96,5 +97,5 @@ export default {
     }
 
     return jsonResponse(response)
-  },
+  }),
 }

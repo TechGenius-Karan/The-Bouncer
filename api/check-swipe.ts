@@ -5,6 +5,7 @@
 
 import { ObjectId } from 'mongodb'
 import type { CheckSwipeRequest, CheckSwipeResponse } from '../lib/api.js'
+import { withCors } from '../lib/cors.js'
 import { getCollections } from '../lib/db.js'
 import { getPuzzleCached } from '../lib/puzzleCache.js'
 import { jsonResponse } from '../lib/respond.js'
@@ -12,7 +13,7 @@ import { buildPool, resolveRuleText } from '../lib/roundView.js'
 import type { ResultPlacementDoc } from '../lib/types.js'
 
 export default {
-  fetch: async (req: Request): Promise<Response> => {
+  fetch: withCors(async (req: Request): Promise<Response> => {
     if (req.method !== 'POST') {
       return jsonResponse({ error: 'Method not allowed' }, 405)
     }
@@ -108,5 +109,5 @@ export default {
       poolReveal,
     }
     return jsonResponse(response)
-  },
+  }),
 }

@@ -7,6 +7,7 @@
 // get-round.ts/get-crack-rate.ts (planning.md §8.4).
 
 import type { GetPuzzleMetaResponse } from '../lib/api.js'
+import { withCors } from '../lib/cors.js'
 import { getCollections } from '../lib/db.js'
 import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
 import { jsonResponse } from '../lib/respond.js'
@@ -24,7 +25,7 @@ function resolveToday(url: URL): string {
 }
 
 export default {
-  fetch: async (req: Request): Promise<Response> => {
+  fetch: withCors(async (req: Request): Promise<Response> => {
     if (req.method !== 'GET') {
       return jsonResponse({ error: 'Method not allowed' }, 405)
     }
@@ -41,5 +42,5 @@ export default {
     // Safe: puzzle was found via status: scheduled/live, which always has a real number.
     const response: GetPuzzleMetaResponse = { number: puzzle.number!, date: today }
     return jsonResponse(response)
-  },
+  }),
 }
