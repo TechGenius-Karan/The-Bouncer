@@ -30,6 +30,12 @@ export interface GetRoundResponse {
 
 export interface CheckSwipeRequest {
   resultId: string
+  /** The client already has this from get-round — sent so check-swipe can
+   * look up the puzzle without an extra round-trip through `results` first.
+   * Not trusted on its own: the update below filters on it too, so a
+   * stale/wrong value just fails to match resultId's real document rather
+   * than resolving against the wrong puzzle's answer key. */
+  puzzleId: string
   wordId: string
   attemptedLabel: Label
 }

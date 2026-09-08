@@ -30,13 +30,14 @@ export function getRound(resultId: string | null): Promise<GetRoundResponse> {
 
 export function checkSwipe(
   resultId: string,
+  puzzleId: string,
   wordId: string,
   attemptedLabel: ApiLabel,
 ): Promise<CheckSwipeResponse> {
   return fetch('/api/check-swipe', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ resultId, wordId, attemptedLabel }),
+    body: JSON.stringify({ resultId, puzzleId, wordId, attemptedLabel }),
   }).then(parseOrThrow<CheckSwipeResponse>)
 }
 

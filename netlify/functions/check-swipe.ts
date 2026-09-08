@@ -6,9 +6,10 @@
 import { ObjectId } from 'mongodb'
 import type { CheckSwipeRequest, CheckSwipeResponse } from './_shared/api'
 import { getCollections } from './_shared/db'
+import { getPuzzleCached } from './_shared/puzzleCache'
 import { jsonResponse } from './_shared/respond'
 import { buildPool, resolveRuleText } from './_shared/roundView'
-import type { ResultDoc } from './_shared/types'
+import type { ResultPlacementDoc } from './_shared/types'
 
 export default async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') {
@@ -22,9 +23,10 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { resultId, wordId, attemptedLabel } = body
+  const { resultId, puzzleId, wordId, attemptedLabel } = body
   if (
     !resultId ||
+    !puzzleId ||
     !wordId ||
     (attemptedLabel !== 'IN' && attemptedLabel !== 'OUT') ||
     !ObjectId.isValid(resultId)
@@ -32,17 +34,7 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'Missing or invalid fields' }, 400)
   }
 
-  const { puzzles, results } = await getCollections()
-
-  const result = await results.findOne({ _id: new ObjectId(resultId) })
-  if (!result) {
-    return jsonResponse({ error: 'Unknown resultId' }, 404)
-  }
-  if (result.roundComplete) {
-    return jsonResponse({ error: 'This round has already ended.' }, 409)
-  }
-
-  const puzzle = await puzzles.findOne({ _id: new ObjectId(result.puzzleId) })
+  const puzzle = await getPuzzleCached(puzzleId)
   if (!puzzle) {
     return jsonResponse({ error: 'Puzzle not found' }, 404)
   }
@@ -51,41 +43,65 @@ export default async (req: Request): Promise<Response> => {
   if (!guest) {
     return jsonResponse({ error: 'Unknown wordId for this puzzle' }, 400)
   }
-  if (result.placements.some((p) => p.wordId === wordId)) {
+
+  const correct = attemptedLabel === guest.trueLabel
+  const placement: ResultPlacementDoc = { wordId, attemptedLabel, correct }
+
+  const { results } = await getCollections()
+
+  // One atomic round trip for the normal case, instead of a separate
+  // find-then-update: the filter below (not-yet-resolved, round still open,
+  // puzzleId actually matches this result) doubles as the idempotency guard,
+  // which also closes a race where two near-simultaneous swipes of the same
+  // guest could otherwise both read "not yet resolved" and both write.
+  const updated = await results.findOneAndUpdate(
+    {
+      _id: new ObjectId(resultId),
+      puzzleId,
+      roundComplete: false,
+      'placements.wordId': { $ne: wordId },
+    },
+    correct
+      ? { $push: { placements: placement } }
+      : { $push: { placements: placement }, $inc: { livesRemaining: -1 } },
+    { returnDocument: 'after' },
+  )
+
+  if (!updated) {
+    // Rare path (stale client state, a duplicate/retried request) — pay one
+    // extra read here for the specific reason, rather than taxing every
+    // normal swipe with an upfront read it doesn't need.
+    const existing = await results.findOne({ _id: new ObjectId(resultId) })
+    if (!existing) return jsonResponse({ error: 'Unknown resultId' }, 404)
+    if (existing.puzzleId !== puzzleId) {
+      return jsonResponse({ error: 'This round is not for the current puzzle' }, 409)
+    }
+    if (existing.roundComplete) {
+      return jsonResponse({ error: 'This round has already ended.' }, 409)
+    }
     return jsonResponse({ error: 'This guest has already been resolved.' }, 409)
   }
 
-  const correct = attemptedLabel === guest.trueLabel
-  const livesRemaining = correct ? result.livesRemaining : result.livesRemaining - 1
-  const placements = [...result.placements, { wordId, attemptedLabel, correct }]
-  const roundComplete = livesRemaining <= 0 || placements.length === puzzle.guests.length
-  const score = placements.filter((p) => p.correct).length
-  const completedAt = roundComplete ? new Date() : null
-
-  await results.updateOne(
-    { _id: result._id },
-    { $set: { placements, livesRemaining, roundComplete, score, completedAt } }
-  )
+  const roundComplete =
+    updated.livesRemaining <= 0 || updated.placements.length === puzzle.guests.length
 
   let ruleText: string | null = null
   let poolReveal: CheckSwipeResponse['poolReveal']
   if (roundComplete) {
+    const score = updated.placements.filter((p) => p.correct).length
+    const completedAt = new Date()
+    await results.updateOne(
+      { _id: updated._id },
+      { $set: { roundComplete: true, score, completedAt } },
+    )
     ruleText = await resolveRuleText(puzzle)
-    const updatedResult: ResultDoc = {
-      ...result,
-      placements,
-      livesRemaining,
-      roundComplete,
-      score,
-      completedAt,
-    }
-    poolReveal = await buildPool(puzzle, updatedResult)
+    poolReveal = await buildPool(puzzle, { ...updated, roundComplete: true, score, completedAt })
   }
 
   const response: CheckSwipeResponse = {
     correct,
     trueLabel: guest.trueLabel,
-    livesRemaining,
+    livesRemaining: updated.livesRemaining,
     roundComplete,
     ruleText,
     poolReveal,

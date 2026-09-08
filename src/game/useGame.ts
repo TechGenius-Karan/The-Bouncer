@@ -163,7 +163,7 @@ export function useGame() {
 
     setState((s) => ({ ...s, pendingIds: [...s.pendingIds, id], selected: null, offlineNotice: null }))
 
-    checkSwipe(current.resultId, id, toApiLabel(side))
+    checkSwipe(current.resultId, current.puzzleId, id, toApiLabel(side))
       .then((response) => {
         const trueLabel = toLabel(response.trueLabel)
         const result: CardResult = response.correct ? 'correct' : 'wrong'
