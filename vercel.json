@@ -5,11 +5,23 @@
     { "source": "/archive", "destination": "/api/archive" },
     { "source": "/archive/:path*", "destination": "/api/archive" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/api/admin-login", "destination": "/api/admin?action=login" },
+    { "source": "/api/admin-list-pending", "destination": "/api/admin?action=list-pending" },
+    { "source": "/api/admin-approve", "destination": "/api/admin?action=approve" },
+    { "source": "/api/admin-reject", "destination": "/api/admin?action=reject" },
+    { "source": "/api/admin-ai-review", "destination": "/api/admin?action=ai-review" },
+    { "source": "/api/admin-list-scheduled", "destination": "/api/admin?action=list-scheduled" },
+    { "source": "/api/admin-unschedule", "destination": "/api/admin?action=unschedule" },
+    { "source": "/api/admin-list-approved", "destination": "/api/admin?action=list-approved" },
+    { "source": "/api/admin-schedule-puzzle", "destination": "/api/admin?action=schedule-puzzle" },
+    { "source": "/api/admin-unapprove", "destination": "/api/admin?action=unapprove" },
+    { "source": "/api/admin-buffer-health", "destination": "/api/admin?action=buffer-health" },
+    { "source": "/api/admin-puzzle-stats", "destination": "/api/admin?action=puzzle-stats" },
+    { "source": "/api/admin-batch-stats", "destination": "/api/admin?action=batch-stats" },
+    { "source": "/api/admin-generate-batch", "destination": "/api/admin?action=generate-batch" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "crons": [
-    { "path": "/api/scheduled-generate-puzzles", "schedule": "0 6 * * *" }
-  ],
+  "crons": [{ "path": "/api/scheduled-generate-puzzles", "schedule": "0 6 * * *" }],
   "headers": [
     {
       "source": "/sw.js",
