@@ -56,11 +56,19 @@ const CLIENT_OPTIONS = {
 
 let cachedClient: MongoClient | null = null
 
+// TEMPORARY diagnostic — lets a caller's response report whether this
+// invocation reused a warm client or paid for a fresh connect(), and how
+// long that connect() took, without needing Netlify dashboard log access.
+export const dbDiagnostics = { wasWarm: false, connectMs: 0 }
+
 async function getDb(): Promise<Db> {
+  dbDiagnostics.wasWarm = cachedClient !== null
   if (!cachedClient) {
+    const t0 = Date.now()
     const client = new MongoClient(uri, CLIENT_OPTIONS)
     try {
       await client.connect()
+      dbDiagnostics.connectMs = Date.now() - t0
     } catch (err) {
       // Never cache a client that failed to connect: the assignment used to
       // happen before connect(), so one bad startup poisoned every later
