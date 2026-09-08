@@ -1,21 +1,35 @@
-import { useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { CardState } from '../game/types'
 
 const DRAG_THRESHOLD = 64
 const TAP_THRESHOLD = 8
 
+type DragSide = 'in' | 'out' | null
+
 interface Props {
   card: CardState
   tilt: number
   selected: boolean
   interactive: boolean
-  onSelect: () => void
-  onCommit: (side: 'in' | 'out') => void
-  onDragChange: (dx: number | null) => void
+  onSelect: (id: string) => void
+  onCommit: (id: string, side: 'in' | 'out') => void
+  onDragChange: (side: DragSide) => void
 }
 
-export function SlipCard({
+function sideFor(dx: number): DragSide {
+  if (dx > DRAG_THRESHOLD) return 'in'
+  if (dx < -DRAG_THRESHOLD) return 'out'
+  return null
+}
+
+/**
+ * Memoized: PlayScreen re-renders whenever onDragChange fires (it tracks the
+ * live side for the tray-highlight glow), which would otherwise reconcile
+ * all ~6 pool cards per event. Needs onSelect/onCommit/onDragChange to stay
+ * referentially stable across renders (see PlayScreen).
+ */
+export const SlipCard = memo(function SlipCard({
   card,
   tilt,
   selected,
@@ -27,6 +41,11 @@ export function SlipCard({
   const [drag, setDrag] = useState<{ x0: number; y0: number; dx: number; dy: number } | null>(
     null,
   )
+  // Tracks the side already reported to PlayScreen so onDragChange (and the
+  // parent re-render it causes) only fires on a threshold crossing, not on
+  // every pixel of pointermove — a plain ref, not state, since it shouldn't
+  // itself trigger a render.
+  const lastSideRef = useRef<DragSide>(null)
   const prefersReducedMotion = useReducedMotion()
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -40,19 +59,26 @@ export function SlipCard({
     const dx = e.clientX - drag.x0
     const dy = e.clientY - drag.y0
     setDrag({ ...drag, dx, dy })
-    onDragChange(dx)
+    const side = sideFor(dx)
+    if (side !== lastSideRef.current) {
+      lastSideRef.current = side
+      onDragChange(side)
+    }
   }
 
   const onPointerUp = () => {
     if (!drag) return
     const { dx, dy } = drag
     setDrag(null)
-    onDragChange(null)
+    if (lastSideRef.current !== null) {
+      lastSideRef.current = null
+      onDragChange(null)
+    }
     if (Math.abs(dx) > DRAG_THRESHOLD) {
-      onCommit(dx > 0 ? 'in' : 'out')
+      onCommit(card.id, dx > 0 ? 'in' : 'out')
       return
     }
-    if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD) onSelect()
+    if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD) onSelect(card.id)
   }
 
   const dragging = drag !== null
@@ -120,4 +146,4 @@ export function SlipCard({
       )}
     </div>
   )
-}
+})

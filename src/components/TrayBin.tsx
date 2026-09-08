@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { CardState, Label } from '../game/types'
 import { CARD_STEP, stackHeightFor, TOP_BASE } from './traySize'
 
@@ -8,7 +9,10 @@ interface Props {
   onClick: () => void
 }
 
-export function TrayBin({ side, cards, active, onClick }: Props) {
+/** Memoized alongside SlipCard — see that component's comment. Needs
+ * `cards` to stay referentially stable across drag-only re-renders (see
+ * PlayScreen's useMemo) or this memo does nothing. */
+export const TrayBin = memo(function TrayBin({ side, cards, active, onClick }: Props) {
   const isIn = side === 'in'
   const label = isIn ? '● IN' : '▲ OUT'
   const labelColor = isIn ? 'text-bin-in-text' : 'text-bin-out-label'
@@ -41,4 +45,4 @@ export function TrayBin({ side, cards, active, onClick }: Props) {
       </div>
     </div>
   )
-}
+})

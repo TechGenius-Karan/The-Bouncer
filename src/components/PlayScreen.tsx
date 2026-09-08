@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BarChart } from 'react-bootstrap-icons'
 import type { useGame } from '../game/useGame'
 import { derivedEndedEarly, type RoundResult } from '../game/types'
@@ -37,7 +37,10 @@ interface Props {
 
 export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSettings }: Props) {
   const { state, commit, select, fileSelected, score } = game
-  const [liveDragDx, setLiveDragDx] = useState<number | null>(null)
+  // 'in' | 'out' | null — set only on a drag-threshold crossing (see
+  // SlipCard's onDragChange), not on every pointermove, so this doesn't
+  // re-render PlayScreen (and everything non-memoized below it) per pixel.
+  const [liveDragSide, setLiveDragSide] = useState<'in' | 'out' | null>(null)
   // Only worth a door animation when there is actually something to wait for.
   // If the round already arrived while the player was on the home screen, or
   // they are coming back from a screen they already loaded it on, the loader
@@ -65,6 +68,14 @@ export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSetti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase])
 
+  // Memoized (not just filtered inline below) so these arrays keep the same
+  // reference across the PlayScreen re-renders liveDragSide causes —
+  // otherwise SlipCard/TrayBin's memo (see those components) would see
+  // "new" props every time and do nothing.
+  const pool = useMemo(() => state.cards.filter((c) => c.place === 'pool'), [state.cards])
+  const inStack = useMemo(() => state.cards.filter((c) => c.place === 'in'), [state.cards])
+  const outStack = useMemo(() => state.cards.filter((c) => c.place === 'out'), [state.cards])
+
   if (state.phase === 'error') {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
@@ -83,12 +94,9 @@ export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSetti
     return <LoadingDoor ready={state.phase !== 'loading'} onDone={() => setShowLoader(false)} />
   }
 
-  const pool = state.cards.filter((c) => c.place === 'pool')
-  const inStack = state.cards.filter((c) => c.place === 'in')
-  const outStack = state.cards.filter((c) => c.place === 'out')
   const hasSelection = state.selected !== null
-  const draggingIn = liveDragDx !== null && liveDragDx > 64
-  const draggingOut = liveDragDx !== null && liveDragDx < -64
+  const draggingIn = liveDragSide === 'in'
+  const draggingOut = liveDragSide === 'out'
   const trayAreaHeight = Math.max(stackHeightFor(inStack.length), stackHeightFor(outStack.length))
 
   return (
@@ -190,9 +198,9 @@ export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSetti
                 tilt={TILT[index % TILT.length]}
                 selected={state.selected === card.id}
                 interactive={card.result === null && !state.pendingIds.includes(card.id)}
-                onSelect={() => select(card.id)}
-                onCommit={(side) => commit(card.id, side)}
-                onDragChange={setLiveDragDx}
+                onSelect={select}
+                onCommit={commit}
+                onDragChange={setLiveDragSide}
               />
             </div>
           ))}
