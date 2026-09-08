@@ -28,7 +28,8 @@
     "content:discover-hidden-category-words": "tsx content-engine/scripts/discoverHiddenCategoryWords.ts",
     "content:test-ai-review": "tsx content-engine/scripts/testAiReview.ts",
     "dev:functions": "netlify dev",
-    "pwa:generate-icons": "pwa-assets-generator"
+    "pwa:generate-icons": "pwa-assets-generator",
+    "content:build-phonetics": "tsx content-engine/scripts/buildPhonetics.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",

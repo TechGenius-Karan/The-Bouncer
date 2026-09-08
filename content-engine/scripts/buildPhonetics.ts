@@ -44,11 +44,28 @@ function main(): void {
     const phonemes = raw.replace(/\d/g, '').trim().split(/\s+/)
     const syllables = (raw.match(/\d/g) ?? []).length
 
+    // A rhyme runs from the last STRESSED vowel, not merely the last vowel.
+    // That distinction is the whole quality of the rule: the last-vowel reading
+    // grouped "surface", "tennis" and "bus" on a shared unstressed schwa —
+    // technically a rhyme, but nobody hears it — while the stressed reading
+    // gives dark/park/shark and smile/file/style, which people do.
+    // CMUdict marks stress on every vowel: 1 primary, 2 secondary, 0 none.
+    const withStress = raw.trim().split(/\s+/)
     let rhyme: string | null = null
-    for (let i = phonemes.length - 1; i >= 0; i--) {
-      if (VOWEL.test(phonemes[i])) {
+    for (let i = withStress.length - 1; i >= 0; i--) {
+      if (/[12]$/.test(withStress[i])) {
         rhyme = phonemes.slice(i).join('')
         break
+      }
+    }
+    // No stressed vowel at all (rare) still deserves a key — fall back to the
+    // last vowel of any kind rather than dropping the word from every rhyme.
+    if (rhyme === null) {
+      for (let i = phonemes.length - 1; i >= 0; i--) {
+        if (VOWEL.test(phonemes[i])) {
+          rhyme = phonemes.slice(i).join('')
+          break
+        }
       }
     }
 
@@ -80,17 +97,28 @@ function main(): void {
   // set makes that safe in theory; this asserts it rather than assuming, since
   // a silent collision would merge two unrelated rhymes into one wrong rule.
   const rhymeSources = new Map<string, Set<string>>()
-  for (const spelling of entries.keys()) {
-    const e = entries.get(spelling)!
+  for (const [spelling, e] of entries) {
     if (!e.rhyme) continue
-    const phonemes = dict[spelling].replace(/\d/g, '').trim().split(/\s+/)
-    const from = phonemes.slice(
-      phonemes.findIndex(
-        (p, i) => VOWEL.test(p) && phonemes.slice(i + 1).every((q) => !VOWEL.test(q))
-      )
-    )
+    const withStress = dict[spelling].trim().split(/\s+/)
+    const bare = withStress.map((ph) => ph.replace(/\d/g, ''))
+    let start = -1
+    for (let i = withStress.length - 1; i >= 0; i--) {
+      if (/[12]$/.test(withStress[i])) {
+        start = i
+        break
+      }
+    }
+    if (start === -1) {
+      for (let i = bare.length - 1; i >= 0; i--) {
+        if (VOWEL.test(bare[i])) {
+          start = i
+          break
+        }
+      }
+    }
+    if (start === -1) continue
     if (!rhymeSources.has(e.rhyme)) rhymeSources.set(e.rhyme, new Set())
-    rhymeSources.get(e.rhyme)!.add(from.join(' '))
+    rhymeSources.get(e.rhyme)!.add(bare.slice(start).join(' '))
   }
   const collisions = [...rhymeSources].filter(([, set]) => set.size > 1)
   if (collisions.length > 0) {
