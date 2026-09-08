@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "typecheck:content-engine": "tsc -p tsconfig.content-engine.json --noEmit",
     "typecheck:netlify-functions": "tsc -p tsconfig.netlify-functions.json --noEmit",
+    "typecheck:vercel-functions": "tsc -p tsconfig.vercel-functions.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "content:print-rules": "tsx content-engine/scripts/printRuleSplits.ts",

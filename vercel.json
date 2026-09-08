@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["bom1"],
+  "rewrites": [
+    { "source": "/archive", "destination": "/api/archive" },
+    { "source": "/archive/:path*", "destination": "/api/archive" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/scheduled-generate-puzzles", "schedule": "0 6 * * *" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }]
+    }
+  ]
+}

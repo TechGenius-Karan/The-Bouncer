@@ -1,0 +1,45 @@
+// Lets the home screen show today's real puzzle number/date before the
+// player has chosen to play. Deliberately separate from get-round.ts: that
+// endpoint creates a ResultDoc as a side effect whenever it's called without
+// a resultId (see its header comment), which would mean a round record gets
+// created the instant Home loads rather than when Play is tapped. This
+// endpoint is read-only — no auth, same no-gating footing as
+// get-round.ts/get-crack-rate.ts (planning.md §8.4).
+
+import type { GetPuzzleMetaResponse } from '../lib/api'
+import { getCollections } from '../lib/db'
+import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate'
+import { jsonResponse } from '../lib/respond'
+
+// Fails closed: local `vercel dev` leaves VERCEL_ENV unset and preview
+// deploys set it to 'preview' — only a real production deploy sets it to
+// 'production', so this is the one value that must never honor the override.
+function resolveToday(url: URL): string {
+  const allowOverride = process.env.VERCEL_ENV !== 'production'
+  const asOf = allowOverride ? url.searchParams.get('asOf') : null
+  if (asOf && isValidPuzzleDateString(asOf)) {
+    return resolvePuzzleDateString(new Date(`${asOf}T00:00:00.000Z`))
+  }
+  return resolvePuzzleDateString()
+}
+
+export default {
+  fetch: async (req: Request): Promise<Response> => {
+    if (req.method !== 'GET') {
+      return jsonResponse({ error: 'Method not allowed' }, 405)
+    }
+
+    const url = new URL(req.url)
+    const today = resolveToday(url)
+
+    const { puzzles } = await getCollections()
+    const puzzle = await puzzles.findOne({ date: today, status: { $in: ['scheduled', 'live'] } })
+    if (!puzzle) {
+      return jsonResponse({ error: `No puzzle is scheduled for ${today} yet.` }, 404)
+    }
+
+    // Safe: puzzle was found via status: scheduled/live, which always has a real number.
+    const response: GetPuzzleMetaResponse = { number: puzzle.number!, date: today }
+    return jsonResponse(response)
+  },
+}

@@ -17,7 +17,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['content-engine/**/*.ts', 'netlify/functions/**/*.ts'],
+      files: ['content-engine/**/*.ts', 'netlify/functions/**/*.ts', 'api/**/*.ts', 'lib/**/*.ts'],
       env: { node: true, browser: false, es2020: true },
       rules: {
         'react-refresh/only-export-components': 'off',
