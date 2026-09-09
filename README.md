@@ -26,20 +26,20 @@ Three wrong swipes and the round ends early, so brute-forcing your way through i
 - **Local play history and sharing** — your past results are saved on your device (no account needed), and finishing a puzzle gives you a spoiler-safe result you can share in a chat.
 - **An admin dashboard** — internal tools for keeping an eye on the puzzle buffer, generating new batches, and reviewing stats, all behind a login.
 - **Installable app support** — it works as a installable, offline-friendly app on your phone or desktop, and updates never interrupt a puzzle you're mid-way through.
+- **Region-tuned deployment** — the actual gameplay calls run next to the database rather than wherever the free hosting tier happened to default to, cutting the swipe-to-feedback delay from multiple seconds down to a couple hundred milliseconds.
 
 ## What's coming next
 
 - **More puzzle variety** — expanding the meaning-based rule set (categories, shared properties) beyond the spelling-based rules that came first.
 - **Visual and copy polish** — leaning further into the "you are the bouncer" framing and refining the look and feel.
 - **A steady content pipeline** — building up a real multi-week buffer of approved puzzles so there's always a comfortable runway ahead.
-- **Deployment and performance tuning** — making sure the game feels fast and reliable in production, not just in local development.
 - **Open questions we're still chewing on:** whether Sunday should be a gentler "cooldown" day after Spicy Saturday, whether accounts/cross-device history are worth adding, and whether a themed-images version of the game (sorting pictures instead of words) is worth building down the line.
 
 None of the above changes the core rules of the game — 3 lives, no partial credit for guessing the rule without playing it out, and never spoiling the answer on a shared result. Those are locked in for good.
 
 ## Under the hood
 
-For anyone poking around the code: this is a Vite + React frontend, a Netlify Functions backend, and MongoDB for storage, with a completely separate offline content-engine (word bank, rule taxonomy, generator, validator) that produces puzzles ahead of time rather than on the fly. See [`CLAUDE.md`](./CLAUDE.md) for the full architecture breakdown, [`planning.md`](./planning.md) for the full game design spec, and [`build-plan.md`](./build-plan.md) for how it was built in phases.
+For anyone poking around the code: this is a Vite + React frontend and MongoDB for storage, with the backend split across two serverless platforms — the core gameplay endpoints run on Vercel (region-pinned next to the database), while the admin tooling and a few static-ish pages stay on Netlify Functions, both served under the same player-facing domain. A completely separate offline content-engine (word bank, rule taxonomy, generator, validator) produces puzzles ahead of time rather than on the fly. See [`CLAUDE.md`](./CLAUDE.md) for the full architecture breakdown, [`planning.md`](./planning.md) for the full game design spec, and [`build-plan.md`](./build-plan.md) for how it was built in phases.
 
 ### Running it locally
 
