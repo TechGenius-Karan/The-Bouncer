@@ -65,7 +65,7 @@ export default {
           date: d.date as string,
           number: d.number,
           ruleName: rule?.name ?? d.ruleId,
-          ruleDescription: rule?.descriptionTemplate ?? '',
+          ruleDescription: d.manualRuleText ?? rule?.descriptionTemplate ?? '',
         }
       })
       return html(renderArchiveIndex(entries))
@@ -98,7 +98,7 @@ export default {
       date: doc.date as string,
       number: doc.number,
       ruleName: rule?.name ?? doc.ruleId,
-      ruleDescription: rule?.descriptionTemplate ?? '',
+      ruleDescription: doc.manualRuleText ?? rule?.descriptionTemplate ?? '',
       clues: doc.clues.map((c) => ({ word: spellingOf.get(c.wordId) ?? c.wordId, label: c.label })),
       guests: doc.guests.map((g) => ({
         word: spellingOf.get(g.wordId) ?? g.wordId,

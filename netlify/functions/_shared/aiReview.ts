@@ -184,10 +184,23 @@ Decide exactly ONE action:
 - adjust-difficulty: the rule is sound but miscalibrated for its tier. Set newSubtlety to a better 1-5 rating. Note this does NOT change the puzzle, so only use it when the feedback is purely about difficulty.
 - agree-reject: use ONLY when the feedback is impossible to act on. The puzzle is kept either way — say plainly in your rationale what you could not do and why.
 
+THE REVIEWER'S INSTRUCTION IS AN ORDER, NOT A SUGGESTION. If they tell you to
+use a specific word, use that exact word. If they tell you to remove a word,
+remove it. If they say a word is IN or OUT, they are right and you are wrong —
+they are the human editor of this game and their judgement outranks yours.
+Do not substitute your own preference for what they asked for, and do not
+"improve" on the instruction. The only reason to deviate is if the exact
+request is impossible (the word is not in the menus below), and then you must
+say so plainly in your rationale rather than quietly doing something else.
+
 CHANGE AS LITTLE AS POSSIBLE. If the reviewer objects to one specific thing, fix
 that and keep every other word exactly as it is. Do not reshuffle words the
 feedback did not mention — a reviewer who asked for one change and got a
 completely different puzzle cannot tell whether you understood them.
+
+Your rationale must describe what you ACTUALLY did, word for word — not what you
+intended. If you could not carry out part of the instruction, the rationale must
+say which part and why.
 
 If the reviewer asks for a SPECIFIC word that does not appear in the menus below,
 you cannot use it — any answer containing it will be discarded. Do not silently

@@ -45,58 +45,106 @@ export interface AiReviewRuleOverride {
 export interface AiReviewDispatchPlan {
   puzzleMutation: AiReviewPuzzleMutation
   ruleOverride: AiReviewRuleOverride | null
+  /**
+   * Why the puzzle was left untouched, when it was. Shown to the reviewer:
+   * without it a rejected edit is indistinguishable from a successful one that
+   * happened to change nothing, and the model's rationale — which describes
+   * what it intended — actively misleads.
+   */
+  failureReason?: string
   /** True when the puzzle survives (content updated) and stays in pending_approval for a second human look. */
   stillPending: boolean
 }
 
-function reject(ruleOverride: AiReviewRuleOverride | null = null): AiReviewDispatchPlan {
-  return { puzzleMutation: { kind: 'reject' }, ruleOverride, stillPending: false }
+function reject(
+  ruleOverride: AiReviewRuleOverride | null = null,
+  failureReason?: string
+): AiReviewDispatchPlan {
+  return {
+    puzzleMutation: { kind: 'reject' },
+    ruleOverride,
+    stillPending: false,
+    ...(failureReason ? { failureReason } : {}),
+  }
 }
 
 /**
- * Turns the AI's authored words (Option A's rewrite-puzzle) into a validated
- * puzzle, or null if it can't be trusted. The AI proposes words; the server
- * disposes: every word must exist in the bank, every clue must actually sit
- * on the side the AI claims (checked against the real rule, never the AI's
- * label), the counts must match the tier's knobs, guest true-labels are
- * recomputed from the rule (never trusted from the AI), the pool must be a
- * genuine mix (not an all-one-label giveaway), and the whole thing must pass
- * the same uniqueness validator every generated puzzle passes.
+ * The AI proposes words; the server disposes. Every word must exist in the
+ * bank, every clue must sit on the side the AI claims (checked against the real
+ * rule, never the AI's label), counts must match the tier's knobs, guest labels
+ * are recomputed from the rule, the pool must be a genuine mix, and the board
+ * must pass the same uniqueness validator every generated puzzle passes.
  */
+/**
+ * The outcome of checking an AI-authored board, with a reason when it fails.
+ *
+ * Every rejection used to be a bare `null`, and that was the single worst thing
+ * about the refine flow: nine different failures collapsed into "nothing
+ * happened", while the reviewer was still shown the model's rationale saying
+ * what it had meant to do. 40% of real refines ended that way. The AI had often
+ * proposed exactly the right edit and the server binned it without a word.
+ */
+export type AuthoredPuzzleResult =
+  | { ok: true; candidate: CandidatePuzzle }
+  | { ok: false; reason: string }
+
+function fail(reason: string): AuthoredPuzzleResult {
+  return { ok: false, reason }
+}
+
 function validateAuthoredPuzzle(
   puzzle: RepairWordInput,
   authoredClues: AiAuthoredWord[],
   authoredGuests: AiAuthoredWord[],
   rules: Rule[],
   wordBank: Word[]
-): CandidatePuzzle | null {
+): AuthoredPuzzleResult {
   const rule = rules.find((r) => r.id === puzzle.ruleId)
-  if (!rule) return null
+  if (!rule) return fail(`the rule "${puzzle.ruleId}" is no longer in the taxonomy`)
 
   const wordById = new Map(wordBank.map((w) => [w.id, w]))
   const knobs = puzzle.knobValues
 
   const inClues = authoredClues.filter((c) => c.label === 'IN')
   const outClues = authoredClues.filter((c) => c.label === 'OUT')
-  if (inClues.length !== knobs.clueCountIn || outClues.length !== knobs.clueCountOut) return null
-  if (authoredGuests.length !== knobs.poolSize) return null
-
-  // No word may appear twice across clues + guests.
-  const allSpellings = [...authoredClues.map((c) => c.word), ...authoredGuests.map((g) => g.word)]
-  if (new Set(allSpellings).size !== allSpellings.length) return null
-
-  // Every clue word must be in the bank AND actually sit on the side the AI claims.
-  for (const clue of authoredClues) {
-    const word = wordById.get(clue.word)
-    if (!word || word.safety.blocked) return null
-    if (rule.evaluate(word) !== (clue.label === 'IN')) return null
+  if (inClues.length !== knobs.clueCountIn || outClues.length !== knobs.clueCountOut) {
+    return fail(
+      `wrong clue counts — got ${inClues.length} IN and ${outClues.length} OUT, need ${knobs.clueCountIn} and ${knobs.clueCountOut}`
+    )
+  }
+  if (authoredGuests.length !== knobs.poolSize) {
+    return fail(`wrong pool size — got ${authoredGuests.length} guests, need ${knobs.poolSize}`)
   }
 
-  // Guests: true label is recomputed from the rule, never trusted from the AI.
-  const guestWords = authoredGuests.map((g) => wordById.get(g.word))
-  if (guestWords.some((w) => !w || w.safety.blocked)) return null
-  const guestLabels = guestWords.map((w) => (rule.evaluate(w!) ? 'IN' : 'OUT'))
-  if (!guestLabels.includes('IN') || !guestLabels.includes('OUT')) return null // no all-one-side giveaway pool
+  const allSpellings = [...authoredClues.map((c) => c.word), ...authoredGuests.map((g) => g.word)]
+  const duplicate = allSpellings.find((w, i) => allSpellings.indexOf(w) !== i)
+  if (duplicate) return fail(`"${duplicate}" appears twice — every word must be distinct`)
+
+  for (const clue of authoredClues) {
+    const word = wordById.get(clue.word)
+    if (!word) return fail(`"${clue.word}" is not in the word bank`)
+    if (word.safety.blocked) return fail(`"${clue.word}" is blocked and can't be used`)
+    if (rule.evaluate(word) !== (clue.label === 'IN')) {
+      return fail(
+        `"${clue.word}" was labelled ${clue.label}, but the rule says it is ${rule.evaluate(word) ? 'IN' : 'OUT'}`
+      )
+    }
+  }
+
+  const guestWords: Word[] = []
+  for (const guest of authoredGuests) {
+    const word = wordById.get(guest.word)
+    if (!word) return fail(`"${guest.word}" is not in the word bank`)
+    if (word.safety.blocked) return fail(`"${guest.word}" is blocked and can't be used`)
+    guestWords.push(word)
+  }
+  // Guest labels are recomputed from the rule, never trusted from the AI.
+  const guestLabels = guestWords.map((w) => (rule.evaluate(w) ? 'IN' : 'OUT'))
+  if (!guestLabels.includes('IN') || !guestLabels.includes('OUT')) {
+    return fail(
+      `every guest would be ${guestLabels[0]} — the pool needs a mix or the puzzle gives itself away`
+    )
+  }
 
   const candidate: CandidatePuzzle = {
     ruleId: puzzle.ruleId,
@@ -115,7 +163,12 @@ function validateAuthoredPuzzle(
   }
 
   const result = validateAndRepair(candidate, rules, buildRuleIndex(rules), wordBank)
-  return result.status === 'valid' ? result.candidate : null
+  if (result.status === 'valid') return { ok: true, candidate: result.candidate }
+  return fail(
+    result.reason === 'unrepairable-collision'
+      ? `another rule (${(result.collidingRuleIds ?? []).join(', ')}) fits that board just as well, so the answer would be ambiguous`
+      : 'the board could not be made unambiguous within the repair budget'
+  )
 }
 
 /**
@@ -135,7 +188,12 @@ export function planAiReviewDispatch(
   switch (decision.action) {
     case 'swap-word': {
       const result = repairWord(puzzle, decision.badWordId, rules, wordBank)
-      if (!result.repaired) return reject()
+      if (!result.repaired) {
+        return reject(
+          null,
+          `no replacement for "${decision.badWordId}" keeps the puzzle solvable — the bank has no word that fits the rule the same way without making the board ambiguous`
+        )
+      }
       return {
         puzzleMutation: {
           kind: 'update-content',
@@ -153,14 +211,15 @@ export function planAiReviewDispatch(
       // content feedback; validateAuthoredPuzzle gates them hard, and a
       // failed rewrite falls back to a plain reject so the click resolves.
       const authoredGuests = decision.guests.map((g) => g.word).join()
-      const candidate = validateAuthoredPuzzle(
+      const outcome = validateAuthoredPuzzle(
         puzzle,
         decision.clues,
         decision.guests,
         rules,
         wordBank
       )
-      if (!candidate) return reject()
+      if (!outcome.ok) return reject(null, outcome.reason)
+      const candidate = outcome.candidate
       return {
         puzzleMutation: {
           kind: 'update-content',

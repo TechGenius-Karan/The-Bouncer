@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { AdminPuzzleDetail } from './types'
+import { ManualEditPanel } from './ManualEditPanel'
+import type { AdminPuzzleDetail, Label } from './types'
 
 interface Props {
   puzzle: AdminPuzzleDetail
@@ -8,15 +9,28 @@ interface Props {
   onRefine: (reason: string) => Promise<void>
   /** Plain reject, no AI — for when the rule/concept itself is bad. */
   onReject: (reason: string) => Promise<void>
+  /** Hand-edit the board directly. No AI, and the labels given here override the rule. */
+  onManualEdit: (edit: {
+    clues: { word: string; label: Label }[]
+    guests: { word: string; label: Label }[]
+    ruleText: string
+  }) => Promise<void>
 }
 
 // Two separate outcomes, deliberately: the reviewer decides whether a puzzle is
 // worth saving, not the AI. Refine always tries to improve and never discards;
 // Reject discards immediately with no AI call. Previously one button did both,
 // so asking for a fix could silently lose the puzzle.
-export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Props) {
+export function PuzzleReviewCard({
+  puzzle,
+  onApprove,
+  onRefine,
+  onReject,
+  onManualEdit,
+}: Props) {
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const clueIn = puzzle.clues.filter((c) => c.label === 'IN').map((c) => c.word)
   const clueOut = puzzle.clues.filter((c) => c.label === 'OUT').map((c) => c.word)
@@ -146,7 +160,26 @@ export function PuzzleReviewCard({ puzzle, onApprove, onRefine, onReject }: Prop
           >
             Reject
           </button>
+          <button
+            onClick={() => setEditing((v) => !v)}
+            disabled={busy}
+            title="Edit the words, labels and rule text yourself. No AI involved."
+            className="rounded-bin border border-line px-4 py-2 font-display text-sm font-bold disabled:opacity-50"
+          >
+            {editing ? 'Close editor' : 'Edit manually'}
+          </button>
         </div>
+
+        {editing && (
+          <ManualEditPanel
+            puzzle={puzzle}
+            onSave={async (edit) => {
+              await onManualEdit(edit)
+              setEditing(false)
+            }}
+            onCancel={() => setEditing(false)}
+          />
+        )}
       </div>
     </div>
   )

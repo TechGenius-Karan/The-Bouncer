@@ -157,3 +157,83 @@ describe('planAiReviewDispatch', () => {
     expect(plan.ruleOverride).toBeNull()
   })
 })
+
+// The whole point of this block: a refused edit must say WHY. 40% of real
+// refines were leaving the puzzle untouched while the reviewer was shown the
+// model's rationale describing what it meant to do — a good sentence beside an
+// unchanged board, with no way to tell what went wrong.
+describe('rejection reasons', () => {
+  const rewrite = (
+    clues: { word: string; label: 'IN' | 'OUT' }[],
+    guests: { word: string; label: 'IN' | 'OUT' }[]
+  ) =>
+    planAiReviewDispatch(
+      { action: 'rewrite-puzzle', rationale: 'x', clues, guests },
+      containsQInput(),
+      RULES,
+      wordBank
+    )
+
+  const sixGuests: { word: string; label: 'IN' | 'OUT' }[] = [
+    { word: 'quiet', label: 'IN' },
+    { word: 'unique', label: 'IN' },
+    { word: 'mosque', label: 'IN' },
+    { word: 'cat', label: 'OUT' },
+    { word: 'dog', label: 'OUT' },
+    { word: 'plan', label: 'OUT' },
+  ]
+  const validClues: { word: string; label: 'IN' | 'OUT' }[] = [
+    { word: 'quarter', label: 'IN' },
+    { word: 'square', label: 'IN' },
+    { word: 'equal', label: 'IN' },
+    { word: 'table', label: 'OUT' },
+    { word: 'chair', label: 'OUT' },
+    { word: 'ocean', label: 'OUT' },
+  ]
+
+  it('names a word that is not in the bank', () => {
+    const plan = rewrite([{ word: 'zzzznotaword', label: 'IN' }, ...validClues.slice(1)], sixGuests)
+    expect(plan.puzzleMutation.kind).toBe('reject')
+    expect(plan.failureReason).toContain('zzzznotaword')
+    expect(plan.failureReason).toContain('not in the word bank')
+  })
+
+  it('names the word that was duplicated', () => {
+    const plan = rewrite(validClues, [...sixGuests.slice(0, 5), { word: 'quiet', label: 'IN' }])
+    expect(plan.puzzleMutation.kind).toBe('reject')
+    expect(plan.failureReason).toContain('quiet')
+  })
+
+  it('reports wrong clue counts with the numbers', () => {
+    const plan = rewrite(validClues.slice(0, 4), sixGuests)
+    expect(plan.puzzleMutation.kind).toBe('reject')
+    expect(plan.failureReason).toMatch(/clue counts/)
+  })
+
+  it('reports a clue labelled against the rule, and which way round', () => {
+    // "bread" has no q, so labelling it IN contradicts contains-q. It must not
+    // already appear elsewhere on the board, or the duplicate check fires first.
+    const plan = rewrite([{ word: 'bread', label: 'IN' }, ...validClues.slice(1)], sixGuests)
+    expect(plan.puzzleMutation.kind).toBe('reject')
+    expect(plan.failureReason).toContain('bread')
+    expect(plan.failureReason).toContain('OUT')
+  })
+
+  it('says nothing about failure when the edit actually applies', () => {
+    const plan = rewrite(validClues, sixGuests)
+    if (plan.puzzleMutation.kind === 'update-content') {
+      expect(plan.failureReason).toBeUndefined()
+    }
+  })
+
+  it('explains a swap-word that has no viable replacement', () => {
+    const plan = planAiReviewDispatch(
+      { action: 'swap-word', badWordId: 'not-a-real-word-id', rationale: 'x' },
+      containsQInput(),
+      RULES,
+      wordBank
+    )
+    expect(plan.puzzleMutation.kind).toBe('reject')
+    expect(plan.failureReason).toBeTruthy()
+  })
+})

@@ -159,3 +159,17 @@ export interface AdminGenerateBatchResponse {
 export interface ApiErrorResponse {
   error: string
 }
+
+/** Manual puzzle edit — the no-AI path. Labels are taken as given: the human's judgement outranks the rule evaluator. */
+export interface AdminEditPuzzleRequest {
+  puzzleId: string
+  clues: { word: string; label: Label }[]
+  guests: { word: string; label: Label }[]
+  /** Replaces the reveal text. Empty restores the generated rule's own description. */
+  ruleText?: string
+}
+
+export interface AdminEditPuzzleResponse {
+  ok: true
+  puzzleId: string
+}

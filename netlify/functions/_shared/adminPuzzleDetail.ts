@@ -43,7 +43,10 @@ export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminP
     // the taxonomy without re-running `npm run content:seed-db`). Naming
     // the actual problem here makes that misconfiguration obvious in the
     // UI instead of looking like a generic bug.
+    // A hand-edited puzzle shows its own reveal text, so the reviewer reads
+    // exactly what the player will be told.
     ruleDescription:
+      puzzle.manualRuleText ??
       rule?.descriptionTemplate ??
       `(No description found for rule "${puzzle.ruleId}" — run "npm run content:seed-db" to sync the rules collection.)`,
     clues: puzzle.clues.map((c) => ({

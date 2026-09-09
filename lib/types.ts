@@ -75,6 +75,16 @@ export interface PuzzleDoc {
    * resolved to rule text before anything reaches the player.
    */
   revealRuleId?: string
+  /**
+   * Set by the manual editor. Overrides the reveal text entirely, because a
+   * hand-edited board can legitimately disagree with its own rule: the editor
+   * may relabel a word IN or OUT on human judgement, and then the generated
+   * rule description would be describing a board that no longer matches it.
+   * Whoever changes the labels is expected to change this too.
+   */
+  manualRuleText?: string
+  /** True once a human has hand-edited this puzzle. Its labels are authoritative and are never re-derived from the rule. */
+  manuallyEdited?: boolean
   status: PuzzleStatus
   /** UTC calendar date ("YYYY-MM-DD") this puzzle is scheduled for, or null if not yet scheduled. */
   date: string | null

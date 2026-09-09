@@ -29,6 +29,9 @@ export async function buildPool(puzzle: PuzzleDoc, result: ResultDoc): Promise<P
  */
 export async function resolveRuleText(puzzle: PuzzleDoc): Promise<string | null> {
   const { rules } = await getCollections()
+  // A hand-edited puzzle carries its own reveal text, because its labels may
+  // deliberately disagree with the generated rule (see PuzzleDoc.manualRuleText).
+  if (puzzle.manualRuleText) return puzzle.manualRuleText
   const rule = await rules.findOne({ _id: puzzle.revealRuleId ?? puzzle.ruleId })
   return rule?.descriptionTemplate ?? null
 }

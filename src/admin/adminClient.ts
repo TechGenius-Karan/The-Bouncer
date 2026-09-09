@@ -2,6 +2,8 @@ import type {
   AdminAiReviewResponse,
   AdminBatchStatsResponse,
   AdminBufferHealthResponse,
+  AdminEditPuzzleRequest,
+  AdminEditPuzzleResponse,
   AdminGenerateBatchResponse,
   AdminListApprovedResponse,
   AdminListPendingResponse,
@@ -159,4 +161,23 @@ export async function generateBatch(
   })
   if (!res.ok) throw new Error(`Failed to generate batch (${res.status})`)
   return res.json() as Promise<AdminGenerateBatchResponse>
+}
+
+export async function editPuzzle(
+  code: string,
+  edit: AdminEditPuzzleRequest,
+): Promise<AdminEditPuzzleResponse> {
+  const res = await adminFetch('/api/admin-edit-puzzle', code, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(edit),
+  })
+  // The server's message names the exact problem ("apple is not in the word
+  // bank"), which is the whole point of editing by hand — surface it rather
+  // than a status code.
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null)
+    throw new Error(detail?.error ?? `Failed to save edit (${res.status})`)
+  }
+  return res.json() as Promise<AdminEditPuzzleResponse>
 }

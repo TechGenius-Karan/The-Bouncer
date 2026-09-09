@@ -4,11 +4,12 @@ import {
   aiReview,
   approve,
   clearStoredCode,
+  editPuzzle,
   getBufferHealth,
   listPending,
-  reject,
   loadStoredCode,
   login,
+  reject,
   storeCode,
 } from './adminClient'
 import { BatchStats } from './BatchStats'
@@ -106,6 +107,22 @@ export function AdminApp() {
     // but never discards it — so reload to pick up whatever changed.
     const result = await aiReview(code, puzzleId, reason)
     setAiBanner(result)
+    await loadQueue(code)
+  }
+
+  const handleManualEdit = async (
+    puzzleId: string,
+    edit: {
+      clues: { word: string; label: 'IN' | 'OUT' }[]
+      guests: { word: string; label: 'IN' | 'OUT' }[]
+      ruleText: string
+    },
+  ) => {
+    if (!code) return
+    // Deliberately not wrapped in try//catch: ManualEditPanel shows the server's
+    // message inline next to the field that caused it, which is more useful
+    // than the page-level banner used for AI results.
+    await editPuzzle(code, { puzzleId, ...edit })
     await loadQueue(code)
   }
 
@@ -222,6 +239,7 @@ export function AdminApp() {
             onApprove={() => handleApprove(puzzle.puzzleId)}
             onRefine={(reason) => handleRefine(puzzle.puzzleId, reason)}
             onReject={(reason) => handleReject(puzzle.puzzleId, reason)}
+            onManualEdit={(edit) => handleManualEdit(puzzle.puzzleId, edit)}
           />
         ))}
 

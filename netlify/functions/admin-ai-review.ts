@@ -144,12 +144,19 @@ export default async (req: Request): Promise<Response> => {
   // letting a silent swap look like the AI having ignored the reviewer.
   const altered =
     plan.puzzleMutation.kind === 'update-content' && plan.puzzleMutation.alteredByValidator
+  // When nothing changed, the model's rationale describes what it *meant* to
+  // do and is actively misleading on its own — it reads as "I did this" beside
+  // an untouched puzzle. Lead with why the edit was refused instead.
+  const rationale = !changed && plan.failureReason
+    ? `Couldn't apply: ${plan.failureReason}. The AI intended: ${decision.rationale}`
+    : altered
+      ? `${decision.rationale} (One pool word was then swapped by the validator to keep the puzzle solvable.)`
+      : decision.rationale
+
   const response: AdminAiReviewResponse = {
     ok: true,
     action: decision.action,
-    rationale: altered
-      ? `${decision.rationale} (One pool word was then swapped by the validator to keep the puzzle solvable.)`
-      : decision.rationale,
+    rationale,
     changed,
   }
   return jsonResponse(response)
