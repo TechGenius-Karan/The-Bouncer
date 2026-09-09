@@ -52,7 +52,13 @@ export function hiddenGroupRule(group: keyof typeof HIDDEN_WORD_GROUPS): Rule {
     templateId: 'hidden-group',
     descriptionTemplate: `The word hides the name of ${article(group)} ${group} inside it.`,
     family: 'lexical-structural',
-    subtlety: 5,
+    // Was 5, which made the highest-rated template in the taxonomy spicy-only —
+    // one day a week for the puzzles most worth playing. The same mistake
+    // hidden-word was in before the audit, and less defensible here: spotting
+    // *some* animal is easier than spotting one specific target, so the group
+    // version was rated harder than the individual version it generalises.
+    // 3 keeps it spicy-eligible and adds it to medium.
+    subtlety: 3,
     aha: 5,
     evaluate: (word) => word.features.hiddenWordHits.some((hit) => members.has(hit)),
     variantOf: (word) => word.features.hiddenWordHits.find((hit) => members.has(hit)) ?? null,

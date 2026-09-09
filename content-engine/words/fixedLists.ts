@@ -91,20 +91,83 @@ export const HIDDEN_COLORS = [
 
 export const HIDDEN_NUMBERS = ['one', 'two', 'six', 'ten', 'nine', 'four', 'five', 'eight'] as const
 
+// Groups added after the taxonomy audit found the aha-5 tier held just 4 rules
+// while the aha-1 filler tier held 87. Every list below was coverage-checked
+// against the real bank before being added, and two candidate groups were
+// dropped on inspection rather than on coverage:
+//
+//   metal  264 words, but 245 of them from "tin" alone (continent, printing) —
+//          a single weak target wearing a group costume.
+//   name   369 words, but "hides a name" reveals as arbitrary rather than as
+//          an insight, and it collides with the proper-noun handling.
+//
+// "bra" is likewise absent from clothing: 54 hits, nearly all of them library/
+// celebrate/brain, where nobody reads it as a garment.
+//
+// Two more groups cleared coverage and were still cut, after reading their
+// actual matches — the floor counts words, it cannot tell a good find from a
+// bad one:
+//
+//   tool        chainsaw and screwdriver "hide a tool" by being one; fingernail
+//               and toenail match the body-part sense of nail; and the largest
+//               variant was "hoe" inside shoe/shoes/horseshoe.
+//   instrument  9 of its 34 words were organization/organic/organism — "organ"
+//               in the wrong sense entirely. Remove those and it drops under
+//               the floor, so there was no version of it worth shipping.
+export const HIDDEN_FOODS = [
+  'pea', 'oat', 'egg', 'ham', 'jam', 'pie', 'nut', 'rice', 'bean', 'corn',
+  'cake', 'soup', 'salt', 'bread', 'honey', 'lemon', 'onion', 'grape', 'melon',
+] as const
+
+export const HIDDEN_DRINKS = [
+  'tea', 'ale', 'cola', 'wine', 'beer', 'milk', 'juice', 'cider', 'water', 'cocoa',
+] as const
+
+export const HIDDEN_CLOTHING = [
+  'cap', 'hat', 'tie', 'vest', 'coat', 'sock', 'shoe', 'robe', 'gown', 'belt',
+  'scarf', 'shirt', 'skirt', 'glove', 'dress',
+] as const
+
+export const HIDDEN_WEATHER = [
+  'ice', 'sun', 'fog', 'rain', 'snow', 'wind', 'hail', 'mist', 'storm', 'cloud', 'frost',
+] as const
+
+export const HIDDEN_FURNITURE = [
+  'bed', 'cot', 'rug', 'lamp', 'desk', 'sofa', 'shelf', 'stool', 'table', 'chair', 'bench',
+] as const
+
+export const HIDDEN_VEHICLES = [
+  'car', 'bus', 'van', 'cab', 'ship', 'boat', 'cart', 'tram', 'train', 'truck', 'plane',
+] as const
+
 /** Every hidden-word target, in one list — this is what features.ts precomputes hits against. */
 export const HIDDEN_WORD_TARGETS = [
   ...HIDDEN_NUMBERS,
   ...HIDDEN_BODY_PARTS,
   ...HIDDEN_ANIMALS,
   ...HIDDEN_COLORS,
+  ...HIDDEN_FOODS,
+  ...HIDDEN_DRINKS,
+  ...HIDDEN_CLOTHING,
+  ...HIDDEN_WEATHER,
+  ...HIDDEN_FURNITURE,
+  ...HIDDEN_VEHICLES,
 ] as const
 
 /** The named groups, for the "hides a <group>" rules. */
+// Keys read straight into the reveal text as "hides the name of <a|an> <key>
+// inside it", so they have to be singular nouns that survive that sentence.
 export const HIDDEN_WORD_GROUPS = {
   number: HIDDEN_NUMBERS,
   'body part': HIDDEN_BODY_PARTS,
   animal: HIDDEN_ANIMALS,
   color: HIDDEN_COLORS,
+  food: HIDDEN_FOODS,
+  drink: HIDDEN_DRINKS,
+  'piece of clothing': HIDDEN_CLOTHING,
+  'kind of weather': HIDDEN_WEATHER,
+  'piece of furniture': HIDDEN_FURNITURE,
+  vehicle: HIDDEN_VEHICLES,
 } as const satisfies Record<string, readonly string[]>
 
 /** Rule #10 (subsequence): fixed in-order-letter targets — no external dictionary needed. */

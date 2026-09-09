@@ -34,6 +34,9 @@ export const TEMPLATE_SPACING_DAYS = 6
 export const TEMPLATE_SPACING_OVERRIDES: Record<string, number> = {
   category: 2,
   'hidden-word': 3,
+  // Same reasoning as hidden-word, and stronger: "hides an animal" and "hides
+  // a vehicle" have less in common than "hides RAT" and "hides OWL" do.
+  'hidden-group': 3,
 }
 
 export function templateSpacingFor(templateId: string): number {
