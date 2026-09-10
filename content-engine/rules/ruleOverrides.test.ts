@@ -8,6 +8,7 @@ function rule(id: string, subtlety: Rule['subtlety'] = 2): Rule {
     name: id,
     descriptionTemplate: id,
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety,
     evaluate: () => true,
   }

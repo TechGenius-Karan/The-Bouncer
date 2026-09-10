@@ -51,6 +51,7 @@ describe('classifyCollision', () => {
       name: 'a',
       descriptionTemplate: 'a',
       family: 'lexical-structural',
+      mechanic: 'letter-pattern',
       subtlety: 3,
       evaluate: (w) => w.spelling.startsWith('a'),
     }
@@ -77,6 +78,7 @@ describe('classifyCollision', () => {
       name: 'Never matches',
       descriptionTemplate: 'Matches nothing',
       family: 'lexical-structural',
+      mechanic: 'letter-pattern',
       subtlety: 3,
       evaluate: () => false,
     }
@@ -94,6 +96,7 @@ describe('classifyCollision', () => {
       name: 'a',
       descriptionTemplate: 'a',
       family: 'lexical-structural',
+      mechanic: 'letter-pattern',
       subtlety: 3,
       evaluate: (w) => w.spelling === 'aaa',
     }
@@ -107,6 +110,7 @@ describe('pickRevealRule', () => {
     name: 'x',
     descriptionTemplate: 'x',
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 3,
   }
   const dull: Rule = { ...base, id: 'a-dull', aha: 1, evaluate: () => true }

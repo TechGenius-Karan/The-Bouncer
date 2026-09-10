@@ -13,7 +13,7 @@ import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { CATEGORY_IDS, categoryTag } from '../words/categories.js'
 import { HIDDEN_WORD_GROUPS, HIDDEN_WORD_TARGETS } from '../words/fixedLists.js'
-import type { PartOfSpeech, Word } from '../words/types.js'
+import type { Word } from '../words/types.js'
 import { buildWordBank } from '../words/wordBank.js'
 
 // A rule needs enough IN words to draft 3 clues plus pool guests without
@@ -59,7 +59,6 @@ const SUFFIX_CANDIDATES = [
   'tion',
   'less',
 ]
-const PARTS_OF_SPEECH: PartOfSpeech[] = ['noun', 'verb', 'adjective', 'adverb']
 
 interface Swept<T> {
   kept: T[]
@@ -110,7 +109,6 @@ function main(): void {
   const startsWith = sweep(PREFIX_CANDIDATES, bank, (w, p) => w.spelling.startsWith(p))
   const endsWith = sweep(SUFFIX_CANDIDATES, bank, (w, s) => w.spelling.endsWith(s))
   const wordLengths = sweep([3, 4, 5, 6, 7, 8, 9, 10], bank, (w, n) => w.length === n)
-  const partsOfSpeech = sweep(PARTS_OF_SPEECH, bank, (w, p) => w.partOfSpeech === p)
   const categories = sweep(CATEGORY_IDS, bank, (w, c) => w.tags.includes(categoryTag(c)))
 
   // Sound rules. 2-syllable words are 43% of the bank and get rejected by the
@@ -127,13 +125,21 @@ function main(): void {
     (w, k) => w.phonetics?.rhyme === k,
     MAX_RHYME_COVERAGE / bank.length
   )
+  // Each surviving key gets an anchor word for the reveal to name ("they all
+  // rhyme with RAIN"). The most common non-proper-noun in the group, because
+  // the anchor is only useful if the player already knows how it sounds.
+  const rhymePairs = rhymes.kept.map((key) => {
+    const members = bank
+      .filter((w) => w.phonetics?.rhyme === key && !w.properNoun)
+      .sort((a, b) => b.frequencyScore - a.frequencyScore)
+    return [key, (members[0] ?? bank.find((w) => w.phonetics?.rhyme === key)!).spelling]
+  })
 
   report('hidden-word', hiddenWords, HIDDEN_WORD_TARGETS.length)
   report('hidden-group', hiddenGroups, groupNames.length)
   report('starts-with', startsWith, PREFIX_CANDIDATES.length)
   report('ends-with', endsWith, SUFFIX_CANDIDATES.length)
   report('word-length', wordLengths, 8)
-  report('part-of-speech', partsOfSpeech, PARTS_OF_SPEECH.length)
   report('category', categories, CATEGORY_IDS.length)
   report('syllable-count', syllableCounts, 6)
   report('silent-letters', silentThresholds, 3)
@@ -150,7 +156,6 @@ function main(): void {
     `  startsWith: ${JSON.stringify(startsWith.kept)},`,
     `  endsWith: ${JSON.stringify(endsWith.kept)},`,
     `  wordLengths: ${JSON.stringify(wordLengths.kept)},`,
-    `  partsOfSpeech: ${JSON.stringify(partsOfSpeech.kept)},`,
     `  categories: ${JSON.stringify(categories.kept)},`,
     `  syllableCounts: ${JSON.stringify(syllableCounts.kept)},`,
     // 3, chosen rather than swept. All of 2/3/4 clear the floor, but they are
@@ -160,7 +165,7 @@ function main(): void {
     // examples: cheese, bouquet, scissors, lighthouse. The sweep still runs so
     // a bank change that pushed 3 under the floor would show up in the report.
     `  silentThreshold: ${JSON.stringify(silentThresholds.kept.includes(3) ? 3 : (silentThresholds.kept[0] ?? 3))},`,
-    `  rhymes: ${JSON.stringify(rhymes.kept)},`,
+    `  rhymes: ${JSON.stringify(rhymePairs)},`,
     '} as const',
     '',
   ]
@@ -172,7 +177,6 @@ function main(): void {
     startsWith.kept.length +
     endsWith.kept.length +
     wordLengths.kept.length +
-    partsOfSpeech.kept.length +
     categories.kept.length +
     syllableCounts.kept.length +
     rhymes.kept.length +

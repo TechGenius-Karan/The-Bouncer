@@ -41,8 +41,50 @@ export function pickFamily(
 }
 
 /**
- * Picks a specific rule from an already-family-selected pool, weighting by
- * two independent signals:
+ * How much of the calendar each mechanic should get, before damping.
+ *
+ * Hand-set, not derived. A derived weight would just re-encode the ratings, and
+ * the ratings are exactly what failed to control the mix: with a flat pick,
+ * `rhyme`'s 73 rules at aha 3 outweighed `palindrome`'s single rule at aha 5 by
+ * 44x, and 86% of spicy lexical puzzles came out as either a rhyme or a hidden
+ * word. Rule count, not rule quality, was setting the menu.
+ *
+ * `sound` is deliberately below what its ratings would earn it: it is there to
+ * make the game feel distinctive, not to be the game. `word-surgery` is above,
+ * because it is the thinnest mechanic today and the one with the most headroom.
+ * `letter-pattern` is lowest because it is where the filler lives — starts-with
+ * and ends-with are 73 of its rules and were rejected 80-88% of the time.
+ *
+ * Measured over 20,000 draws against the real taxonomy, lexical pool:
+ *
+ *   spicy   word-inside 36%  sound 30%  word-surgery 18%  letter-pattern 16%
+ *   medium  word-inside 33%  sound 28%  letter-pattern 27%  word-surgery 12%
+ *
+ * Nothing above ~36%, against 45% for `rhyme` alone before this existed. The
+ * ceiling is set by there being only four lexical mechanics with real content
+ * in them — adding rules to the thin ones dilutes the top one further, which is
+ * what planning-lexical-depth.md's later phases are for. Retune here after any
+ * phase that adds a family.
+ */
+export const MECHANIC_WEIGHTS: Record<Rule['mechanic'], number> = {
+  'word-inside': 0.6,
+  sound: 0.4,
+  'letter-pattern': 0.35,
+  'word-surgery': 1.5,
+  meaning: 1,
+}
+
+/**
+ * Picks a rule in two steps — mechanic first, then a rule within it.
+ *
+ * The mechanic step is what stops a large family crowding out a small one. Its
+ * weight is `MECHANIC_WEIGHTS x sqrt(rule count)`: some credit for a mechanic
+ * that can actually sustain variety, but square-rooted, because the alternative
+ * of ignoring count entirely would draw `palindrome` (one rule, 60-day cooldown)
+ * as often as all 73 rhymes and starve the calendar.
+ *
+ * The rule step keeps the two signals it always had, both soft — no rule is
+ * ever excluded outright:
  *
  * - **aha** (how satisfying the rule is to get) — a rule rated 1 is drawn
  *   ~5x less often than one rated 5, so arithmetic rules like prime-length
@@ -51,9 +93,21 @@ export function pickFamily(
  *   "next-batch soft-avoidance". Each rejection roughly halves the share
  *   (1/(1+count)) rather than zeroing it, so a heavily-rejected rule can
  *   still be drawn if the batch has nothing else fresh to offer.
- *
- * Both are soft: no rule is ever excluded outright here.
  */
 export function pickTrueRule(pool: Rule[], rejectCounts: Map<string, number> = new Map()): Rule {
-  return pickWeighted(pool, (r) => (r.aha ?? 3) / (1 + (rejectCounts.get(r.id) ?? 0)))
+  const ruleWeight = (r: Rule) => (r.aha ?? 3) / (1 + (rejectCounts.get(r.id) ?? 0))
+
+  const byMechanic = new Map<Rule['mechanic'], Rule[]>()
+  for (const rule of pool) {
+    const bucket = byMechanic.get(rule.mechanic)
+    if (bucket) bucket.push(rule)
+    else byMechanic.set(rule.mechanic, [rule])
+  }
+
+  const buckets = [...byMechanic.entries()]
+  const [mechanic] = pickWeighted(
+    buckets,
+    ([m, rules]) => MECHANIC_WEIGHTS[m] * Math.sqrt(rules.length)
+  )
+  return pickWeighted(byMechanic.get(mechanic)!, ruleWeight)
 }

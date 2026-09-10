@@ -44,6 +44,17 @@ export function templateSpacingFor(templateId: string): number {
 }
 
 /**
+ * Don't run the same *mechanic* — what the player would call the trick — within
+ * this many days of itself.
+ *
+ * The coarsest of the three spacings, and the one that was missing. Template
+ * spacing cannot see that `hidden-word` and `hidden-group` are one trick to a
+ * player, so both could run in the same week and did. With five mechanics and
+ * seven days, 3 leaves at least three mechanics eligible on any date.
+ */
+export const MECHANIC_SPACING_DAYS = 3
+
+/**
  * A rule at or below this `aha` is filler: technically valid, rarely enjoyed.
  *
  * The ratings are not guesses — they were set from the rejection record. The
@@ -100,6 +111,16 @@ export interface PlaceablePuzzle {
 const AHA_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.aha ?? 3]))
 
 /**
+ * Mechanic is looked up from the taxonomy rather than stored on the puzzle
+ * document, unlike `templateId`. It is derivable from `ruleId` and nothing
+ * else, so storing it would only create something that can drift — and it
+ * means every puzzle already in the database gets mechanic spacing with no
+ * backfill. A retired or renamed rule resolves to undefined and is simply not
+ * spaced, the same fail-open `isFillerRule` already takes.
+ */
+const MECHANIC_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.mechanic]))
+
+/**
  * A rule id no longer in the taxonomy (an older puzzle, a renamed rule) counts
  * as non-filler. The cap exists to hold filler back, and guessing "filler" for
  * an unknown id would restrict the calendar on no evidence — risking empty days
@@ -114,19 +135,31 @@ export function daysBetween(a: string, b: string): number {
   return Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000
 }
 
-/** True when this puzzle's rule and template family are far enough from every date already placed. */
+/**
+ * True when this puzzle's rule, template family and mechanic are all far enough
+ * from every date already placed — the same rule, the same kind of rule, and
+ * the same trick, at three widening spacings.
+ */
 export function isFreshFor(
   date: string,
   puzzle: PlaceablePuzzle,
   placements: Placement[]
 ): boolean {
+  const mechanic = MECHANIC_BY_RULE_ID.get(puzzle.ruleId)
   return !placements.some((p) => {
     const gap = daysBetween(date, p.date)
     if (p.ruleId === puzzle.ruleId && gap < RULE_SPACING_DAYS) return true
-    return (
+    if (
       puzzle.templateId !== undefined &&
       p.templateId === puzzle.templateId &&
       gap < templateSpacingFor(puzzle.templateId)
+    ) {
+      return true
+    }
+    return (
+      mechanic !== undefined &&
+      MECHANIC_BY_RULE_ID.get(p.ruleId) === mechanic &&
+      gap < MECHANIC_SPACING_DAYS
     )
   })
 }

@@ -1,6 +1,5 @@
 import { CATEGORY_DEFINITIONS, categoryTag } from '../words/categories.js'
 import { HIDDEN_WORD_GROUPS } from '../words/fixedLists.js'
-import type { PartOfSpeech } from '../words/types.js'
 import { RULE_PARAMS } from './ruleParams.js'
 import type { Rule } from './types.js'
 
@@ -28,6 +27,7 @@ export function hiddenWordRule(target: string): Rule {
     templateId: 'hidden-word',
     descriptionTemplate: `The word hides "${target}" inside it.`,
     family: 'lexical-structural',
+    mechanic: 'word-inside',
     // Was 4, which made every hidden-word rule spicy-only — one day a week.
     // It is the best-performing template in the whole taxonomy: 25% of its
     // puzzles get rejected, against 80% for ends-with and 88% for starts-with.
@@ -52,6 +52,7 @@ export function hiddenGroupRule(group: keyof typeof HIDDEN_WORD_GROUPS): Rule {
     templateId: 'hidden-group',
     descriptionTemplate: `The word hides the name of ${article(group)} ${group} inside it.`,
     family: 'lexical-structural',
+    mechanic: 'word-inside',
     // Was 5, which made the highest-rated template in the taxonomy spicy-only —
     // one day a week for the puzzles most worth playing. The same mistake
     // hidden-word was in before the audit, and less defensible here: spotting
@@ -72,6 +73,7 @@ export function startsWithRule(prefix: string): Rule {
     templateId: 'starts-with',
     descriptionTemplate: `The word starts with "${prefix.toUpperCase()}".`,
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: prefix.length > 1 ? 3 : 2,
     // 88% of starts-with puzzles have been rejected — the worst rate of any
     // template. aha is a selection weight (pickTrueRule uses aha / (1 +
@@ -89,6 +91,7 @@ export function endsWithRule(suffix: string): Rule {
     templateId: 'ends-with',
     descriptionTemplate: `The word ends with "${suffix.toUpperCase()}".`,
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: suffix.length > 1 ? 3 : 2,
     // 80% rejected, yet rated neutral — the rating disagreed with every review
     // decision ever made about it. Same reasoning as startsWithRule.
@@ -104,32 +107,11 @@ export function wordLengthRule(length: number): Rule {
     templateId: 'word-length',
     descriptionTemplate: `The word is exactly ${length} letters long.`,
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 2,
     // Counting letters is mechanical, not an insight — kept as rare filler.
     aha: 1,
     evaluate: (word) => word.length === length,
-  }
-}
-
-const POS_LABEL: Record<string, string> = {
-  noun: 'a noun',
-  verb: 'a verb',
-  adjective: 'an adjective',
-  adverb: 'an adverb',
-}
-
-export function partOfSpeechRule(pos: PartOfSpeech): Rule {
-  return {
-    id: `part-of-speech-${pos}`,
-    name: `Is ${POS_LABEL[pos] ?? pos}`,
-    templateId: 'part-of-speech',
-    descriptionTemplate: `The word is ${POS_LABEL[pos] ?? pos}.`,
-    family: 'semantic-knowledge',
-    subtlety: 3,
-    // 83% rejected. "Is a verb" is a grammar question, not an observation
-    // about the word — it reads as a quiz rather than a puzzle.
-    aha: 1,
-    evaluate: (word) => word.partOfSpeech === pos,
   }
 }
 
@@ -152,6 +134,7 @@ export function categoryRule(id: string): Rule {
     templateId: 'category',
     descriptionTemplate: `The word names ${def.label}.`,
     family: 'semantic-knowledge',
+    mechanic: 'meaning',
     subtlety: def.subtlety,
     // Recognising a shared category is a genuine insight rather than a
     // letter-counting exercise, so these sit high on the aha axis.
@@ -167,7 +150,6 @@ export const GENERATED_RULES: Rule[] = [
   ...RULE_PARAMS.startsWith.map(startsWithRule),
   ...RULE_PARAMS.endsWith.map(endsWithRule),
   ...RULE_PARAMS.wordLengths.map(wordLengthRule),
-  ...RULE_PARAMS.partsOfSpeech.map((p) => partOfSpeechRule(p as PartOfSpeech)),
   ...RULE_PARAMS.syllableCounts.map(syllableCountRule),
   ...RULE_PARAMS.rhymes.map(rhymeRule),
   silentLettersRule(RULE_PARAMS.silentThreshold),
@@ -194,6 +176,7 @@ export function syllableCountRule(count: number): Rule {
     templateId: 'syllable-count',
     descriptionTemplate: `The word has exactly ${count} syllable${count === 1 ? '' : 's'} when spoken.`,
     family: 'lexical-structural',
+    mechanic: 'sound',
     subtlety: 3,
     // Counting, like word-length — but counting something you can only get at
     // by pronouncing the word, which is a different act from counting letters.
@@ -219,6 +202,7 @@ export function silentLettersRule(minSilent: number): Rule {
     templateId: 'silent-letters',
     descriptionTemplate: `The word has at least ${minSilent} more letters than it has sounds.`,
     family: 'lexical-structural',
+    mechanic: 'sound',
     subtlety: 3,
     aha: 4,
     evaluate: (word) => (word.phonetics?.silent ?? 0) >= minSilent,
@@ -233,6 +217,7 @@ export function homophoneRule(): Rule {
     templateId: 'homophone',
     descriptionTemplate: 'The word sounds exactly like a different word.',
     family: 'lexical-structural',
+    mechanic: 'sound',
     subtlety: 3,
     aha: 4,
     evaluate: (word) => word.phonetics?.homophone === true,
@@ -240,17 +225,25 @@ export function homophoneRule(): Rule {
 }
 
 /**
- * "They all rhyme." The rhyme key is the last vowel sound onward, so it groups
- * by how words END in speech rather than in spelling — "eight" rhymes with
- * "late" here, which no ends-with rule can express.
+ * "They all rhyme." The rhyme key is the last stressed vowel sound onward, so
+ * it groups by how words END in speech rather than in spelling — "eight"
+ * rhymes with "late" here, which no ends-with rule can express.
+ *
+ * `anchor` is a common bank word carrying the same key, and it exists purely so
+ * the reveal names something. All 73 rhyme rules used to end with the identical
+ * sentence, "The words all rhyme with each other" — 73 rules that read as one
+ * puzzle played 73 ways, which is more repetitive than the hidden-word family
+ * it was quietly out-drawing. "They all rhyme with RAIN" tells the player what
+ * they were listening for.
  */
-export function rhymeRule(key: string): Rule {
+export function rhymeRule([key, anchor]: readonly [string, string]): Rule {
   return {
     id: `rhyme-${key.toLowerCase()}`,
-    name: `Rhymes (${key})`,
+    name: `Rhymes With "${anchor.toUpperCase()}"`,
     templateId: 'rhyme',
-    descriptionTemplate: 'The words all rhyme with each other.',
+    descriptionTemplate: `The words all rhyme with "${anchor}".`,
     family: 'lexical-structural',
+    mechanic: 'sound',
     subtlety: 3,
     aha: 3,
     evaluate: (word) => word.phonetics?.rhyme === key,

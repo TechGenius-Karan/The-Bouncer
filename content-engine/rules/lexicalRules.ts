@@ -27,6 +27,7 @@ function containsLetterRule(letter: string): Rule {
     name: `Contains ${letter.toUpperCase()}`,
     descriptionTemplate: `The word contains the letter ${letter.toUpperCase()}.`,
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     // Was 1, which put it outside BOTH tier windows ([2,3] and [3,5]) — all 8
     // of these rules were unreachable dead code. Against a 5,000-word bank
     // spotting "they all contain a K" is genuinely a beat's work, so 2 is the
@@ -43,6 +44,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Doubled Letter',
     descriptionTemplate: 'The word contains a repeated adjacent letter.',
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 2, // was 1 — unreachable by either tier window
     aha: 3,
     evaluate: (word) => word.features.hasDoubledLetter,
@@ -52,6 +54,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Same Start/End Letter',
     descriptionTemplate: "The word's first and last letters are the same.",
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 2,
     aha: 4,
     evaluate: (word) => word.features.sameStartEnd,
@@ -62,6 +65,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Prime Length',
     descriptionTemplate: "The word's length is a prime number.",
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 3,
     // Arithmetic, not insight — a player grinds this out rather than
     // discovering it. Kept as rare filler rather than removed.
@@ -73,6 +77,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Starts With a Vowel',
     descriptionTemplate: 'The word starts with a vowel.',
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 2, // was 1 — unreachable by either tier window
     aha: 2,
     evaluate: (word) => word.features.startsWithVowel,
@@ -82,6 +87,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Exactly Two Vowels',
     descriptionTemplate: 'The word contains exactly two vowels.',
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 3,
     aha: 1, // counting exercise
     evaluate: (word) => word.features.vowelCount === 2,
@@ -91,6 +97,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Adjacent Vowels',
     descriptionTemplate: 'Two vowels sit next to each other somewhere in the word.',
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 3,
     aha: 2,
     // Inverted from the old `no-adjacent-vowels`, which matched 73% of the
@@ -105,6 +112,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Third Letter is a Vowel',
     descriptionTemplate: "The word's third letter is a vowel.",
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 2,
     aha: 1, // positional bookkeeping, no insight
     evaluate: (word) => word.length >= 3 && VOWELS.has(word.spelling[2]),
@@ -114,6 +122,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Hides A-C-E in Order',
     descriptionTemplate: 'The letters A, C, E appear somewhere in the word, in that order.',
     family: 'lexical-structural',
+    mechanic: 'word-inside',
     subtlety: 5,
     aha: 4,
     evaluate: (word) => word.features.subsequenceHits.includes('ace'),
@@ -123,6 +132,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Palindrome',
     descriptionTemplate: 'The word reads the same forwards and backwards.',
     family: 'lexical-structural',
+    mechanic: 'word-surgery',
     subtlety: 3,
     aha: 5,
     evaluate: (word) => word.features.isPalindrome,
@@ -132,6 +142,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Letters in Alphabetical Order',
     descriptionTemplate: "The word's letters appear in alphabetical order, left to right.",
     family: 'lexical-structural',
+    mechanic: 'letter-pattern',
     subtlety: 4,
     aha: 4,
     // A word's letters are already in alphabetical order exactly when sorting
@@ -143,6 +154,7 @@ export const LEXICAL_RULES: Rule[] = [
     name: 'Has an Anagram',
     descriptionTemplate: "The word's letters can be rearranged into a different word in the bank.",
     family: 'lexical-structural',
+    mechanic: 'word-surgery',
     subtlety: 5,
     aha: 5,
     evaluate: (word) => word.tags.includes('lexical:has-anagram'),

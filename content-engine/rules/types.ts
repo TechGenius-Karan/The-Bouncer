@@ -4,12 +4,39 @@ export type RuleFamily = 'lexical-structural' | 'semantic-knowledge'
 
 export type Subtlety = 1 | 2 | 3 | 4 | 5
 
+/**
+ * What the player would say the trick was — coarser than `templateId`, and the
+ * axis variety is actually judged on.
+ *
+ * `templateId` groups rules by how they are implemented, which turned out to be
+ * the wrong unit. `hidden-word` and `hidden-group` are two templates and one
+ * trick: hunt for a smaller word inside the word. Spacing and weighting by
+ * template let both run in the same week and the player saw the same puzzle
+ * twice. Measured before this existed, 86% of spicy lexical puzzles were either
+ * a rhyme or a hidden word.
+ *
+ * Required, not optional: a rule that declared no mechanic would form its own
+ * bucket of one and win draws out of all proportion (see MECHANIC_WEIGHTS).
+ */
+export type Mechanic =
+  /** Hunt for a smaller word inside the word. */
+  | 'word-inside'
+  /** Say it out loud — rhyme, syllables, sounds versus letters. */
+  | 'sound'
+  /** Look at the letters — position, count, repetition. */
+  | 'letter-pattern'
+  /** Change the word and see what you get — reverse, behead, rearrange. */
+  | 'word-surgery'
+  /** Know what it means. */
+  | 'meaning'
+
 export interface Rule {
   id: string
   name: string
   /** Plain-text reveal shown to the player once a round ends (planning.md §3.5). */
   descriptionTemplate: string
   family: RuleFamily
+  mechanic: Mechanic
   /**
    * Which template produced this rule ("hidden-word", "starts-with"), for
    * rules built from a parameter list. Lets scheduling space out a whole

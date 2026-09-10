@@ -11,6 +11,7 @@ const endsWithG: Rule = {
   name: 'Ends with G',
   descriptionTemplate: 'Ends with the letter G',
   family: 'lexical-structural',
+  mechanic: 'letter-pattern',
   subtlety: 2,
   evaluate: (w) => w.spelling.endsWith('g'),
 }

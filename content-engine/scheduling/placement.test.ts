@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { MEDIUM_KNOBS } from '../generator/difficulty.js'
 import { RULES } from '../rules/index.js'
 import {
   daysBetween,
@@ -127,6 +128,34 @@ describe('isFreshFor', () => {
     ]
     expect(isFreshFor('2026-09-02', { ruleId: 'palindrome' }, placements)).toBe(true)
   })
+
+  // The gap mechanic spacing was added to close. These are two different
+  // templates, so template spacing let them sit a day apart — and to a player
+  // they are the same trick twice: hunt for a word inside the word.
+  it('spaces two templates that share a mechanic', () => {
+    const placements: Placement[] = [
+      { date: '2026-09-01', ruleId: 'hidden-word-cat', templateId: 'hidden-word', isFiller: false },
+    ]
+    const sameMechanic = { ruleId: 'hidden-group-animal', templateId: 'hidden-group' }
+    expect(isFreshFor('2026-09-02', sameMechanic, placements)).toBe(false)
+    expect(isFreshFor('2026-09-05', sameMechanic, placements)).toBe(true)
+  })
+
+  it('does not space rules whose mechanics differ', () => {
+    const placements: Placement[] = [
+      { date: '2026-09-01', ruleId: 'hidden-word-cat', templateId: 'hidden-word', isFiller: false },
+    ]
+    expect(isFreshFor('2026-09-02', { ruleId: 'palindrome' }, placements)).toBe(true)
+  })
+
+  // Fail-open, matching isFillerRule: an id no longer in the taxonomy must not
+  // block a date on no evidence.
+  it('ignores mechanic spacing for a rule missing from the taxonomy', () => {
+    const placements: Placement[] = [
+      { date: '2026-09-01', ruleId: 'hidden-word-cat', templateId: 'hidden-word', isFiller: false },
+    ]
+    expect(isFreshFor('2026-09-02', { ruleId: 'rule-that-no-longer-exists' }, placements)).toBe(true)
+  })
 })
 
 // Drives the real selectForDate across a realistic pool, rather than
@@ -229,15 +258,23 @@ describe('supply supports the cap', () => {
       (r) => r.subtlety >= 2 && r.subtlety <= 3 && r.family === 'semantic-knowledge'
     ).length
 
-    const semanticNeededPerWeek = 7 - MAX_FILLER_PER_WEEK
+    // Demand is what the generator actually asks for, not every non-filler day.
+    // This used to read `7 - MAX_FILLER_PER_WEEK`, i.e. 5 — which assumed every
+    // day that isn't filler is semantic. It never was: pickFamily splits by
+    // semanticRuleWeight first, and medium runs six days a week, not seven. The
+    // old figure passed by 0.15 and then failed the moment three junk
+    // part-of-speech rules were deleted, which is the wrong thing for a supply
+    // guard to be sensitive to.
+    const MEDIUM_DAYS_PER_WEEK = 6
+    const semanticNeededPerWeek = MEDIUM_DAYS_PER_WEEK * MEDIUM_KNOBS.semanticRuleWeight
     const sustainablePerWeek = (mediumSemantic / RULE_SPACING_DAYS) * 7
     const rulesForCleanCap = Math.ceil((semanticNeededPerWeek / 7) * RULE_SPACING_DAYS)
 
     expect(
       sustainablePerWeek,
-      `MAX_FILLER_PER_WEEK=${MAX_FILLER_PER_WEEK} wants ${semanticNeededPerWeek} semantic puzzles a week; ` +
+      `The generator wants ${semanticNeededPerWeek} semantic puzzles a week; ` +
         `${mediumSemantic} medium-eligible semantic rules sustain ${sustainablePerWeek.toFixed(1)}. ` +
-        `Either raise the cap or grow the taxonomy to ~${rulesForCleanCap} semantic rules.`
-    ).toBeGreaterThan(semanticNeededPerWeek - 1)
+        `Either lower MEDIUM_SEMANTIC_WEIGHT or grow the taxonomy to ~${rulesForCleanCap} semantic rules.`
+    ).toBeGreaterThan(semanticNeededPerWeek)
   })
 })

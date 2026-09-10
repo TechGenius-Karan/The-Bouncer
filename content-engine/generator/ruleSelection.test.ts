@@ -2,12 +2,18 @@ import { describe, expect, it } from 'vitest'
 import type { Rule } from '../rules/types.js'
 import { eligibleRulesByFamily, pickFamily, pickTrueRule } from './ruleSelection.js'
 
-function rule(id: string, family: Rule['family'], subtlety: Rule['subtlety']): Rule {
+function rule(
+  id: string,
+  family: Rule['family'],
+  subtlety: Rule['subtlety'],
+  mechanic: Rule['mechanic'] = 'letter-pattern'
+): Rule {
   return {
     id,
     name: id,
     descriptionTemplate: id,
     family,
+    mechanic,
     subtlety,
     evaluate: () => true,
   }
@@ -85,5 +91,33 @@ describe('pickTrueRule', () => {
     // rule, asserting only that it's clearly the minority, not eliminated.
     expect(counts['lex-5']).toBeGreaterThan(0)
     expect(counts['lex-5']).toBeLessThan(runs * 0.3)
+  })
+
+  // The bug this two-step pick exists to fix. A flat weighted pick let a
+  // mechanic with many rules crowd out one with few, regardless of rating —
+  // measured at 86% of spicy lexical puzzles being either a rhyme or a hidden
+  // word. Rule count was setting the menu, not rule quality.
+  it('does not let a large mechanic crowd out a small one', () => {
+    const many = Array.from({ length: 40 }, (_, i) =>
+      rule(`sound-${i}`, 'lexical-structural', 3, 'sound')
+    )
+    const one = rule('surgery-1', 'lexical-structural', 3, 'word-surgery')
+    const pool = [...many, one]
+
+    let surgery = 0
+    const runs = 600
+    for (let i = 0; i < runs; i++) {
+      if (pickTrueRule(pool).mechanic === 'word-surgery') surgery++
+    }
+    // A flat pick would give the lone rule 1/41 ≈ 2%. Weighted by mechanic it
+    // is 1.5 / (1.5 + 0.4 * sqrt(40)) ≈ 37%. Wide bounds: this asserts the
+    // shape of the fix, not the exact constants, which are meant to be tuned.
+    expect(surgery).toBeGreaterThan(runs * 0.15)
+    expect(surgery).toBeLessThan(runs * 0.5)
+  })
+
+  it('still returns the only rule available, whatever its mechanic', () => {
+    const lone = rule('lonely', 'lexical-structural', 3, 'meaning')
+    expect(pickTrueRule([lone])).toBe(lone)
   })
 })
