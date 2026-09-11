@@ -7,14 +7,27 @@ import type { ClueEntry, KnobValues } from './types.js'
 // higher commonness bar than trap guests (planning.md §7.5).
 const CLUE_FREQUENCY_FLOOR = 0.6
 
-function pickClueWords(pool: Word[], count: number): Word[] {
-  // Proper nouns stay usable in the guest pool but are kept out of clues:
-  // clues are the evidence the whole inference rests on, and a name like
-  // "margaret" reads as an odd, arbitrary example rather than a fair one.
+/**
+ * The commonness / proper-noun ladder every clue must clear.
+ *
+ * Proper nouns stay usable in the guest pool but are kept out of clues: clues
+ * are the evidence the whole inference rests on, and a name like "margaret"
+ * reads as an odd, arbitrary example rather than a fair one.
+ *
+ * Separated from pickClueWords so the variant-spreading path below gets it too.
+ * It did not, and the gap was invisible until a rule with many variants shipped:
+ * the first "starts with a K sound" puzzle drew `caprice, krishna, quietly`,
+ * having bought its c/k/q spread with two words no player should be asked to
+ * reason from.
+ */
+function clueCandidates(pool: Word[], count: number): Word[] {
   const preferred = pool.filter((w) => w.frequencyScore >= CLUE_FREQUENCY_FLOOR && !w.properNoun)
   const fallback = pool.filter((w) => !w.properNoun)
-  const source = preferred.length >= count ? preferred : fallback.length >= count ? fallback : pool
-  return shuffle(source).slice(0, count)
+  return preferred.length >= count ? preferred : fallback.length >= count ? fallback : pool
+}
+
+function pickClueWords(pool: Word[], count: number): Word[] {
+  return shuffle(clueCandidates(pool, count)).slice(0, count)
 }
 
 /**
@@ -31,8 +44,10 @@ function pickClueWords(pool: Word[], count: number): Word[] {
 function pickDiverseClueWords(rule: Rule, pool: Word[], count: number): Word[] {
   if (!rule.variantOf) return pickClueWords(pool, count)
 
+  // Bucket the words that already clear the clue bar, not the raw pool —
+  // spanning variants must not be paid for with rare words or names.
   const byVariant = new Map<string, Word[]>()
-  for (const word of pool) {
+  for (const word of clueCandidates(pool, count)) {
     const variant = rule.variantOf(word)
     if (variant === null) continue
     const bucket = byVariant.get(variant)

@@ -25,7 +25,30 @@ interface Entry {
   rhyme: string | null
   silent: number
   homophone: boolean
+  first: string
+  silentFirst: boolean
 }
+
+/**
+ * The silent initial digraphs of English, with the sound the word really starts
+ * with. Plus silent H, handled separately below because what follows it is a
+ * vowel sound rather than one fixed consonant.
+ *
+ * Hardcoded, and deliberately not learned from the bank. The obvious
+ * data-driven version — "a first phoneme that is rare for this first letter" —
+ * gets this exactly backwards: there are ~25 kn- words in the bank, so N would
+ * register as a perfectly normal realisation of K and the rule would find
+ * nothing. The set of silent initials in English is finite and closed; a table
+ * is the honest model, and each entry below was checked against CMUdict.
+ */
+const SILENT_INITIALS: [prefix: string, sound: string][] = [
+  ['kn', 'N'], // knee, knife, know
+  ['gn', 'N'], // gnome, gnaw
+  ['pn', 'N'], // pneumonia
+  ['mn', 'N'], // mnemonic
+  ['wr', 'R'], // write, wrist, wrong
+  ['ps', 'S'], // psychology, psalm
+]
 
 function main(): void {
   const dict = dictionary as Record<string, string>
@@ -69,11 +92,19 @@ function main(): void {
       }
     }
 
+    // Silent H is its own case: "hour" and "honest" start on a vowel sound, so
+    // there is no single consonant to match against the way kn-/wr- have.
+    const silentFirst =
+      SILENT_INITIALS.some(([prefix, sound]) => spelling.startsWith(prefix) && phonemes[0] === sound) ||
+      (spelling.startsWith('h') && VOWEL.test(phonemes[0]))
+
     entries.set(spelling, {
       syllables,
       rhyme,
       silent: spelling.length - phonemes.length,
       homophone: false,
+      first: phonemes[0],
+      silentFirst,
     })
 
     const key = phonemes.join(' ')
@@ -142,7 +173,7 @@ function main(): void {
       .sort(([a], [b]) => (a < b ? -1 : 1))
       .map(
         ([spelling, e]) =>
-          `  ${JSON.stringify(spelling)}: { syllables: ${e.syllables}, rhyme: ${e.rhyme === null ? 'null' : JSON.stringify(e.rhyme)}, silent: ${e.silent}, homophone: ${e.homophone} },`
+          `  ${JSON.stringify(spelling)}: { syllables: ${e.syllables}, rhyme: ${e.rhyme === null ? 'null' : JSON.stringify(e.rhyme)}, silent: ${e.silent}, homophone: ${e.homophone}, first: ${JSON.stringify(e.first)}, silentFirst: ${e.silentFirst} },`
       ),
     '}',
     '',
@@ -157,6 +188,10 @@ function main(): void {
     `Words with a pronunciation: ${entries.size}/${spellings.length} (${missing} missing)`
   )
   console.log(`  homophones: ${homophoneWords} words`)
+  const silentFirsts = [...entries].filter(([, e]) => e.silentFirst).map(([w]) => w)
+  console.log(
+    `  silent first letter: ${silentFirsts.length} words (${silentFirsts.slice(0, 10).join(', ')})`
+  )
   console.log(`  distinct rhymes: ${rhymeSources.size} (no key collisions)`)
   console.log(
     `  syllables: ${[...sylCounts]

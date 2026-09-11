@@ -36,6 +36,37 @@ const MAX_COVERAGE_SHARE = 0.35
  */
 const MAX_RHYME_COVERAGE = 400
 
+/**
+ * How much of an initial-sound group must be spelled *against* the majority for
+ * the rule to be worth shipping — as a share, and as an absolute count.
+ *
+ * "Starts with a B sound" is a tautology of "starts with B" — every B-sound word
+ * in the bank begins with the letter B — so it would add nothing but a
+ * guaranteed live decoy on every B puzzle. The rule is only interesting where
+ * the spelling disagrees with the sound often enough for a player to notice:
+ * coffee / kitten / quiet, or gentle / jacket / giraffe.
+ *
+ * The absolute floor exists because the share alone is noise on a small group. Z
+ * cleared 10% on three words out of 29 — `xerox`, `xenon`, `czar` — so a drawn
+ * clue set would be all-z nearly every time and the rule would be "starts with
+ * Z" wearing a costume, which is the exact thing this gate is here to reject.
+ *
+ * Three sounds qualify: K (c/k/q), JH (j/g), Y (y/u/e). S (6%:
+ * spoon/civic/psychology) and F (5%: follow/phone) just miss on share, and are
+ * the first two to let in if the sound family is ever given more room.
+ */
+const MIN_MINORITY_SPELLING_SHARE = 0.1
+const MIN_MINORITY_SPELLING_WORDS = 10
+
+/**
+ * ARPAbet names a player would not recognise, mapped to something readable.
+ * Vowels are excluded from initial-sound rules entirely — "starts with an AH
+ * sound" is not a thing anyone can act on.
+ */
+const VOWEL_PHONEMES = new Set([
+  'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW',
+])
+
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('')
 // Multi-letter starts/ends worth trying. Suffixes carry more signal than
 // prefixes (English marks grammar at the end), so the list leans that way.
@@ -135,7 +166,40 @@ function main(): void {
     return [key, (members[0] ?? bank.find((w) => w.phonetics?.rhyme === key)!).spelling]
   })
 
+  // Initial sound. Swept on coverage like everything else, then filtered again
+  // on spelling disagreement — a sound spelled only one way is the letter rule
+  // wearing a phonetic costume.
+  const byFirstPhoneme = new Map<string, Word[]>()
+  for (const w of bank) {
+    const f = w.phonetics?.first
+    if (!f || VOWEL_PHONEMES.has(f)) continue
+    const group = byFirstPhoneme.get(f)
+    if (group) group.push(w)
+    else byFirstPhoneme.set(f, [w])
+  }
+  const initialSounds = sweep(
+    [...byFirstPhoneme.keys()].sort(),
+    bank,
+    (w, p) => w.phonetics?.first === p
+  )
+  const soundsWithVariedSpelling = initialSounds.kept.filter((phoneme) => {
+    const group = byFirstPhoneme.get(phoneme)!
+    const byLetter = new Map<string, number>()
+    for (const w of group) byLetter.set(w.spelling[0], (byLetter.get(w.spelling[0]) ?? 0) + 1)
+    const minority = group.length - Math.max(...byLetter.values())
+    return (
+      minority / group.length >= MIN_MINORITY_SPELLING_SHARE &&
+      minority >= MIN_MINORITY_SPELLING_WORDS
+    )
+  })
+
   report('hidden-word', hiddenWords, HIDDEN_WORD_TARGETS.length)
+  console.log(
+    `  initial-sound: kept ${soundsWithVariedSpelling.length}/${byFirstPhoneme.size} ` +
+      `(${initialSounds.rejected.length} on coverage, ` +
+      `${initialSounds.kept.length - soundsWithVariedSpelling.length} spelled only one way) ` +
+      `-> ${soundsWithVariedSpelling.join(', ')}`
+  )
   report('hidden-group', hiddenGroups, groupNames.length)
   report('starts-with', startsWith, PREFIX_CANDIDATES.length)
   report('ends-with', endsWith, SUFFIX_CANDIDATES.length)
@@ -166,6 +230,7 @@ function main(): void {
     // a bank change that pushed 3 under the floor would show up in the report.
     `  silentThreshold: ${JSON.stringify(silentThresholds.kept.includes(3) ? 3 : (silentThresholds.kept[0] ?? 3))},`,
     `  rhymes: ${JSON.stringify(rhymePairs)},`,
+    `  initialSounds: ${JSON.stringify(soundsWithVariedSpelling)},`,
     '} as const',
     '',
   ]
@@ -180,6 +245,7 @@ function main(): void {
     categories.kept.length +
     syllableCounts.kept.length +
     rhymes.kept.length +
+    soundsWithVariedSpelling.length +
     1 // silent-letters, a single rule
   console.log(`\nWrote ${total} generated rules to content-engine/rules/ruleParams.ts`)
 }

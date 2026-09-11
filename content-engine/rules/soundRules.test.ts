@@ -5,7 +5,18 @@ import type { Rule } from './types.js'
 
 const bank = buildWordBank()
 const byWord = new Map(bank.map((w) => [w.spelling, w]))
-const SOUND_TEMPLATES = ['syllable-count', 'rhyme', 'silent-letters', 'homophone']
+// Every sound template, so the two blanket guards below — unpronounceable words
+// are never IN, and every rule clears the coverage floor — automatically cover
+// anything added to the family.
+const SOUND_TEMPLATES = [
+  'syllable-count',
+  'rhyme',
+  'silent-letters',
+  'homophone',
+  'initial-sound',
+  'silent-first-letter',
+  'one-syllable-long',
+]
 const soundRules = RULES.filter((r) => SOUND_TEMPLATES.includes(r.templateId ?? ''))
 
 function rule(id: string): Rule {
@@ -119,6 +130,85 @@ describe('rhyme', () => {
       if (prior === undefined) seen.set(p.rhyme, w.spelling)
     }
     expect(seen.size).toBeGreaterThan(100)
+  })
+})
+
+describe('initial sound', () => {
+  it('groups words by the sound they start with, not the letter', () => {
+    const k = rule('initial-sound-k')
+    for (const w of ['coffee', 'kitten', 'quiet']) expect(matches(k, w), w).toBe(true)
+    const j = rule('initial-sound-jh')
+    for (const w of ['jacket', 'gentle', 'giraffe']) expect(matches(j, w), w).toBe(true)
+    const y = rule('initial-sound-y')
+    for (const w of ['yellow', 'unique', 'europe']) expect(matches(y, w), w).toBe(true)
+  })
+
+  it('does not match a word that merely starts with the letter', () => {
+    // "ceiling" starts with C and sounds like S — the whole point of the rule.
+    expect(matches(rule('initial-sound-k'), 'ceiling')).toBe(false)
+  })
+
+  // Without this the clue set could be three c-words, teaching the player
+  // "starts with C" and making the pool look arbitrary when "quiet" turns up IN.
+  it('reports the spelling as its variant, so clue sets span spellings', () => {
+    const k = rule('initial-sound-k')
+    expect(k.variantOf).toBeDefined()
+    expect(k.variantOf!(byWord.get('coffee')!)).toBe('c')
+    expect(k.variantOf!(byWord.get('quiet')!)).toBe('q')
+    expect(k.variantOf!(byWord.get('banana')!)).toBe(null)
+  })
+
+  // The gate that keeps the family honest: a sound spelled only one way is the
+  // letter rule in disguise, and would be a guaranteed live decoy on every
+  // puzzle the letter rule produced.
+  it('exists only for sounds with more than one spelling', () => {
+    const oneWay = ['b', 'p', 'd', 'm', 't', 'l', 'g', 'v']
+    for (const letter of oneWay) {
+      expect(
+        RULES.find((r) => r.id === `initial-sound-${letter}`),
+        `initial-sound-${letter} should not exist — that sound is only ever spelled "${letter}"`
+      ).toBeUndefined()
+    }
+  })
+})
+
+describe('silent first letter', () => {
+  const r = rule('silent-first-letter')
+
+  it('matches the silent initial digraphs and silent H', () => {
+    for (const w of ['knee', 'wrist', 'write', 'wrong', 'honest', 'hour']) {
+      expect(matches(r, w), w).toBe(true)
+    }
+  })
+
+  it('does not match a word whose first letter is pronounced', () => {
+    for (const w of ['kitten', 'window', 'happy', 'pillow']) expect(matches(r, w), w).toBe(false)
+  })
+
+  // The first batch generated without this drew wrestling/knowing/wrong, whose
+  // shared -ng ending produced three decoys about the END of the word.
+  it('reports the silent letter as its variant, so clue sets span kn-/wr-/ps-/h-', () => {
+    expect(r.variantOf).toBeDefined()
+    expect(r.variantOf!(byWord.get('knee')!)).toBe('k')
+    expect(r.variantOf!(byWord.get('wrist')!)).toBe('w')
+    expect(r.variantOf!(byWord.get('honest')!)).toBe('h')
+    expect(r.variantOf!(byWord.get('kitten')!)).toBe(null)
+  })
+})
+
+describe('long but one syllable', () => {
+  const r = RULES.find((x) => x.templateId === 'one-syllable-long')!
+
+  it('matches long words spoken in one beat', () => {
+    for (const w of ['cheese', 'square', 'spring', 'wrench']) expect(matches(r, w), w).toBe(true)
+  })
+
+  it('does not match a short one-syllable word', () => {
+    expect(matches(r, 'cat')).toBe(false)
+  })
+
+  it('does not match a long word with several syllables', () => {
+    expect(matches(r, 'banana')).toBe(false)
   })
 })
 

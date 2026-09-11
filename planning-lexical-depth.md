@@ -1,6 +1,6 @@
 # Lexical Depth — making the puzzles feel different from each other
 
-**Status:** approved. **Phase A shipped.** Phases B–E outstanding.
+**Status:** approved. **Phases A and B shipped.** Phases C–E outstanding.
 
 ### Decisions taken on the §7 questions
 
@@ -307,10 +307,55 @@ only four lexical mechanics with real content in them, so the largest cannot go
 much below a third. Phases B–D are what dilute it. **Retune `MECHANIC_WEIGHTS`
 after each phase that adds a family.**
 
-**Phase B — phonetic hybrids**
-Extend `buildPhonetics.ts` with stress index and first/last phoneme; regenerate
-`phonetics.ts`; add the §4a rules; sweep their parameters in `buildRuleParams.ts`.
-Test: every sound rule treats missing phonetics as OUT (the existing invariant).
+**Phase B — phonetic hybrids — DONE**
+
+Five new rules, not the nine §4a listed, per the "sound is a seasoning" call:
+
+| rule | matches | clue set from a real batch |
+| --- | --- | --- |
+| Starts with a "K" sound | 1,353 | — |
+| Starts with a "J" sound | 225 | gym, jumping, gee |
+| Starts with a "Y" sound | 93 | — |
+| Silent first letter | **91** | wreck, heir, know |
+| Long, but one syllable | 478 | proved, stoned, scowled |
+
+`Phonetics` gained exactly two fields, `first` and `silentFirst`. **Stress index
+and last phoneme were deliberately NOT added** — no shipped rule reads them, and
+an unused precomputed field is the exact complaint the original audit made about
+`vcPattern` and `consonantCount`. Add them with the rule that needs them.
+
+Three gates decide which initial sounds get a rule, and they are the substance of
+this phase:
+
+- coverage floor 25 (19 of 23 consonant sounds pass)
+- **minority spelling share ≥ 10%** — "starts with a B sound" is "starts with B"
+  with extra steps, and would be a guaranteed live decoy on every B puzzle
+- **minority spelling count ≥ 10 words** — Z cleared the share test on three
+  words (`xerox`, `xenon`, `czar`), which is noise, not a pattern
+
+`silent first letter` came in at **91 words**, confirming the ~100 estimate and
+that the probe's 239 was noise. `SILENT_INITIALS` is a hardcoded closed list
+(kn/gn/pn/mn/wr/ps plus silent H) — the data-driven version learns N as a normal
+realisation of K from the bank's ~25 kn- words and finds nothing.
+
+S (6%: spoon/civic/psychology) and F (5%: follow/phone) just missed the share
+gate and are the first two to admit if sound is ever given more room.
+
+**Two bugs this phase surfaced, both fixed:**
+
+1. **Template size crowded out quality inside a mechanic.** Phase A stopped
+   `rhyme` dominating all draws, but within the `sound` bucket its 73 rules left
+   the three new rules sharing 2.8% — one puzzle every six weeks. `pickTrueRule`
+   now damps template size by `sqrt` the same way it damps mechanic size. New
+   rules went to **9.2–9.9%**, `rhyme` from 25.6% to 13.2%, and the aha-1 filler
+   templates (starts-with/ends-with/word-length) from ~15–20% down to **6.6–7.5%**.
+2. **`pickDiverseClueWords` bypassed the clue quality bar.** It bucketed the raw
+   pool, skipping the commonness floor and proper-noun exclusion that
+   `pickClueWords` applies — so it bought variant spread with whatever matched.
+   The first K-sound puzzle drew `caprice, krishna, quietly` (frequency 0.10
+   against a 0.6 floor, and a flagged proper noun). This affected **every**
+   `variantOf` rule, `hidden-group` included, so the fix went in the shared
+   helper rather than the new rules.
 
 **Phase C — word surgery + letter patterns**
 Post-pass tags in `wordBank.ts` for reverse/behead/curtail/compound; the §4b and

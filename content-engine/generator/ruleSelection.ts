@@ -57,10 +57,10 @@ export function pickFamily(
  *
  * Measured over 20,000 draws against the real taxonomy, lexical pool:
  *
- *   spicy   word-inside 36%  sound 30%  word-surgery 18%  letter-pattern 16%
- *   medium  word-inside 33%  sound 28%  letter-pattern 27%  word-surgery 12%
+ *   spicy   word-inside 35%  sound 31%  word-surgery 18%  letter-pattern 16%
+ *   medium  word-inside 32%  sound 29%  letter-pattern 27%  word-surgery 12%
  *
- * Nothing above ~36%, against 45% for `rhyme` alone before this existed. The
+ * Nothing above ~35%, against 45% for `rhyme` alone before this existed. The
  * ceiling is set by there being only four lexical mechanics with real content
  * in them — adding rules to the thin ones dilutes the top one further, which is
  * what planning-lexical-depth.md's later phases are for. Retune here after any
@@ -95,7 +95,23 @@ export const MECHANIC_WEIGHTS: Record<Rule['mechanic'], number> = {
  *   still be drawn if the batch has nothing else fresh to offer.
  */
 export function pickTrueRule(pool: Rule[], rejectCounts: Map<string, number> = new Map()): Rule {
-  const ruleWeight = (r: Rule) => (r.aha ?? 3) / (1 + (rejectCounts.get(r.id) ?? 0))
+  // Template size is damped the same way mechanic size is, and for the same
+  // reason one level down. Grouping by mechanic alone left `rhyme`'s 73 rules
+  // taking 26% of all lexical draws while the three sharpest sound rules
+  // (initial-sound, silent-first-letter, one-syllable-long) shared 2.8% between
+  // them — about one puzzle every six weeks, which is not worth building.
+  // An untemplated rule is its own template of one: `palindrome` and
+  // `contains-q` are each a distinct idea, not members of an "everything else"
+  // family that deserves to be throttled as a group.
+  const templateSize = new Map<string, number>()
+  for (const r of pool) {
+    const key = r.templateId ?? r.id
+    templateSize.set(key, (templateSize.get(key) ?? 0) + 1)
+  }
+  const ruleWeight = (r: Rule) =>
+    (r.aha ?? 3) /
+    (1 + (rejectCounts.get(r.id) ?? 0)) /
+    Math.sqrt(templateSize.get(r.templateId ?? r.id)!)
 
   const byMechanic = new Map<Rule['mechanic'], Rule[]>()
   for (const rule of pool) {

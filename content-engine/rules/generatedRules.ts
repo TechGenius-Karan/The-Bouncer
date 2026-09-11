@@ -15,6 +15,13 @@ import type { Rule } from './types.js'
 // so three rules sat unusable for months. Regenerating the params after a
 // word-bank change now unlocks newly-viable rules automatically.
 
+/**
+ * ARPAbet symbols a player would not recognise, in the reveal's own vocabulary.
+ * Only the phonemes that can survive buildRuleParams' spelling-variety gate need
+ * an entry; anything else falls through to the symbol itself.
+ */
+const SOUND_LABEL: Record<string, string> = { JH: 'J', ZH: 'ZH', HH: 'H' }
+
 function article(word: string): string {
   return /^[aeiou]/.test(word) ? 'an' : 'a'
 }
@@ -152,8 +159,11 @@ export const GENERATED_RULES: Rule[] = [
   ...RULE_PARAMS.wordLengths.map(wordLengthRule),
   ...RULE_PARAMS.syllableCounts.map(syllableCountRule),
   ...RULE_PARAMS.rhymes.map(rhymeRule),
+  ...RULE_PARAMS.initialSounds.map(initialSoundRule),
   silentLettersRule(RULE_PARAMS.silentThreshold),
   homophoneRule(),
+  silentFirstLetterRule(),
+  longOneSyllableRule(6),
 ]
 
 // --- sound rules -------------------------------------------------------------
@@ -221,6 +231,87 @@ export function homophoneRule(): Rule {
     subtlety: 3,
     aha: 4,
     evaluate: (word) => word.phonetics?.homophone === true,
+  }
+}
+
+/**
+ * "They all start with a K sound" — coffee, kitten, quiet, chemistry.
+ *
+ * The sharpest thing the sound family can do, and the one rule here that no
+ * spelling rule could imitate: the words share a sound and share no letter. Only
+ * phonemes spelled several ways in the bank get a rule at all
+ * (MIN_MINORITY_SPELLING_SHARE), because "starts with a B sound" is just "starts
+ * with B" with extra steps.
+ *
+ * `variantOf` returns the first *letter*, which matters more here than anywhere
+ * else in the taxonomy: it makes draftClueSet span at least two spellings, so the
+ * clue set is coffee/kitten/quiet rather than three c-words that teach the player
+ * the wrong rule.
+ */
+export function initialSoundRule(phoneme: string): Rule {
+  const label = SOUND_LABEL[phoneme] ?? phoneme
+  return {
+    id: `initial-sound-${phoneme.toLowerCase()}`,
+    name: `Starts With a "${label}" Sound`,
+    templateId: 'initial-sound',
+    descriptionTemplate: `The word starts with a "${label}" sound, however it is spelled.`,
+    family: 'lexical-structural',
+    mechanic: 'sound',
+    subtlety: 3,
+    aha: 5,
+    evaluate: (word) => word.phonetics?.first === phoneme,
+    variantOf: (word) => (word.phonetics?.first === phoneme ? word.spelling[0] : null),
+  }
+}
+
+/**
+ * "The first letter makes no sound at all" — knee, gnome, wrist, write, hour.
+ *
+ * 91 words, from a closed list of silent initial digraphs plus silent H; see
+ * SILENT_INITIALS in scripts/buildPhonetics.ts for why that list is hardcoded
+ * rather than inferred.
+ *
+ * `variantOf` is the silent letter. Without it the first real batch drew
+ * `wrestling, knowing, wrong` — a clue set whose shared -ng ending generated
+ * three spurious decoys ("Ends With NG", "Contains G") and taught the player to
+ * look at the end of the word rather than the start. Spanning variants gives
+ * knee / wrist / honest instead.
+ */
+export function silentFirstLetterRule(): Rule {
+  return {
+    id: 'silent-first-letter',
+    name: 'Silent First Letter',
+    templateId: 'silent-first-letter',
+    descriptionTemplate: 'The word begins with a letter you do not pronounce.',
+    family: 'lexical-structural',
+    mechanic: 'sound',
+    subtlety: 3,
+    aha: 5,
+    evaluate: (word) => word.phonetics?.silentFirst === true,
+    variantOf: (word) => (word.phonetics?.silentFirst ? word.spelling[0] : null),
+  }
+}
+
+/**
+ * "A long word you say in one beat" — cheese, mosque, square, spring, wrench.
+ *
+ * Spelling against sound again, from the other direction: the word looks like it
+ * should take a while and doesn't. `minLength` is 6 rather than swept, because
+ * the three candidate lengths are the same idea at three strengths and only one
+ * should ship; soundRules.test.ts asserts the coverage floor so a bank change
+ * that starved it would fail loudly.
+ */
+export function longOneSyllableRule(minLength: number): Rule {
+  return {
+    id: `one-syllable-long-${minLength}`,
+    name: 'Long, But One Syllable',
+    templateId: 'one-syllable-long',
+    descriptionTemplate: `The word is ${minLength} letters or more, but only one syllable when spoken.`,
+    family: 'lexical-structural',
+    mechanic: 'sound',
+    subtlety: 3,
+    aha: 5,
+    evaluate: (word) => word.phonetics?.syllables === 1 && word.length >= minLength,
   }
 }
 

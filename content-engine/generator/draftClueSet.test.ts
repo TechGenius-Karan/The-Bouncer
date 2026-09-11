@@ -34,4 +34,21 @@ describe('draftClueSet variant spread', () => {
       }
     }
   )
+
+  // The variant-spreading path used to bucket the raw pool, skipping the
+  // commonness and proper-noun bar that the plain path applies — so it bought
+  // diversity with whatever matched. The first "starts with a K sound" puzzle
+  // drew `caprice, krishna, quietly`.
+  it.each(variantRules.map((r) => [r.id, r] as [string, Rule]))(
+    '"%s" spans variants without resorting to proper nouns',
+    (_id, rule) => {
+      for (let run = 0; run < 20; run++) {
+        const names = draftClueSet(rule, wordBank, MEDIUM_KNOBS)
+          .map((c) => bySpelling.get(c.wordId)!)
+          .filter((w) => w.properNoun)
+          .map((w) => w.spelling)
+        expect(names, `proper nouns used as clues`).toEqual([])
+      }
+    }
+  )
 })

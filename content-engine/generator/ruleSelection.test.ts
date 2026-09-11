@@ -120,4 +120,43 @@ describe('pickTrueRule', () => {
     const lone = rule('lonely', 'lexical-structural', 3, 'meaning')
     expect(pickTrueRule([lone])).toBe(lone)
   })
+
+  // The same crowding-out bug one level down, found after Phase A shipped:
+  // grouping by mechanic stopped `rhyme` dominating all draws, but inside the
+  // sound bucket its 73 rules still left the three best sound rules sharing
+  // 2.8% between them. Templates are damped like mechanics are.
+  it('does not let a large template crowd out a small one in the same mechanic', () => {
+    const big = Array.from({ length: 36 }, (_, i) => {
+      const r = rule(`big-${i}`, 'lexical-structural', 3, 'sound')
+      return { ...r, templateId: 'big-family' }
+    })
+    const small = { ...rule('small-1', 'lexical-structural', 3, 'sound'), templateId: 'small-family' }
+    const pool = [...big, small]
+
+    let smallHits = 0
+    const runs = 600
+    for (let i = 0; i < runs; i++) {
+      if (pickTrueRule(pool).templateId === 'small-family') smallHits++
+    }
+    // Flat within a mechanic the lone rule gets 1/37 ≈ 3%. Damped by sqrt of
+    // template size it is 1 / (1 + 36/sqrt(36)) = 1/7 ≈ 14%.
+    expect(smallHits).toBeGreaterThan(runs * 0.07)
+    expect(smallHits).toBeLessThan(runs * 0.25)
+  })
+
+  // Two hand-written one-offs must not be throttled as if they were one family.
+  it('treats untemplated rules as a template of one each', () => {
+    const a = rule('palindrome-ish', 'lexical-structural', 3, 'word-surgery')
+    const b = rule('anagram-ish', 'lexical-structural', 3, 'word-surgery')
+    const counts = { 'palindrome-ish': 0, 'anagram-ish': 0 }
+    for (let i = 0; i < 400; i++) {
+      counts[pickTrueRule([a, b]).id as keyof typeof counts]++
+    }
+    // Equal aha, equal template size of 1 — so roughly even, not 1/sqrt(2) each
+    // of a shared "undefined" bucket (which would be even too, but for the
+    // wrong reason: add a third and the shared-bucket version would throttle
+    // all three together).
+    expect(counts['palindrome-ish']).toBeGreaterThan(120)
+    expect(counts['anagram-ish']).toBeGreaterThan(120)
+  })
 })

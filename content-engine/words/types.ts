@@ -50,6 +50,17 @@ export interface Phonetics {
   silent: number
   /** Another bank word is pronounced identically ("great"/"grate"). */
   homophone: boolean
+  /** First phoneme, ARPAbet, stress stripped ("K" for both "cat" and "quiet"). */
+  first: string
+  /**
+   * The first letter contributes no sound at all — knee, gnome, wrist, hour.
+   *
+   * Precomputed rather than derived in the rule, because deciding it needs the
+   * pronunciation this record came from. Deliberately NOT a frequency-derived
+   * heuristic: see SILENT_INITIALS in buildPhonetics.ts for why learning the
+   * table from the bank gets this exactly backwards.
+   */
+  silentFirst: boolean
 }
 
 export interface Word {
