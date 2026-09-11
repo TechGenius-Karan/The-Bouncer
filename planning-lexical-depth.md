@@ -1,6 +1,6 @@
 # Lexical Depth — making the puzzles feel different from each other
 
-**Status:** approved. **Phases A and B shipped.** Phases C–E outstanding.
+**Status:** approved. **All phases (A–E) shipped.**
 
 ### Decisions taken on the §7 questions
 
@@ -357,28 +357,97 @@ gate and are the first two to admit if sound is ever given more room.
    `variantOf` rule, `hidden-group` included, so the fix went in the shared
    helper rather than the new rules.
 
-**Phase C — word surgery + letter patterns**
-Post-pass tags in `wordBank.ts` for reverse/behead/curtail/compound; the §4b and
-§4d rules. Test: each new tag's coverage clears the floor.
+**Phases C and D — word surgery, letter patterns, and the cross-product — DONE**
 
-**Phase D — the cross-product**
-`operation × target-set` parameter sweep in `buildRuleParams.ts` for the four
-operations that survived the sweep (behead / curtail / anagram / rhymes-with),
-plus homophone once implemented exactly; reveal-text templating per operation.
-Test: every emitted cell clears the floor, and no cell duplicates an existing
-rule's IN set — the `ruleSimilarity` containment check already exists and should
-be reused here rather than rewritten.
+Built together rather than in sequence: C's bank-wide behead/curtail/reverse/
+anagram lookups *are* D's foundation, so doing them separately would have meant
+writing the same pass twice. New file `words/wordSurgery.ts`, one post-pass over
+the built bank, subsuming the old inline anagram tagging.
 
-**Phase E — verify against real output**
+Word surgery — a mechanic the game did not have, 14 rules where it had 2:
 
-```
-npm run content:build-rule-params
-npm run content:generate -- 40
-```
+| rule | matches | examples |
+| --- | --- | --- |
+| Reverses into another word | 164 | wolf/flow, deer/reed, live/evil, part/trap |
+| Drop the first letter | 1,016 | (d)inner, (l)adder, (w)ant, (f)eel |
+| Drop the last letter | 1,312 | rabbi(t), plane(t), shove(l) |
+| Two words joined | 120 | earthquake, strawberry, motorcycle, wristwatch |
 
-Read `content-engine/output/candidates.md` and confirm by inspection: no mechanic
-runs more than about 1 in 3, `word-inside` is no longer the majority of spicy, and
-the new families actually appear.
+Letter patterns — five rules, three of them finally reading `vcPattern` and the
+vowel counts that had been computed for every word since the start and read by
+nothing: alternating vowel/consonant (1,067), one vowel repeated (1,307), a letter
+three times (1,204), four consonants in a row (189), reverse alphabetical (82).
+
+**The cross-product: 9 cells of 140 cleared the floor.**
+
+| operation | cells shipped |
+| --- | --- |
+| behead | animal 37 (ladder→adder, want→ant, feel→eel), body-part 38 (bear→ear, climb→limb) |
+| curtail | animal 31 (crown→crow, boat→boa), body-part 32, food 28 (mayor→mayo, code→cod) |
+| anagram | animal 45 (throne→hornet, garden→gander, love→vole), body-part 36 (lamp→palm, inch→chin), food 40, profession 38 |
+| reverse | **none** — only 164 words reverse into anything at all |
+
+The `reverse × category` prediction from the sweep held exactly: zero viable
+cells, cut before it was built.
+
+**Three thresholds that the data, not judgement, settled:**
+
+- `MIN_COMPOUND_HALF = 5`. At 3 the split finds kit+ten and mag+net (1,794
+  matches, mostly coincidence); at 4, basic+ally (876); at 5, 120 matches that are
+  almost all real compounds.
+- `MIN_RESULT_LENGTH = 3`, not 4. At 4 the cross-product collapsed to four cells,
+  all anagrams, because the best beheadings land on three-letter words: want→ant,
+  pear→ear, boat→boa, beer→bee.
+- **No result-frequency floor**, because `frequencyScore` is actively misleading
+  here: `lam` scores 0.58 and `mil` 0.54, against `adder` 0.32 and `boa` 0.28. A
+  floor would have cut the results worth having and kept the junk. Length does not
+  separate them either — `lam` and `ant` are both three letters. Weak results
+  (lamp→lam, last→lats, shut→tush) are left for the human approval step, which is
+  what it is for.
+
+**Rhyme, significantly decreased** — three levers, since measurement showed the
+rule count was not one (tightening the coverage ceiling from 400 to 150 removes
+exactly one group):
+
+- `aha` 3 → 2, which puts it under `FILLER_AHA_THRESHOLD`, so `MAX_FILLER_PER_WEEK`
+  now caps how many can reach the calendar at all
+- `TEMPLATE_SPACING_OVERRIDES.rhyme = 14` — the first *widening* override, making
+  it roughly fortnightly where the 6-day default allowed one a week
+- ceiling 400 → 150, dropping EYSHAHN (186 words of information / situation /
+  station) — "ends with -ation" in a phonetic costume, exactly what the ceiling is
+  for. EYT survives and should: great/wait/late/straight/eight is spelled five ways.
+
+Rhyme went **45.2% → 13.2% → 8.2%** of lexical draws across the three phases, and
+generation now matches what the calendar will accept rather than over-producing
+puzzles the scheduler refuses.
+
+**Phase E — measured against a real batch — DONE**
+
+`npm run content:generate -- 40` produced **35 distinct rules in 40 puzzles**,
+against the audit's baseline of ~14 distinct in 20. One rhyme. No rule more than
+twice. Mechanic shares, 30,000 draws:
+
+| | before any phase | now |
+| --- | --- | --- |
+| largest mechanic | — | 30% (spicy), 27% (medium) |
+| largest single template | rhyme 45.2% | hidden-word 16.3% |
+| rhyme | 45.2% | 8.2% |
+| aha-1 filler templates | ~15-20% | 3.7% |
+| cross-product | 0% | 15.6% |
+
+**Two bugs found in the real output and fixed:**
+
+1. `consonant-run-4` matched cyclone, mystery, bicycle and skyscraper, because
+   `vcPattern` classifies y as a consonant and "cycl" / "myst" counted as runs. It
+   now reads the spelling with y excluded: 471 matches → 189, and they are the
+   words the rule is about (earthquake, lighthouse, cartwheel).
+2. **`midget` reached a generated puzzle as an IN answer** (curtail → animal,
+   midget → midge). The earlier content-safety pass was scoped to distressing
+   subject matter and left slurs against groups entirely open. Eight words blocked
+   — midget, retarded, cripple, crippled, imbecile, negro, oriental, gypsy — and
+   deliberately **not** crazy, insane, lame, dwarf, blind, deaf, idiot, moron,
+   addict, colored, queer and the rest, which are ordinary English whose dominant
+   sense is not a slur. `blockedWords.ts` records both lists and the reasoning.
 
 ## 7. Still open
 

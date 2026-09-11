@@ -110,7 +110,7 @@ describe('pickTrueRule', () => {
       if (pickTrueRule(pool).mechanic === 'word-surgery') surgery++
     }
     // A flat pick would give the lone rule 1/41 ≈ 2%. Weighted by mechanic it
-    // is 1.5 / (1.5 + 0.4 * sqrt(40)) ≈ 37%. Wide bounds: this asserts the
+    // is 1.1 / (1.1 + 0.4 * sqrt(40)) ≈ 30%. Wide bounds: this asserts the
     // shape of the fix, not the exact constants, which are meant to be tuned.
     expect(surgery).toBeGreaterThan(runs * 0.15)
     expect(surgery).toBeLessThan(runs * 0.5)

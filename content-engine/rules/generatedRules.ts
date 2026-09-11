@@ -1,5 +1,11 @@
 import { CATEGORY_DEFINITIONS, categoryTag } from '../words/categories.js'
-import { HIDDEN_WORD_GROUPS } from '../words/fixedLists.js'
+import { HIDDEN_WORD_GROUPS, VOWELS } from '../words/fixedLists.js'
+import {
+  COMPOUND_TAG,
+  SURGERY_TAG,
+  surgeryCategoryTag,
+  type SurgeryOperation,
+} from '../words/wordSurgery.js'
 import { RULE_PARAMS } from './ruleParams.js'
 import type { Rule } from './types.js'
 
@@ -150,6 +156,225 @@ export function categoryRule(id: string): Rule {
   }
 }
 
+// --- word surgery ------------------------------------------------------------
+//
+// A mechanic the game did not have: change the word and see what comes out.
+// Every other lexical rule asks the player to look at a word as it stands.
+//
+// All of these read tags from words/wordSurgery.ts, because "is the result also
+// a word?" can only be answered against the whole bank, which a rule evaluator
+// cannot see.
+
+export function reversesIntoWordRule(): Rule {
+  return {
+    id: 'reverses-into-word',
+    name: 'Reverses Into Another Word',
+    templateId: 'reverses-into-word',
+    descriptionTemplate: 'Spell the word backwards and you get a different word.',
+    family: 'lexical-structural',
+    mechanic: 'word-surgery',
+    subtlety: 3,
+    aha: 5,
+    evaluate: (word) => word.tags.includes(SURGERY_TAG.reverse),
+  }
+}
+
+export function beheadIntoWordRule(): Rule {
+  return {
+    id: 'behead-into-word',
+    name: 'Drop the First Letter',
+    templateId: 'behead-into-word',
+    descriptionTemplate: "Remove the word's first letter and what's left is still a word.",
+    family: 'lexical-structural',
+    mechanic: 'word-surgery',
+    subtlety: 3,
+    aha: 4,
+    evaluate: (word) => word.tags.includes(SURGERY_TAG.behead),
+  }
+}
+
+export function curtailIntoWordRule(): Rule {
+  return {
+    id: 'curtail-into-word',
+    name: 'Drop the Last Letter',
+    templateId: 'curtail-into-word',
+    descriptionTemplate: "Remove the word's last letter and what's left is still a word.",
+    family: 'lexical-structural',
+    mechanic: 'word-surgery',
+    subtlety: 3,
+    // Lower than beheading on purpose: dropping a final letter hits a plural or
+    // a verb stem often enough that a player can stumble into it without seeing
+    // the pattern. wordSurgery.ts already excludes outright -s inflections.
+    aha: 3,
+    evaluate: (word) => word.tags.includes(SURGERY_TAG.curtail),
+  }
+}
+
+export function compoundRule(): Rule {
+  return {
+    id: 'compound-word',
+    name: 'Two Words Joined',
+    templateId: 'compound-word',
+    descriptionTemplate: 'The word is two shorter words stuck together.',
+    family: 'lexical-structural',
+    mechanic: 'word-surgery',
+    subtlety: 2,
+    aha: 4,
+    evaluate: (word) => word.tags.includes(COMPOUND_TAG),
+  }
+}
+
+/**
+ * The lexical-semantic hybrid, and the reason this phase exists: a lexical
+ * *operation* applied to a semantic *target set*.
+ *
+ * "Take away the first letter and you get an animal" — ladder/adder, jowl/owl,
+ * want/ant. Connections can express the target set and has no way to express the
+ * operation, which is what makes this the game's own shape rather than a variant
+ * of someone else's.
+ *
+ * Only 9 of 124 candidate cells clear the coverage floor, which is the point of
+ * sweeping them in buildRuleParams rather than hand-picking: the data decides
+ * which crossings are real.
+ */
+const SURGERY_PHRASE: Record<SurgeryOperation, string> = {
+  reverse: 'Spell the word backwards and you get',
+  behead: "Remove the word's first letter and you get",
+  curtail: "Remove the word's last letter and you get",
+  anagram: "Rearrange the word's letters and you get",
+}
+
+const SURGERY_SHORT: Record<SurgeryOperation, string> = {
+  reverse: 'Backwards',
+  behead: 'Beheaded',
+  curtail: 'Curtailed',
+  anagram: 'Anagram',
+}
+
+export function surgeryCategoryRule([op, categoryId]: readonly [SurgeryOperation, string]): Rule {
+  const def = CATEGORY_BY_ID.get(categoryId)
+  if (!def) throw new Error(`Unknown category id: ${categoryId}`)
+  const tag = surgeryCategoryTag(op, categoryId)
+  return {
+    id: `${op}-into-${categoryId}`,
+    name: `${SURGERY_SHORT[op]}: ${def.label}`,
+    templateId: `surgery-${op}`,
+    descriptionTemplate: `${SURGERY_PHRASE[op]} ${def.label}.`,
+    family: 'lexical-structural',
+    mechanic: 'word-surgery',
+    subtlety: 3,
+    // The best material in the taxonomy: a letter operation and a meaning at
+    // once, which nothing else here does.
+    aha: 5,
+    evaluate: (word) => word.tags.includes(tag),
+  }
+}
+
+// --- letter patterns ---------------------------------------------------------
+//
+// Cheap rules over the spelling alone. Three of them read `vcPattern` and the
+// vowel/consonant counts, which have been computed for every word since the
+// beginning and were read by no rule at all.
+
+export function alternatingPatternRule(): Rule {
+  return {
+    id: 'alternating-vowel-consonant',
+    name: 'Vowels and Consonants Alternate',
+    templateId: 'alternating-vowel-consonant',
+    descriptionTemplate: 'Vowels and consonants alternate all the way through the word.',
+    family: 'lexical-structural',
+    mechanic: 'letter-pattern',
+    subtlety: 3,
+    aha: 4,
+    evaluate: (word) =>
+      word.length >= 5 && !/VV|CC/.test(word.features.vcPattern),
+  }
+}
+
+export function sameVowelThroughoutRule(): Rule {
+  return {
+    id: 'same-vowel-throughout',
+    name: 'One Vowel, Repeated',
+    templateId: 'same-vowel-throughout',
+    descriptionTemplate: 'Every vowel in the word is the same letter.',
+    family: 'lexical-structural',
+    mechanic: 'letter-pattern',
+    subtlety: 2,
+    aha: 3,
+    evaluate: (word) => {
+      const vowels = [...word.spelling].filter((c) => VOWELS.has(c))
+      return vowels.length >= 2 && new Set(vowels).size === 1
+    },
+  }
+}
+
+export function letterThriceRule(): Rule {
+  return {
+    id: 'letter-three-times',
+    name: 'A Letter Three Times',
+    templateId: 'letter-three-times',
+    descriptionTemplate: 'One letter appears three or more times in the word.',
+    family: 'lexical-structural',
+    mechanic: 'letter-pattern',
+    subtlety: 2,
+    aha: 3,
+    evaluate: (word) => {
+      const counts = new Map<string, number>()
+      for (const c of word.spelling) {
+        const n = (counts.get(c) ?? 0) + 1
+        if (n >= 3) return true
+        counts.set(c, n)
+      }
+      return false
+    },
+  }
+}
+
+/**
+ * Y is excluded from the run, which is why this reads the spelling rather than
+ * the precomputed `vcPattern`.
+ *
+ * `vcPattern` classifies y as a consonant, and against this rule that is plainly
+ * wrong: it made cyclone, mystery, bicycle and skyscraper match on runs like
+ * "cycl" and "myst", where y is doing a vowel's job and no player would count it.
+ * Using vcPattern gave 471 matches; excluding y gives 189, and they are the words
+ * the rule is actually about — earthquake, lighthouse, cartwheel, lengthen.
+ */
+export function consonantClusterRule(minRun: number): Rule {
+  const run = new RegExp(`[bcdfghjklmnpqrstvwxz]{${minRun},}`)
+  return {
+    id: `consonant-run-${minRun}`,
+    name: `${minRun} Consonants in a Row`,
+    templateId: 'consonant-run',
+    descriptionTemplate: `The word has ${minRun} or more consonants in a row.`,
+    family: 'lexical-structural',
+    mechanic: 'letter-pattern',
+    subtlety: 3,
+    aha: 4,
+    evaluate: (word) => run.test(word.spelling),
+  }
+}
+
+/**
+ * The mirror of `alphabetical-order-run`. Free, because sorting the letters
+ * descending is the same check as sorting them ascending, read the other way.
+ */
+export function reverseAlphabeticalRule(): Rule {
+  return {
+    id: 'reverse-alphabetical-order-run',
+    name: 'Letters in Reverse Alphabetical Order',
+    templateId: 'reverse-alphabetical-order-run',
+    descriptionTemplate: "The word's letters appear in reverse alphabetical order, left to right.",
+    family: 'lexical-structural',
+    mechanic: 'letter-pattern',
+    subtlety: 4,
+    aha: 4,
+    evaluate: (word) =>
+      word.length >= 4 &&
+      word.spelling === [...word.features.anagramSignature].reverse().join(''),
+  }
+}
+
 export const GENERATED_RULES: Rule[] = [
   ...RULE_PARAMS.categories.map(categoryRule),
   ...RULE_PARAMS.hiddenWords.map(hiddenWordRule),
@@ -164,6 +389,18 @@ export const GENERATED_RULES: Rule[] = [
   homophoneRule(),
   silentFirstLetterRule(),
   longOneSyllableRule(6),
+  reversesIntoWordRule(),
+  beheadIntoWordRule(),
+  curtailIntoWordRule(),
+  compoundRule(),
+  ...RULE_PARAMS.surgeryCategories.map(
+    (pair) => surgeryCategoryRule(pair as readonly [SurgeryOperation, string])
+  ),
+  alternatingPatternRule(),
+  sameVowelThroughoutRule(),
+  letterThriceRule(),
+  consonantClusterRule(4),
+  reverseAlphabeticalRule(),
 ]
 
 // --- sound rules -------------------------------------------------------------
@@ -336,7 +573,14 @@ export function rhymeRule([key, anchor]: readonly [string, string]): Rule {
     family: 'lexical-structural',
     mechanic: 'sound',
     subtlety: 3,
-    aha: 3,
+    // Demoted from 3 to filler. 73 rules all asking the same question is the
+    // largest single template in the taxonomy, and even after mechanic and
+    // template damping it still took 13% of every lexical draw — more than any
+    // rule family that asks something a player hasn't already been asked this
+    // week. At 2 it falls under FILLER_AHA_THRESHOLD, so MAX_FILLER_PER_WEEK
+    // caps how many can reach the calendar at all, and it stops out-producing
+    // the sound rules that are actually distinctive.
+    aha: 2,
     evaluate: (word) => word.phonetics?.rhyme === key,
   }
 }

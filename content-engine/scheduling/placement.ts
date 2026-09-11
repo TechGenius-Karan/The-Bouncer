@@ -33,6 +33,11 @@ export const TEMPLATE_SPACING_DAYS = 6
  */
 export const TEMPLATE_SPACING_OVERRIDES: Record<string, number> = {
   category: 2,
+  // The opposite direction to the others: a *wider* gap, not a tighter one.
+  // Every one of the 73 rhyme rules asks the player to do the same thing, and
+  // the default 6 days allowed one a week — the most frequent single idea on the
+  // calendar. 14 makes it roughly fortnightly.
+  rhyme: 14,
   'hidden-word': 3,
   // Same reasoning as hidden-word, and stronger: "hides an animal" and "hides
   // a vehicle" have less in common than "hides RAT" and "hides OWL" do.

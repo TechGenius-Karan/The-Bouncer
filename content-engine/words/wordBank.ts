@@ -7,6 +7,7 @@ import { PHONETICS } from './phonetics.js'
 import { SEED_WORDS } from './seedWords.js'
 import { TAG_OVERRIDES } from './tagOverrides.js'
 import type { Word } from './types.js'
+import { tagWordSurgery } from './wordSurgery.js'
 
 // SEED_WORDS is hand-curated (its words carry human-reviewed category tags,
 // Phase 10.5 §2); BULK_SEED_WORDS is corpus-sourced (Phase 10.6, no tags of
@@ -41,19 +42,11 @@ export function buildWordBank(): Word[] {
     safety: { blocked: BLOCKED_WORDS.has(seed.spelling), needsReview: false },
   }))
 
-  // Anagram partners can only be found bank-wide, not from a single spelling
-  // (unlike the rest of `features`), so it's tagged here as a post-process
-  // pass rather than living in buildLetterFeatures.
-  const bySignature = new Map<string, number>()
-  for (const w of words) {
-    bySignature.set(
-      w.features.anagramSignature,
-      (bySignature.get(w.features.anagramSignature) ?? 0) + 1
-    )
-  }
-  for (const w of words) {
-    if ((bySignature.get(w.features.anagramSignature) ?? 0) > 1) w.tags.push('lexical:has-anagram')
-  }
+  // Facts that can only be answered bank-wide, not from a single spelling
+  // (unlike the rest of `features`) — "reverse it and is that also a word?",
+  // "does beheading it leave an animal?". Tagged here as a post-process pass.
+  // Started life as the inline anagram check this now subsumes.
+  tagWordSurgery(words)
 
   return words
 }

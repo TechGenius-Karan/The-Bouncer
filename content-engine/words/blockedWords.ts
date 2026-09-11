@@ -116,6 +116,30 @@ export const BLOCKED_WORDS = new Set([
   'amputation',
   'chemotherapy',
 
+  // Slurs against groups of people — a gap the earlier content-safety pass left
+  // open, because it was scoped to distressing *subject matter* (violence,
+  // atrocity, terminal illness) and a slur is neither. Found the way these
+  // things are always found: "midget" turned up as an IN answer in a generated
+  // "remove the last letter and you get an animal" puzzle (midget -> midge).
+  //
+  // The line is the same one drawn above — a word whose *primary* modern
+  // reference is a slur, not any word that can be used as an insult. So these
+  // eight are blocked and the following are deliberately NOT, despite being in
+  // the bank: crazy, insane, lame, savage, primitive, dwarf, blind, deaf, mute,
+  // dumb, idiot, moron, addict, alcoholic, wheelchair, handicapped, colored,
+  // queer. They are ordinary English whose dominant sense is not a slur, and
+  // blocking them would be the squeamishness about vocabulary this file warns
+  // against at the top. "colored" is also just the past tense of "color", and
+  // "invalid" is overwhelmingly the adjective.
+  'midget',
+  'retarded',
+  'cripple',
+  'crippled',
+  'imbecile',
+  'negro',
+  'oriental',
+  'gypsy',
+
   // Severe medical conditions. Blocked so the `illness` category can stay —
   // "cold, flu, rash, headache, hiccup" is a perfectly good light puzzle,
   // "coma, stroke, seizure, depression" is not. Without this the category

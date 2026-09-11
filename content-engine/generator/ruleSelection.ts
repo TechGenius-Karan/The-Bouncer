@@ -50,27 +50,30 @@ export function pickFamily(
  * word. Rule count, not rule quality, was setting the menu.
  *
  * `sound` is deliberately below what its ratings would earn it: it is there to
- * make the game feel distinctive, not to be the game. `word-surgery` is above,
- * because it is the thinnest mechanic today and the one with the most headroom.
- * `letter-pattern` is lowest because it is where the filler lives — starts-with
- * and ends-with are 73 of its rules and were rejected 80-88% of the time.
+ * make the game feel distinctive, not to be the game. `letter-pattern` is lowest
+ * because it is where the filler lives — starts-with and ends-with are 73 of its
+ * rules and were rejected 80-88% of the time. `word-surgery` is highest because
+ * it is still the smallest mechanic by rule count, and sqrt damping would
+ * otherwise under-serve the newest and best-rated material in the taxonomy.
  *
- * Measured over 20,000 draws against the real taxonomy, lexical pool:
+ * Measured over 30,000 draws against the real taxonomy, lexical pool:
  *
- *   spicy   word-inside 35%  sound 31%  word-surgery 18%  letter-pattern 16%
- *   medium  word-inside 32%  sound 29%  letter-pattern 27%  word-surgery 12%
+ *   spicy   word-inside 30%  word-surgery 29%  sound 26%  letter-pattern 15%
+ *   medium  word-surgery 27%  word-inside 26%  sound 24%  letter-pattern 23%
  *
- * Nothing above ~35%, against 45% for `rhyme` alone before this existed. The
- * ceiling is set by there being only four lexical mechanics with real content
- * in them — adding rules to the thin ones dilutes the top one further, which is
- * what planning-lexical-depth.md's later phases are for. Retune here after any
- * phase that adds a family.
+ * The largest single template is now `hidden-word` at 16%, against `rhyme` at
+ * 45% before any of this. Retune here after any phase that adds a family — the
+ * weights are ratios against rule counts, so a family that grows changes every
+ * other family's share.
  */
 export const MECHANIC_WEIGHTS: Record<Rule['mechanic'], number> = {
   'word-inside': 0.6,
   sound: 0.4,
   'letter-pattern': 0.35,
-  'word-surgery': 1.5,
+  // Was 1.5, set when word-surgery held two rules and needed the help. It now
+  // holds 14 and took 37% of spicy draws on that weight — retuned, as the note
+  // below says to do after any phase that grows a family.
+  'word-surgery': 1.1,
   meaning: 1,
 }
 

@@ -15,6 +15,11 @@ import { CATEGORY_IDS, categoryTag } from '../words/categories.js'
 import { HIDDEN_WORD_GROUPS, HIDDEN_WORD_TARGETS } from '../words/fixedLists.js'
 import type { Word } from '../words/types.js'
 import { buildWordBank } from '../words/wordBank.js'
+import {
+  SURGERY_OPERATIONS,
+  surgeryCategoryTag,
+  type SurgeryOperation,
+} from '../words/wordSurgery.js'
 
 // A rule needs enough IN words to draft 3 clues plus pool guests without
 // leaning on the same handful every time it's drawn.
@@ -31,10 +36,16 @@ const MAX_COVERAGE_SHARE = 0.35
  * (1,202) and -IHNG (1,047) — which are not rhymes a player notices, they are
  * "ends in -y / -er / -ing" wearing a phonetic costume, and the taxonomy
  * already has ends-with rules for those. A rhyme is only interesting when the
- * set is small enough that hearing it is the insight. 400 is roughly 2.7% of
- * the bank.
+ * set is small enough that hearing it is the insight.
+ *
+ * Lowered from 400 to 150, which drops exactly one group: EYSHAHN, 186 words of
+ * information / situation / station / operation. That is "ends with -ation"
+ * wearing a phonetic costume, the very thing this ceiling exists to catch, and
+ * it was the only group between 150 and 400. EYT (142 — great, wait, late,
+ * straight, eight) survives, and should: it is spelled five different ways,
+ * which is what makes a rhyme worth hearing.
  */
-const MAX_RHYME_COVERAGE = 400
+const MAX_RHYME_COVERAGE = 150
 
 /**
  * How much of an initial-sound group must be spelled *against* the majority for
@@ -193,7 +204,23 @@ function main(): void {
     )
   })
 
+  // The lexical-semantic cross-product: every operation against every category.
+  // Most cells are far too thin to ship, which is exactly why they are swept
+  // rather than chosen — "reverse it and you get an animal" sounds great and the
+  // bank has four such words.
+  const surgeryPairs: [SurgeryOperation, string][] = SURGERY_OPERATIONS.flatMap((op) =>
+    CATEGORY_IDS.map((c) => [op, c] as [SurgeryOperation, string])
+  )
+  const surgeryCategories = sweep(surgeryPairs, bank, (w, [op, c]) =>
+    w.tags.includes(surgeryCategoryTag(op, c))
+  )
+
   report('hidden-word', hiddenWords, HIDDEN_WORD_TARGETS.length)
+  report('surgery x category', surgeryCategories, surgeryPairs.length)
+  for (const [op, c] of surgeryCategories.kept) {
+    const n = bank.filter((w) => w.tags.includes(surgeryCategoryTag(op, c))).length
+    console.log(`      ${op}-into-${c}: ${n} words`)
+  }
   console.log(
     `  initial-sound: kept ${soundsWithVariedSpelling.length}/${byFirstPhoneme.size} ` +
       `(${initialSounds.rejected.length} on coverage, ` +
@@ -231,6 +258,7 @@ function main(): void {
     `  silentThreshold: ${JSON.stringify(silentThresholds.kept.includes(3) ? 3 : (silentThresholds.kept[0] ?? 3))},`,
     `  rhymes: ${JSON.stringify(rhymePairs)},`,
     `  initialSounds: ${JSON.stringify(soundsWithVariedSpelling)},`,
+    `  surgeryCategories: ${JSON.stringify(surgeryCategories.kept)},`,
     '} as const',
     '',
   ]
@@ -246,6 +274,7 @@ function main(): void {
     syllableCounts.kept.length +
     rhymes.kept.length +
     soundsWithVariedSpelling.length +
+    surgeryCategories.kept.length +
     1 // silent-letters, a single rule
   console.log(`\nWrote ${total} generated rules to content-engine/rules/ruleParams.ts`)
 }
