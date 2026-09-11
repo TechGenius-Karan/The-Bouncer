@@ -22,9 +22,16 @@ describe('resolveKnobs', () => {
 })
 
 describe('semanticRuleWeight', () => {
-  it('defaults to 0.5 for medium (fully semantic-eligible) and 0.3 for spicy (partially eligible)', () => {
-    expect(MEDIUM_KNOBS.semanticRuleWeight).toBe(0.5)
+  // Medium used to be 0.5 and above spicy, on a supply argument about its wider
+  // subtlety window. `category` is now the entire semantic family, so this knob
+  // is really "how often is the puzzle 'The word names a ___'" — and a real
+  // 40-puzzle batch at 0.5 came out with 14 of them.
+  it('keeps medium at or below spicy, so weekdays lean lexical', () => {
+    expect(MEDIUM_KNOBS.semanticRuleWeight).toBe(0.25)
     expect(SPICY_KNOBS.semanticRuleWeight).toBe(0.3)
+    expect(MEDIUM_KNOBS.semanticRuleWeight).toBeLessThanOrEqual(
+      SPICY_KNOBS.semanticRuleWeight
+    )
   })
 })
 

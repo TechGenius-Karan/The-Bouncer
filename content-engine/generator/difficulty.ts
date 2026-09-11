@@ -3,13 +3,21 @@ import type { DifficultyTier, KnobValues } from './types.js'
 // Defaults straight from planning.md §7.4's knob table.
 // planning.md §7.1's suggested launch mix: skew toward lexical/structural
 // since it's cheaper to generate/validate with high confidence, expanding
-// semantic coverage over time as the tagged word bank matures. Medium's
-// weight is set higher than spicy's because medium's [2,3] subtlety window
-// already has full semantic coverage (all 7 semantic rules are rated 2-3),
-// while spicy only picks up the 3 rated exactly 3 (category-bird,
-// category-tool, category-body-part) via subtletyRangeFor's [3,5] window —
-// it'll pick up the rest automatically once any semantic rule is rated 4+.
-const MEDIUM_SEMANTIC_WEIGHT = 0.5
+// semantic coverage over time as the tagged word bank matures.
+//
+// Medium used to be 0.5, higher than spicy, on the reasoning that medium's
+// [2,3] window had fuller semantic coverage than spicy's [3,5]. That was a
+// supply argument, and it has been overtaken by a content one: `category` is
+// now the whole semantic family (part-of-speech was deleted), so the weight is
+// really "how often is today's puzzle 'The word names a ___'". At 0.5 a real
+// 40-puzzle batch came out with 14 of them, and play-testing says that is the
+// Connections-shaped material the game is trying not to be.
+//
+// Halved to 0.25: roughly 1.5 semantic puzzles in a medium week rather than 3.
+// Supply is not the constraint either way — 33 category rules sustain ~3.9/week
+// under the 60-day rule cooldown, and placement.test.ts asserts that headroom
+// against this exact constant.
+const MEDIUM_SEMANTIC_WEIGHT = 0.25
 const SPICY_SEMANTIC_WEIGHT = 0.3
 
 export const MEDIUM_KNOBS: KnobValues = {
