@@ -2,6 +2,21 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/**
+ * Paths netlify.toml routes to server-rendered Netlify Functions rather than
+ * to the SPA. They must be kept out of the service worker's navigation
+ * fallback: workbox answers *every* same-origin navigation from the precached
+ * index.html unless told otherwise, so a returning visitor — anyone who has
+ * the service worker installed — opening /archive got the landing page, and a
+ * shared /archive/<date> permalink opened on today's puzzle instead of that
+ * day's. Crawlers never saw it (they don't run service workers), so it looked
+ * healthy in Search Console while being broken for every repeat human.
+ *
+ * Matched against pathname + search, so these are deliberately unanchored at
+ * the end — /archive?x=1 has to be denied too.
+ */
+export const NAVIGATE_FALLBACK_DENYLIST = [/^\/archive(?:[/?]|$)/, /^\/sitemap\.xml/, /^\/robots\.txt/]
+
 export default defineConfig({
   plugins: [
     react(),
@@ -32,6 +47,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: NAVIGATE_FALLBACK_DENYLIST,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
