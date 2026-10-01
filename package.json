@@ -29,7 +29,9 @@
     "content:test-ai-review": "tsx content-engine/scripts/testAiReview.ts",
     "dev:functions": "netlify dev",
     "pwa:generate-icons": "pwa-assets-generator",
-    "content:build-phonetics": "tsx content-engine/scripts/buildPhonetics.ts"
+    "content:build-phonetics": "tsx content-engine/scripts/buildPhonetics.ts",
+    "visual:candidates": "tsx content-engine/visual/scripts/listOpenMojiCandidates.ts",
+    "visual:fetch-icons": "tsx content-engine/visual/scripts/fetchOpenMojiIcons.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
