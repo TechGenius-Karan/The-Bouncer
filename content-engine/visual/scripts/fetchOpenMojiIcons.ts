@@ -7,8 +7,12 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { RAW_OPENMOJI_DIR, rawIconPath } from '../iconSources.js'
 import { ITEMS } from '../items.js'
 import { openMojiSvgUrl } from '../openmoji.js'
+import { validateItems } from '../validateItems.js'
 
 async function main() {
+  const problems = validateItems(ITEMS)
+  if (problems.length > 0) throw new Error(`items.ts is invalid:\n${problems.join('\n')}`)
+
   mkdirSync(RAW_OPENMOJI_DIR, { recursive: true })
   let fetched = 0
   for (const item of ITEMS) {

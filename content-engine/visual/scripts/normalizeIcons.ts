@@ -9,8 +9,15 @@ import { buildContactSheet, type SheetEntry } from '../contactSheet.js'
 import { ICON_OUTPUT_DIR, rawIconPath, strokeScaleFor } from '../iconSources.js'
 import { ITEMS } from '../items.js'
 import { normalizeSvg } from '../normalize.js'
+import { validateItems } from '../validateItems.js'
 
 const SHEET_PATH = join(process.cwd(), 'content-engine', 'output', 'icon-sheet.html')
+
+const problems = validateItems(ITEMS)
+if (problems.length > 0) {
+  for (const p of problems) console.error(`INVALID  ${p}`)
+  process.exit(1)
+}
 
 const failures: string[] = []
 const warnings: string[] = []

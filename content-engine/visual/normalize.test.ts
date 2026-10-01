@@ -35,6 +35,14 @@ describe('normalizeSvg on OpenMoji stroke art', () => {
     expect(svg).toContain('stroke-width="3"')
   })
 
+  it('gives strokes with no width of their own the scaled default', () => {
+    const stroked = normalizeSvg(
+      '<svg viewBox="0 0 10 10"><path stroke="#000" d="M0 0h5"/></svg>',
+      STROKE_SCALE
+    )
+    expect(stroked.ok && stroked.svg).toContain(`<svg stroke-width="${STROKE_SCALE}"`)
+  })
+
   it('keeps the viewBox and drops the ids', () => {
     expect(svg).toContain('viewBox="0 0 72 72"')
     expect(svg).not.toContain('id=')
@@ -102,6 +110,18 @@ describe('normalizeSvg rejections', () => {
         '<?xml-stylesheet type="text/css" href="x.css"?><svg viewBox="0 0 10 10"><path d="M0 0h5"/></svg>'
       )
     ).toEqual(['processing instruction <?xml-stylesheet?> is not allowed'])
+  })
+
+  it('rejects character data inside the drawing', () => {
+    expect(
+      rejectReasons('<svg viewBox="0 0 10 10"><g><![CDATA[<script>alert(1)</script>]]></g></svg>')
+    ).toEqual(['CDATA sections are not allowed'])
+  })
+
+  it('rejects stray text content', () => {
+    expect(rejectReasons('<svg viewBox="0 0 10 10">hello<path d="M0 0h5"/></svg>')).toEqual([
+      'text content is not allowed',
+    ])
   })
 
   // Recolouring both shapes to currentColor would fill the hole in.

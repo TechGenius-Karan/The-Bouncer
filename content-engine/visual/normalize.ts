@@ -91,6 +91,17 @@ export function normalizeSvg(raw: string, strokeScale = 1): NormalizeResult {
           }
         },
       },
+      // Icons are pure geometry. Whitespace between tags is the only text a file needs.
+      text: {
+        enter: (node) => {
+          if (node.value.trim() !== '') reasons.push('text content is not allowed')
+        },
+      },
+      cdata: {
+        enter: () => {
+          reasons.push('CDATA sections are not allowed')
+        },
+      },
       element: {
         enter: (node, parentNode) => {
           if (!ALLOWED_ELEMENTS.has(node.name)) {
