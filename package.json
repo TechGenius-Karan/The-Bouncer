@@ -62,6 +62,7 @@
     "postcss": "^8.4.0",
     "prettier": "^3.3.0",
     "subtlex-word-frequencies": "^2.0.0",
+    "svgo": "^4.1.0",
     "tailwindcss": "^3.4.0",
     "tsx": "^4.23.11",
     "typescript": "^5.5.0",
