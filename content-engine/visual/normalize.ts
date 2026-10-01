@@ -82,6 +82,15 @@ export function normalizeSvg(raw: string, strokeScale = 1): NormalizeResult {
   const gate: CustomPlugin = {
     name: 'gate',
     fn: () => ({
+      // The XML declaration is the only processing instruction an icon file needs;
+      // any other (xml-stylesheet especially) would sit outside the element allowlist.
+      instruction: {
+        enter: (node) => {
+          if (node.name !== 'xml') {
+            reasons.push(`processing instruction <?${node.name}?> is not allowed`)
+          }
+        },
+      },
       element: {
         enter: (node, parentNode) => {
           if (!ALLOWED_ELEMENTS.has(node.name)) {

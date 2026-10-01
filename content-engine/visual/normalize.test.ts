@@ -57,6 +57,13 @@ describe('normalizeSvg on filled-path art', () => {
     )
     expect(result.ok).toBe(true)
   })
+
+  it('accepts a leading XML declaration', () => {
+    const result = normalizeSvg(
+      '<?xml version="1.0" encoding="UTF-8"?><svg viewBox="0 0 10 10"><path d="M0 0h5"/></svg>'
+    )
+    expect(result.ok).toBe(true)
+  })
 })
 
 describe('normalizeSvg rejections', () => {
@@ -87,6 +94,14 @@ describe('normalizeSvg rejections', () => {
     expect(
       rejectReasons('<svg viewBox="0 0 10 10"><path fill="url(#g)" d="M0 0h5"/></svg>')
     ).toContain('attribute "fill" references url()')
+  })
+
+  it('rejects processing instructions other than the XML declaration', () => {
+    expect(
+      rejectReasons(
+        '<?xml-stylesheet type="text/css" href="x.css"?><svg viewBox="0 0 10 10"><path d="M0 0h5"/></svg>'
+      )
+    ).toEqual(['processing instruction <?xml-stylesheet?> is not allowed'])
   })
 
   // Recolouring both shapes to currentColor would fill the hole in.
