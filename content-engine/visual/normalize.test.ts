@@ -32,7 +32,7 @@ describe('normalizeSvg on OpenMoji stroke art', () => {
   })
 
   it('multiplies the stroke width by the scale', () => {
-    expect(svg).toContain('stroke-width="3"')
+    expect(svg).toContain(`stroke-width="${2 * STROKE_SCALE}"`)
   })
 
   it('gives strokes with no width of their own the scaled default', () => {

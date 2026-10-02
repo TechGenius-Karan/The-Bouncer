@@ -4,7 +4,7 @@ import { optimize, type CustomPlugin } from 'svgo'
  * OpenMoji draws at stroke-width 2 on a 72-unit grid, which lands at about
  * 1px on a 36px card. Tuned by eye on the contact sheet, not derived.
  */
-export const STROKE_SCALE = 1.5
+export const STROKE_SCALE = 1.75
 
 export const WARN_BYTES = 6_000
 export const MAX_BYTES = 20_000

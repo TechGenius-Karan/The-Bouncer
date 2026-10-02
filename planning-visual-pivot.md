@@ -1,6 +1,6 @@
 # The Bouncer — Visual Pivot Plan
 
-> **Status:** Design approved 2026-10-01 (all three sections). Phase 1 built on branch `visual-pivot-phase1` (draft PR #1), awaiting its contact-sheet review (Task 6). Implementation plans for every remaining phase written 2026-10-02 (§6), each with code verified end to end against the branch; nothing past Phase 1 is implemented yet.
+> **Status:** Design approved 2026-10-01 (all three sections). Phase 1 done on branch `visual-pivot-phase1` (draft PR #1), contact sheet reviewed 2026-10-02. Implementation plans for every remaining phase written 2026-10-02 (§6), each with code verified end to end against the branch; nothing past Phase 1 is implemented yet.
 > **Scope:** Change the puzzle content from words to monochrome line-art icons of everyday things, judged on their physical and practical properties. The game loop stays the same. The word engine stays in the repo, intact, as an archived baseline.
 > **How to read this doc:** 🔒 = decided directly by the user for this pivot (2026-09-30 / 2026-10-01, through explicit questions). Not open to casual re-litigation. 💡 = a suggested default; change freely. Same convention as `ai-feedback-plan.md`.
 > **Companion docs:** `planning.md` (locked game spec; §1 of this doc lists what the pivot overrides there), `build-plan.md` (phase history), `CLAUDE.md` (architecture).
@@ -329,6 +329,7 @@ export interface GetRoundResponse {
 Every phase is test-first (TDD): for each behavior listed under *Tests*, the test is written and watched failing before the code that makes it pass. Each phase ends with `npm test`, `npm run lint` and every affected `typecheck:*` script green, and is a natural commit point.
 
 ### Phase 1 — Scaffolding, item bank, icon pipeline
+**Status:** done 2026-10-02 (STROKE_SCALE = 1.75; 165 items, 0 blocked; truck and book icons swapped to 1F69B / 1F4D6; captions torch, football, biscuit for an India-heavy audience).
 **Implementation plan:** [`planning-visual-pivot-phase1.md`](planning-visual-pivot-phase1.md) (6 tasks, test-first, with the code already verified end to end against the 165-item pilot).
 - **Build:** `visual/types.ts` (Item), `items.ts` (165-item pilot), `listOpenMojiCandidates.ts`, `fetchOpenMojiIcons.ts`, `normalizeIcons.ts`, `public/icons/visual/`, the contact sheet, `package.json` scripts, and the `svgo` devDependency.
 - **Tests:** each rejection rule (script, `<text>`, two-colour cutout, oversize, missing `viewBox`, a disallowed attribute); `fill="none"` survives; strokes become `currentColor`; `STROKE_SCALE` is applied; the 1:1 item↔file check; item ids are unique permanent slugs; every item has a credit-capable source.
