@@ -167,7 +167,7 @@ Every rule is a single plain property, with reveal text (e.g. "IN: it has a hand
 - **The physical, how-you-use-it and size-weight families** are judged on the **canonical real-world version**: typical size and material, intact, in its everyday state.
 - **The shape family** is judged on the **icon as drawn**, because that's what the player sees. Redrawing an icon means re-checking its shape tags, and the normalizer lists them whenever an icon's bytes change.
 - **When in doubt, tag `unsure`.** An unused item costs nothing; a debatable item in a live puzzle costs a player a life.
-- **Authoring check:** two rules that agree on ≥90% of items both have definite tags for are the same idea twice. They get merged, or split apart with items where they disagree. The report in §4.3 enforces this, so the runway count isn't inflated by duplicates.
+- **Authoring check:** two rules whose yes-sets and no-sets both overlap at ≥0.8 (Jaccard, on items both answer definitely; see `content-engine/visual/report.ts`) are the same idea twice. They get merged, or split apart with items where they disagree. The report in §4.3 enforces this, so the runway count isn't inflated by duplicates.
 
 ### 4.2 Tagging matrix: storage and semantics
 ```ts

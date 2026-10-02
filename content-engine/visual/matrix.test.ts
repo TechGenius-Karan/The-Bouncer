@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { ITEMS } from './items.js'
-import { buildMatrix, validateTagTable } from './matrix.js'
+import { buildMatrix, idsOf, validateTagTable } from './matrix.js'
 import { VISUAL_RULES } from './rules.js'
 import { TAG_FILES } from './tags/index.js'
+
+describe('idsOf', () => {
+  it('splits on any run of whitespace, not just a single space', () => {
+    expect(idsOf('cork\n  anchor')).toEqual(['cork', 'anchor'])
+  })
+})
 
 describe('buildMatrix', () => {
   const matrix = buildMatrix(

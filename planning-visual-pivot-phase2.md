@@ -1774,3 +1774,14 @@ git commit -m "Tag the visual pilot matrix and record the Phase 2 review"
 - **The AI judges shape rules from the item's name**, with "as usually drawn in a simple emoji-style icon" as its basis. A human checks them against the contact sheet (Task 7). Sending icons to the model is a possible later improvement, not needed for the pilot.
 - **A rule's tagging guidance is its family's `FAMILY_BASIS` plus an optional per-rule `basis`**, rather than a full `basis` on every rule.
 - **`RuleDoc.subtlety` is 0 for visual rules** (D7). The field is required by the shared type.
+
+## Changes made during execution
+
+Fixes from the final whole-branch review (see `.superpowers/sdd/planning-visual-pivot-phase2/final-findings.md`):
+- **I1:** `tagVisualAi.ts`'s `askOnce` now retries an incomplete response (fewer ids answered than asked) instead of letting `consensus` settle the gap as `unsure`; the last attempt returns `null` and logs the shortfall.
+- **I2:** the tagger's rule filter no longer skips `retired` rules — retired rules stay rivals (§3.5) and so must still be tagged.
+- **I3:** a failed call now stops the whole run: it writes the current rule's answers gathered so far (if any, and not `--dry`), logs which rule and item range failed, and exits 1 telling the operator to re-run later. Writing a tag-file row for a rule with zero new cells is now skipped on both the failure and normal paths.
+- **M1:** `rules.test.ts` gained an inline-snapshot test of `VISUAL_RULES.map((r) => r.id)`, so a removed or renamed id (instead of `retired: true`) fails CI.
+- **M2:** §4.1's authoring-check sentence now states the Jaccard ≥0.8 overlap measure `report.ts` actually implements, instead of the earlier "≥90% agreement" phrasing.
+- **M3:** the tagger validates `--family` against `FAMILIES` and `--rule` against `VISUAL_RULES` ids before any network call, and a flag given with no value is also an error.
+- **M4:** `matrix.ts`'s `idsOf` splits on `/\s+/` instead of a single space, so a tag-file row id list can wrap lines; `matrix.test.ts` covers it.

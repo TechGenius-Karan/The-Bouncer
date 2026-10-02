@@ -22,7 +22,8 @@ export interface Matrix {
   cellOf(itemId: string, ruleId: string): Cell | undefined
 }
 
-export const idsOf = (list: string | undefined): string[] => (list ?? '').split(' ').filter(Boolean)
+export const idsOf = (list: string | undefined): string[] =>
+  (list ?? '').split(/\s+/).filter(Boolean)
 
 function cellsOf(row: TagRow): Map<string, Cell> {
   const cells = new Map<string, Cell>()
