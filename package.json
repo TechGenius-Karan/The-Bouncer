@@ -33,7 +33,8 @@
     "visual:candidates": "tsx content-engine/visual/scripts/listOpenMojiCandidates.ts",
     "visual:fetch-icons": "tsx content-engine/visual/scripts/fetchOpenMojiIcons.ts",
     "visual:icons": "tsx content-engine/visual/scripts/normalizeIcons.ts",
-    "visual:tag": "tsx content-engine/visual/scripts/tagVisualAi.ts"
+    "visual:tag": "tsx content-engine/visual/scripts/tagVisualAi.ts",
+    "visual:report": "tsx content-engine/visual/scripts/matrixReport.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",

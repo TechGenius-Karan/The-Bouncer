@@ -9,6 +9,8 @@ import { buildContactSheet, type SheetEntry } from '../contactSheet.js'
 import { ICON_OUTPUT_DIR, rawIconPath, strokeScaleFor } from '../iconSources.js'
 import { ITEMS } from '../items.js'
 import { normalizeSvg } from '../normalize.js'
+import { VISUAL_RULES } from '../rules.js'
+import { MATRIX } from '../tags/index.js'
 import { validateItems } from '../validateItems.js'
 
 const SHEET_PATH = join(process.cwd(), 'content-engine', 'output', 'icon-sheet.html')
@@ -53,9 +55,16 @@ writeFileSync(SHEET_PATH, buildContactSheet(entries))
 
 console.log(`Normalized ${entries.length}/${ITEMS.length} icons -> ${ICON_OUTPUT_DIR}`)
 console.log(`Contact sheet -> ${SHEET_PATH}`)
-// Phase 2 extends this line with the shape-family tags to re-check, since
-// those are judged on the icon as drawn (planning-visual-pivot.md §4.1).
 if (changed.length > 0) console.log(`Changed (${changed.length}): ${changed.join(', ')}`)
+// Shape rules are judged on the icon as drawn (planning-visual-pivot.md §4.1),
+// so a redrawn icon's existing shape answers may now be wrong.
+const shapeRules = VISUAL_RULES.filter((r) => r.family === 'shape')
+for (const id of changed) {
+  const tagged = shapeRules.filter((r) => MATRIX.cellOf(id, r.id) !== undefined)
+  if (tagged.length > 0) {
+    console.log(`  re-check ${id}'s shape tags: ${tagged.map((r) => r.id).join(', ')}`)
+  }
+}
 for (const w of warnings) console.warn(`warn  ${w}`)
 for (const f of failures) console.error(`FAIL  ${f}`)
 for (const o of orphans) {
