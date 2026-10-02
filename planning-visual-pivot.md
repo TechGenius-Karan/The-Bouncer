@@ -1,6 +1,6 @@
 # The Bouncer — Visual Pivot Plan
 
-> **Status:** Design approved 2026-10-01 (all three sections). Phase 1 implementation plan written: [`planning-visual-pivot-phase1.md`](planning-visual-pivot-phase1.md). Nothing has been implemented yet.
+> **Status:** Design approved 2026-10-01 (all three sections). Phase 1 built on branch `visual-pivot-phase1` (draft PR #1), awaiting its contact-sheet review (Task 6). Implementation plans for every remaining phase written 2026-10-02 (§6), each with code verified end to end against the branch; nothing past Phase 1 is implemented yet.
 > **Scope:** Change the puzzle content from words to monochrome line-art icons of everyday things, judged on their physical and practical properties. The game loop stays the same. The word engine stays in the repo, intact, as an archived baseline.
 > **How to read this doc:** 🔒 = decided directly by the user for this pivot (2026-09-30 / 2026-10-01, through explicit questions). Not open to casual re-litigation. 💡 = a suggested default; change freely. Same convention as `ai-feedback-plan.md`.
 > **Companion docs:** `planning.md` (locked game spec; §1 of this doc lists what the pivot overrides there), `build-plan.md` (phase history), `CLAUDE.md` (architecture).
@@ -335,6 +335,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
 - **Exit:** the pilot icons normalize cleanly, and the contact sheet has been reviewed for recognizability.
 
 ### Phase 2 — Rules, tagging matrix, Mongo seed
+**Implementation plan:** [`planning-visual-pivot-phase2.md`](planning-visual-pivot-phase2.md) (7 tasks; a 51-rule pilot across all 11 families).
 - **Build:** `rules.ts` (pilot ~40 rules across all families), `tags/` layout, `matrix.ts`, `tagging.ts`, `tagVisualAi.ts`, `matrixReport.ts`, `seedVisual.ts`, plus the additive types and `db.ts` handles in both backends.
 - **Tests:**
   - **Three-valued merge:** overrides win per cell; untagged ≠ unsure in reports but both read as null.
@@ -344,6 +345,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
 - **Exit:** the pilot matrix is AI-drafted and spot-reviewed; ≥30 pilot rules are eligible; `content:seed-visual` has been run against Atlas.
 
 ### Phase 3 — Generator, uniqueness, scheduling
+**Implementation plan:** [`planning-visual-pivot-phase3.md`](planning-visual-pivot-phase3.md) (5 tasks).
 - **Build:** `random.ts`, `generator.ts`, `generateVisualBatch.ts`, the uniqueness gate in generation, and the `placement.ts` / `schedulePuzzles.ts` visual paths.
 - **Tests:**
   - **Null exclusion:** a null or untagged item on T never appears in clues, pool or repairs, across many seeds.
@@ -355,6 +357,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
 - **Exit:** **Yield ≥75%**, measured as one offline board attempt per eligible pilot rule (`content:generate-visual` writing to `content-engine/output/`, nothing queued), divided by the number of eligible rules. This yield number is the go/no-go signal for scaling content to ~600 items × ~500 rules. Each rule can be drafted only once per batch, so yield has to be measured per rule, not per attempt.
 
 ### Phase 4 — Backend contract, ops wiring, UI (light)
+**Implementation plans:** [`planning-visual-pivot-phase4.md`](planning-visual-pivot-phase4.md) (4a, 5 tasks) and [`planning-visual-pivot-phase4-ui.md`](planning-visual-pivot-phase4-ui.md) (4b/4c, 4 tasks).
 - **4a (server):**
   - Build the contract fields, the `roundView` branch, `get-round` passthrough, the generation entry points, the approve-uniqueness refusal, the edit/AI-review refusal, buffer health and runway, the cron kind switch, and name lookup in admin/stats/archive.
   - Tests:
@@ -366,6 +369,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
 - **4c (admin):** icons in review cards, kind badge, generate selector, edit/AI-review hidden for visual puzzles.
 
 ### After Phase 4 — content build-out and cutover
+**Runbook:** [`planning-visual-pivot-cutover.md`](planning-visual-pivot-cutover.md) (two production deploys in total).
 Scale to ~600 items and ~500 rules, run the full AI tagging pass, re-run `matrixReport` until the runway reads ≥400 with no near-duplicates or oversize families, then follow §5.6.
 
 ---
@@ -392,7 +396,7 @@ Scale to ~600 items and ~500 rules, run the full AI tagging pass, re-run `matrix
 - No Mongo collection or document is deleted. Every seed step upserts.
 - The word engine (`content-engine/words/`, `rules/`, `generator/`) is **not modified**. That includes `rules/types.ts`; the `Mechanic` change considered in an earlier draft was dropped (§2.6).
 
-**New:** everything under `content-engine/visual/`, `public/icons/visual/`, `src/components/ItemFace.tsx`, and a credits view.
+**New:** everything under `content-engine/visual/`, `public/icons/visual/`, `lib/` + `netlify/functions/_shared/` `visual.ts` and `names.ts` (with tests), `lib/roundView.test.ts`, `src/components/ItemFace.tsx`, `src/game/icons.ts`, `src/game/iconCredits.ts` (the credits, shown in Settings), and `src/admin/ClueList.tsx`.
 
 **Existing files touched (additive or behind a branch; the word path keeps its current behavior):**
 
@@ -409,11 +413,11 @@ Scale to ~600 items and ~500 rules, run the full AI tagging pass, re-run `matrix
 | 4a | `api/scheduled-generate-puzzles.ts`, `netlify/functions/admin-generate-batch.ts`, `content-engine/scripts/queuePuzzles.ts`, `api/admin.ts` | kind-aware generation; copy `kind` + `generatorSeed` |
 | 4a | `netlify/functions/admin-approve.ts` (+ `api/admin.ts` approve) | refuse an already-used visual rule |
 | 4a | `netlify/functions/admin-edit-puzzle.ts`, `admin-ai-review.ts` (+ `api/admin.ts`) | refuse visual puzzles |
-| 4a | `lib/` + `_shared/` `adminPuzzleDetail.ts`, `puzzleStats.ts`, `adminApi.ts`; `api/archive.ts`, `netlify/functions/archive.ts`; `src/admin/types.ts` | visual names, `kind`, visual buffer + runway |
+| 4a | `lib/` + `_shared/` `adminPuzzleDetail.ts`, `puzzleStats.ts`, `adminApi.ts`, `types.ts` (`DecoyResult.negated?`); `api/archive.ts`, `netlify/functions/archive.ts`; `src/admin/types.ts`; `netlify/functions/admin-buffer-health.ts` (+ `api/admin.ts`) | visual names, `kind`, visual buffer + runway |
 | 4b | `src/game/useGame.ts`, `src/game/types.ts` | `kind`, `clueIds` |
 | 4b | `SlipCard.tsx`, `ClueDeck.tsx`, `TrayBin.tsx`, `RevealScreen.tsx`, `PlayScreen.tsx`, `SettingsModal.tsx` | render via `ItemFace`; credits link |
-| 4b | `vite.config.ts` | icon runtime-cache rule |
-| 4c | `PuzzleReviewCard.tsx`, `PuzzleCardBody.tsx`, `LivePuzzleStats.tsx`, `GenerateBatchPanel.tsx`, `BufferHealthPanel.tsx` | icons, kind badge, selector, runway |
+| 4b | `vite.config.ts`, `netlify.toml` | icon runtime-cache rule; CSP + `nosniff` on `/icons/visual/*` |
+| 4c | `PuzzleReviewCard.tsx`, `PuzzleCardBody.tsx`, `GenerateBatchPanel.tsx`, `adminClient.ts`, `BufferHealthPanel.tsx` | icons, kind badge, selector, runway (`LivePuzzleStats.tsx` needs nothing: captions are resolved server-side) |
 | after approval | `planning.md`, `build-plan.md`, `CLAUDE.md` | pointer lines; architecture note once Phase 4 lands |
 
 Both copies of `check-swipe.ts` are deliberately absent (§2.2).
