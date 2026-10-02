@@ -34,7 +34,8 @@
     "visual:fetch-icons": "tsx content-engine/visual/scripts/fetchOpenMojiIcons.ts",
     "visual:icons": "tsx content-engine/visual/scripts/normalizeIcons.ts",
     "visual:tag": "tsx content-engine/visual/scripts/tagVisualAi.ts",
-    "visual:report": "tsx content-engine/visual/scripts/matrixReport.ts"
+    "visual:report": "tsx content-engine/visual/scripts/matrixReport.ts",
+    "content:seed-visual": "tsx content-engine/visual/scripts/seedVisual.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
