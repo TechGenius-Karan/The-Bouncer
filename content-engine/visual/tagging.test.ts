@@ -10,6 +10,7 @@ import {
   parseRuleTaggingResponse,
   renderAiTagFile,
 } from './tagging.js'
+import { TAG_FILES } from './tags/index.js'
 import type { Item, VisualRule } from './types.js'
 
 const item = (id: string, extra: Partial<Item> = {}): Item => ({
@@ -157,11 +158,13 @@ describe('renderAiTagFile', () => {
     )
   })
 
-  it('renders an empty table exactly as the committed stub files are written', () => {
-    const stub = readFileSync(
-      join(process.cwd(), 'content-engine', 'visual', 'tags', 'shape.ai.ts'),
+  // The AI files are generated, never hand-edited: each committed one must be
+  // exactly what the renderer makes from its own table. A hand edit fails here.
+  it.each(Object.entries(TAG_FILES))('%s.ai.ts is exactly the rendered output', (family, files) => {
+    const committed = readFileSync(
+      join(process.cwd(), 'content-engine', 'visual', 'tags', `${family}.ai.ts`),
       'utf8'
     ).replace(/\r\n/g, '\n')
-    expect(renderAiTagFile({})).toBe(stub)
+    expect(renderAiTagFile(files.ai)).toBe(committed)
   })
 })

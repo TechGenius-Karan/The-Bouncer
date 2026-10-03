@@ -4,4 +4,14 @@ import type { TagTable } from '../matrix.js'
 // Each listed item wins over the AI draft for that rule. Never generated.
 // Format: 'visual-rule-id': { yes: 'item-id item-id', no: '…', unsure: '…' }
 
-export const TAGS: TagTable = {}
+// Reviewed 2026-10-03 against the first Gemini draft.
+export const TAGS: TagTable = {
+  'visual-made-of-fabric': { unsure: 'bed' },
+  'visual-made-of-metal': {
+    yes: 'crown',
+    unsure:
+      'axe battery hammer kitchen-knife ladder laptop mobile-phone screwdriver shield shovel trophy',
+  },
+  'visual-made-of-plastic': { unsure: 'magnifying-glass' },
+  'visual-made-of-wood': { unsure: 'axe bed hammer paintbrush' },
+}

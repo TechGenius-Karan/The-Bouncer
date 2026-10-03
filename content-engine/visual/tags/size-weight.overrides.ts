@@ -4,4 +4,8 @@ import type { TagTable } from '../matrix.js'
 // Each listed item wins over the AI draft for that rule. Never generated.
 // Format: 'visual-rule-id': { yes: 'item-id item-id', no: '…', unsure: '…' }
 
-export const TAGS: TagTable = {}
+// Reviewed 2026-10-03 against the first Gemini draft.
+export const TAGS: TagTable = {
+  'visual-fits-in-a-pocket': { unsure: 'balloon lemon magnifying-glass' },
+  'visual-lift-with-one-hand': { unsure: 'penguin turtle' },
+}
