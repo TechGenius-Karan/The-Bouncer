@@ -141,6 +141,8 @@ export const VISUAL_RULES: VisualRule[] = [
     id: 'visual-lift-with-one-hand',
     family: 'size-weight',
     reveal: 'You could lift it with one hand.',
+    // Retired 2026-10-03: the inverse of heavier-than-a-person (0.96).
+    retired: true,
   },
 
   // senses
@@ -171,6 +173,8 @@ export const VISUAL_RULES: VisualRule[] = [
     family: 'living',
     reveal: 'It can move on its own.',
     basis: 'Vehicles need someone to drive them, so they count as no.',
+    // Retired 2026-10-03: identical to is-an-animal, since only animals move on their own.
+    retired: true,
   },
 
   // shape: judged on the icon as drawn (§4.1)

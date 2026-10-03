@@ -336,6 +336,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
 - **Exit:** the pilot icons normalize cleanly, and the contact sheet has been reviewed for recognizability.
 
 ### Phase 2 — Rules, tagging matrix, Mongo seed
+**Status:** done 2026-10-03 except the Atlas seed: 66 rules (3 retired), 23 usable; ~240 override cells after review of the Gemini draft. The ≥30-usable exit was waived for the pilot by the product owner: the 165-item bank is the ceiling (several rules sit at 14–19 confident yeses), and the build-out grows it. Remaining near-duplicates on this bank: has-wheels/ridden ≈ is-a-vehicle, found-in-a-kitchen ≈ is-food, made-of-metal ≈ sticks-to-a-magnet ≈ shiny; re-check after the bank grows.
 **Implementation plan:** [`planning-visual-pivot-phase2.md`](planning-visual-pivot-phase2.md) (7 tasks; a 51-rule pilot across all 11 families).
 - **Build:** `rules.ts` (pilot ~40 rules across all families), `tags/` layout, `matrix.ts`, `tagging.ts`, `tagVisualAi.ts`, `matrixReport.ts`, `seedVisual.ts`, plus the additive types and `db.ts` handles in both backends.
 - **Tests:**
