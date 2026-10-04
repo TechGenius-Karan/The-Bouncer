@@ -1,3 +1,5 @@
+import type { ClueEntry, GuestEntry, KnobValues } from '../generator/types.js'
+
 export type ItemGroup = 'thing' | 'food' | 'vehicle' | 'animal' | 'plant'
 
 export type IconSource =
@@ -49,4 +51,27 @@ export interface VisualRule {
   basis?: string
   /** Out of generation for good, but its id stays reserved and it is still a rival. */
   retired?: boolean
+}
+
+/** A rival rule that still fits the clues on their own (§4.5 step 4). */
+export interface VisualDecoy {
+  ruleId: string
+  /** Visual rules have no subtlety (D7); 0 keeps the stored DecoyResult shape. */
+  subtlety: 0
+  /** It fits read the other way round: IN = the rule is false. */
+  negated?: true
+}
+
+/** What the visual generator emits (§4.5 step 7). Item ids sit in the `wordId` fields (§3.3). */
+export interface VisualCandidate {
+  kind: 'visual'
+  ruleId: string
+  /** Stored as medium so the shared typed fields keep working; visual paths ignore it (§3.4). */
+  difficultyTier: 'medium'
+  knobValues: KnobValues
+  status: 'pending_approval'
+  clues: ClueEntry[]
+  guests: GuestEntry[]
+  liveDecoys: VisualDecoy[]
+  generatorSeed: number
 }
