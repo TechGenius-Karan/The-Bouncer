@@ -2,7 +2,7 @@ import { MEDIUM_KNOBS, trapAllocation } from '../generator/difficulty.js'
 import type { Label, TrapType } from '../generator/types.js'
 import type { Matrix } from './matrix.js'
 import { mulberry32, pick, pickWeighted, shuffle, type Rng } from './random.js'
-import { countRule } from './report.js'
+import { countRule, isRivalOf } from './report.js'
 import type { Item, Tri, VisualCandidate, VisualRule } from './types.js'
 
 // The visual generator (planning-visual-pivot.md §4.5): rule -> clues -> decoy
@@ -64,18 +64,10 @@ export function eligibleRules(input: GeneratorInput): VisualRule[] {
   )
 }
 
-/**
- * Every rule other than T, both ways round, that someone has tagged. Retired
- * and too-thin rules stay in: a player can still think of them. A rule with no
- * definite answer at all is left out until it is tagged — otherwise one newly
- * written rule would collide with every board (§4.4) and stop generation.
- */
+/** Every rival of T (`isRivalOf`), both ways round. */
 export function rivalReadings(trueRule: VisualRule, input: GeneratorInput): Reading[] {
-  const usable = input.items.filter((i) => !i.blocked)
   return input.rules
-    .filter(
-      (r) => r.id !== trueRule.id && usable.some((i) => input.matrix.valueOf(i.id, r.id) !== null)
-    )
+    .filter((r) => isRivalOf(r, trueRule, input.items, input.matrix))
     .flatMap((rule) => [
       { rule, negated: false },
       { rule, negated: true },
@@ -123,14 +115,18 @@ function draftClues(yes: Item[], no: Item[], rng: Rng): BoardItem[] {
   ]
 }
 
-/** §4.5 step 5: one decoy trap, one "fits but looks wrong" guest, then padding toward a drawn IN count. */
+/**
+ * §4.5 step 5: one decoy trap, one "fits but looks wrong" guest (or a second
+ * decoy trap when none exists), then padding toward a drawn IN count.
+ */
 function buildPool(
   decoy: Reading,
   yes: Item[],
   no: Item[],
   used: Set<string>,
   matrix: Matrix,
-  rng: Rng
+  rng: Rng,
+  allowSecondDecoyTrap: boolean
 ): Guest[] | null {
   const guests: Guest[] = []
   const take = (from: Item[], ok: (item: Item) => boolean) => {
@@ -152,8 +148,14 @@ function buildPool(
   }
   for (let n = 0; n < tButLooksWrong; n++) {
     const item = take(yes, (i) => decoyPlaces(i) === false)
-    if (!item) return null
-    guests.push({ item, label: 'IN', trapType: 't-but-looks-wrong' })
+    if (item) {
+      guests.push({ item, label: 'IN', trapType: 't-but-looks-wrong' })
+      continue
+    }
+    if (!allowSecondDecoyTrap) return null
+    const second = take(no, (i) => decoyPlaces(i) === true)
+    if (!second) return null
+    guests.push({ item: second, label: 'OUT', trapType: 'decoy' })
   }
 
   const targetIn = pickWeighted(IN_COUNT_WEIGHTS, ([, weight]) => weight, rng)[0]
@@ -207,9 +209,16 @@ export function buildBoard(
 
   let guests: Guest[] | null = null
   let used = new Set<string>()
-  for (const decoy of shuffle(decoys, rng)) {
-    used = new Set(clues.map((c) => c.itemId))
-    guests = buildPool(decoy, yes, no, used, matrix, rng)
+  const order = shuffle(decoys, rng)
+  // When every decoy is a superset of T, a looks-wrong guest can't exist, and the
+  // decoy trap is what catches the broader theory: so if no decoy yields one, the
+  // second pass takes a second decoy trap instead (product-owner decision 2026-10-04).
+  for (const allowSecondDecoyTrap of [false, true]) {
+    for (const decoy of order) {
+      used = new Set(clues.map((c) => c.itemId))
+      guests = buildPool(decoy, yes, no, used, matrix, rng, allowSecondDecoyTrap)
+      if (guests) break
+    }
     if (guests) break
   }
   if (!guests) return null

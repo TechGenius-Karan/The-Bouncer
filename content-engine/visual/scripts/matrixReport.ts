@@ -1,6 +1,6 @@
 // Prints the tagging-matrix review (planning-visual-pivot.md §4.3): per-rule
-// counts, which rules are usable, near-duplicate pairs, oversize families and
-// the runway. Read-only.
+// counts, which rules are usable, near-duplicate pairs, oversize families,
+// unshippable rules and the runway. Read-only.
 // Run with: npm run visual:report
 
 import { ITEMS } from '../items.js'
@@ -40,7 +40,20 @@ for (const f of report.oversizeFamilies) {
   console.log(`  ${f.family}: ${f.eligible} rules (${Math.round(f.share * 100)}%)`)
 }
 
+console.log('\nUnshippable (a rival no item can contradict):')
+if (report.unshippable.length === 0) console.log('  none')
+for (const u of report.unshippable) {
+  console.log(`  ${u.ruleId}  blocked by ${u.blockedBy.join(', ')}`)
+}
+
 const untagged = report.counts.reduce((sum, c) => sum + c.untagged, 0)
 console.log(`\nUsable rules: ${report.eligibleCount} of ${VISUAL_RULES.length}`)
 console.log(`Runway before any are used: ${report.eligibleCount} days`)
 if (untagged > 0) console.log(`Untagged cells: ${untagged} (npm run visual:tag fills them)`)
+const partlyTagged = report.counts.filter((c) => c.untagged > 0).length
+if (partlyTagged > 0) {
+  console.log(
+    `Warning: ${partlyTagged} rules still have untagged usable items. Tag them before ` +
+      'generating: a partly tagged rule collides with almost every board.'
+  )
+}

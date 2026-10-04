@@ -101,6 +101,7 @@ export const VISUAL_RULES: VisualRule[] = [
     // Retired 2026-10-03: on the pilot bank it matched made-of-metal and
     // sticks-to-a-magnet exactly (planning-visual-pivot.md §7, correlated physics).
     retired: true,
+    mergedInto: ['visual-sticks-to-a-magnet', 'visual-made-of-metal'],
   },
   { id: 'visual-sticks-to-a-magnet', family: 'physical', reveal: 'A magnet would stick to it.' },
   { id: 'visual-melts-on-a-hot-day', family: 'physical', reveal: 'It would melt on a hot day.' },
@@ -143,6 +144,7 @@ export const VISUAL_RULES: VisualRule[] = [
     reveal: 'You could lift it with one hand.',
     // Retired 2026-10-03: the inverse of heavier-than-a-person (0.96).
     retired: true,
+    mergedInto: ['visual-heavier-than-a-person'],
   },
 
   // senses
@@ -175,6 +177,7 @@ export const VISUAL_RULES: VisualRule[] = [
     basis: 'Vehicles need someone to drive them, so they count as no.',
     // Retired 2026-10-03: identical to is-an-animal, since only animals move on their own.
     retired: true,
+    mergedInto: ['visual-is-an-animal'],
   },
 
   // shape: judged on the icon as drawn (§4.1)

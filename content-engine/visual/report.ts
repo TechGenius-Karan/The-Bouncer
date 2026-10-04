@@ -43,7 +43,12 @@ export interface MatrixReport {
   counts: RuleCounts[]
   nearDuplicates: NearDuplicate[]
   oversizeFamilies: { family: Family; eligible: number; share: number }[]
-  /** Usable rules before any are spent. Each one is a day of puzzles (§4.7). */
+  /** Eligible rules that can never get a board: some rival reading no item rules out. */
+  unshippable: { ruleId: string; blockedBy: string[] }[]
+  /**
+   * Usable rules before any are spent, unshippable ones excluded. Each one is a
+   * day of puzzles (§4.7).
+   */
   eligibleCount: number
 }
 
@@ -56,6 +61,51 @@ export function countRule(rule: VisualRule, items: Item[], matrix: Matrix): Rule
   const eligible =
     !rule.retired && counts.yes >= MIN_DEFINITE_PER_SIDE && counts.no >= MIN_DEFINITE_PER_SIDE
   return { ruleId: rule.id, family: rule.family, ...counts, eligible }
+}
+
+/**
+ * The one definition of a rival, shared with the generator. A rule nobody has
+ * tagged yet is left out, or one newly written rule would collide with every
+ * board (§4.4). Retired and too-thin rules stay in: a player can still think of
+ * them, except that a retired duplicate is not a rival of the rules it merged into.
+ */
+export function isRivalOf(
+  rival: VisualRule,
+  trueRule: VisualRule,
+  items: Item[],
+  matrix: Matrix
+): boolean {
+  return (
+    rival.id !== trueRule.id &&
+    !(rival.mergedInto ?? []).includes(trueRule.id) &&
+    usable(items).some((i) => matrix.valueOf(i.id, rival.id) !== null)
+  )
+}
+
+/**
+ * Rival readings (both polarities: `id` or `NOT id`) that no item definite on
+ * `rule` definitely contradicts. Every board is drawn from those items, so each
+ * of these collides (§4.4) with every board the rule could ever have.
+ */
+export function unavoidableRivals(
+  rule: VisualRule,
+  rules: VisualRule[],
+  items: Item[],
+  matrix: Matrix
+): string[] {
+  const definite = usable(items).filter((i) => matrix.valueOf(i.id, rule.id) !== null)
+  const blockers: string[] = []
+  for (const rival of rules) {
+    if (!isRivalOf(rival, rule, items, matrix)) continue
+    for (const negated of [false, true]) {
+      const contradicted = definite.some((i) => {
+        const r = matrix.valueOf(i.id, rival.id)
+        return r !== null && (r !== negated) !== matrix.valueOf(i.id, rule.id)
+      })
+      if (!contradicted) blockers.push(negated ? `NOT ${rival.id}` : rival.id)
+    }
+  }
+  return blockers
 }
 
 const overlap = (both: number, onlyOne: number) =>
@@ -116,12 +166,19 @@ export function buildMatrixReport(
     }
   }
 
-  const eligibleCount = counts.filter((c) => c.eligible).length
+  const unshippable = rules
+    .filter((_, n) => counts[n].eligible)
+    .map((r) => ({ ruleId: r.id, blockedBy: unavoidableRivals(r, rules, items, matrix) }))
+    .filter((u) => u.blockedBy.length > 0)
+  const blocked = new Set(unshippable.map((u) => u.ruleId))
+  const shippable = counts.filter((c) => c.eligible && !blocked.has(c.ruleId))
+
+  const eligibleCount = shippable.length
   const byFamily = new Map<Family, number>()
-  for (const c of counts) if (c.eligible) byFamily.set(c.family, (byFamily.get(c.family) ?? 0) + 1)
+  for (const c of shippable) byFamily.set(c.family, (byFamily.get(c.family) ?? 0) + 1)
   const oversizeFamilies = [...byFamily]
     .map(([family, eligible]) => ({ family, eligible, share: eligible / eligibleCount }))
     .filter((f) => f.share > MAX_FAMILY_SHARE)
 
-  return { counts, nearDuplicates, oversizeFamilies, eligibleCount }
+  return { counts, nearDuplicates, oversizeFamilies, unshippable, eligibleCount }
 }

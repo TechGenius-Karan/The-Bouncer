@@ -51,6 +51,12 @@ export interface VisualRule {
   basis?: string
   /** Out of generation for good, but its id stays reserved and it is still a rival. */
   retired?: boolean
+  /**
+   * A retired rule that duplicated these rules on the bank. It is not treated as
+   * their rival, or it would block every board for them, but it stays a rival of
+   * everything else.
+   */
+  mergedInto?: string[]
 }
 
 /** A rival rule that still fits the clues on their own (§4.5 step 4). */

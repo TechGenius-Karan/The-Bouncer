@@ -1222,3 +1222,11 @@ git commit -m "Record the Phase 3 visual yield"
 | Global: word engine untouched; nothing deleted | all tasks |
 
 **Left for Phase 4a, by design:** filling `usedRuleIds`, `pendingRuleIds` and `rejectCounts` from Mongo, the cron and admin entry points, and approval's uniqueness refusal. Phase 3 defines the contract (`GeneratorInput`); Phase 4a supplies it from the database.
+
+## Changes made during execution
+
+- **F1 (final review):** the yield gate is reproducible: 20 attempts per eligible rule on fixed seeds 1..20 (no `new Date()`/`batchSeed`); yield = boards / (rules × 20), coverage = rules with a board / rules; one board per rule written out; exit 1 below 75%.
+- **F2 (final review):** `VisualRule.mergedInto` on the three retired duplicates; one shared `isRivalOf` in `report.ts` (used by `rivalReadings`) skips a retired rule as a rival of what it merged into; `unavoidableRivals` marks unshippable rules, which `buildMatrixReport` lists and leaves out of the runway; `visual:report` prints them and warns about partly tagged rules.
+- **F3 (final review):** when no decoy yields a "fits but looks wrong" guest, the pool takes a second decoy trap instead (owner decision 2026-10-04); a first pass still prefers a looks-wrong guest from any decoy, so earlier boards are unchanged.
+- **Minor:** the decoy/trap test is renamed to what it asserts (at least one live decoy; traps definite on a decoy).
+- **Minor:** a new test checks the IN-guest count varies (≥3 values) with 3 the most common.

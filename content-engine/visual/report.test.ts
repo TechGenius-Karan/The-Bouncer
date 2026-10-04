@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildMatrix, type TagTable } from './matrix.js'
-import { buildMatrixReport, compareRules, countRule } from './report.js'
+import { buildMatrixReport, compareRules, countRule, unavoidableRivals } from './report.js'
 import type { Family, Item, VisualRule } from './types.js'
 
 // 100 numbered items: i0 … i99.
@@ -130,14 +130,66 @@ describe('buildMatrixReport', () => {
     expect(report.nearDuplicates).toEqual([
       { a: 'visual-a', b: 'visual-b', inverted: true, similarity: 1, shared: 100 },
     ])
-    expect(report.eligibleCount).toBe(3)
+    expect(report.counts.filter((c) => c.eligible)).toHaveLength(3)
+    // a and b are each other's inverse, and retired d duplicates a: only c can ship.
+    expect(report.eligibleCount).toBe(1)
   })
 
   it('flags a family holding more than a third of the eligible rules', () => {
     const rules = [rule('visual-a', 'shape'), rule('visual-b', 'shape'), rule('visual-c', 'senses')]
-    const matrix = buildMatrix({ 'visual-a': half, 'visual-b': other, 'visual-c': half }, {})
+    const quarters = { yes: `${ids(0, 25)} ${ids(50, 75)}`, no: `${ids(25, 50)} ${ids(75, 100)}` }
+    const matrix = buildMatrix({ 'visual-a': half, 'visual-b': other, 'visual-c': quarters }, {})
     expect(buildMatrixReport(rules, ITEMS, matrix).oversizeFamilies).toEqual([
       { family: 'shape', eligible: 2, share: 2 / 3 },
     ])
+  })
+})
+
+describe('unavoidableRivals', () => {
+  const half = { yes: ids(0, 50), no: ids(50, 100) }
+  const evens = ids(0, 100)
+    .split(' ')
+    .filter((_, n) => n % 2 === 0)
+    .join(' ')
+  const odds = ids(0, 100)
+    .split(' ')
+    .filter((_, n) => n % 2 === 1)
+    .join(' ')
+  const matrix = buildMatrix(
+    {
+      'visual-t': half,
+      'visual-copy': half,
+      'visual-merged': half,
+      'visual-inverse': { yes: ids(50, 100), no: ids(0, 50) },
+      'visual-other': { yes: evens, no: odds },
+    },
+    {}
+  )
+  const t = rule('visual-t')
+  const copy = rule('visual-copy')
+  const merged = rule('visual-merged', 'physical', { retired: true, mergedInto: ['visual-t'] })
+  const inverse = rule('visual-inverse')
+  const other = rule('visual-other')
+
+  it('finds an identical rival, and an inverse one read the other way round', () => {
+    expect(unavoidableRivals(t, [t, copy, inverse, other], ITEMS, matrix)).toEqual([
+      'visual-copy',
+      'NOT visual-inverse',
+    ])
+  })
+
+  it('skips a retired rule merged into this one, but not into another', () => {
+    expect(unavoidableRivals(t, [t, merged, other], ITEMS, matrix)).toEqual([])
+    expect(unavoidableRivals(copy, [copy, merged], ITEMS, matrix)).toEqual(['visual-merged'])
+  })
+
+  it('drops an unshippable rule from eligibleCount', () => {
+    const report = buildMatrixReport([t, copy, other], ITEMS, matrix)
+    expect(report.unshippable).toEqual([
+      { ruleId: 'visual-t', blockedBy: ['visual-copy'] },
+      { ruleId: 'visual-copy', blockedBy: ['visual-t'] },
+    ])
+    expect(report.eligibleCount).toBe(1)
+    expect(buildMatrixReport([t, merged, other], ITEMS, matrix).eligibleCount).toBe(2)
   })
 })

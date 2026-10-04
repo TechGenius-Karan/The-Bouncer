@@ -133,14 +133,14 @@ generatorSeed?: number
 - Ids stay in the existing `wordId` fields. For a visual puzzle they hold an item id. Renaming the field would touch three contract copies and every stored result for no gain. A comment on each type records the dual meaning.
 
 ### 3.4 Difficulty (D7)
-Visual puzzles use a single knob set, today's medium values: 3 + 3 clues, 6 guests, 2 traps (1 decoy trap + 1 "fits but looks wrong" guest), and a 2–3 live-decoy target. They're stored as `difficultyTier: 'medium'` so the existing typed fields (`PuzzleDoc`, admin types, stats) keep working without a migration. The visual paths in scheduling, buffer health and the cron ignore the tier field.
+Visual puzzles use a single knob set, today's medium values: 3 + 3 clues, 6 guests, 2 traps (1 decoy trap + 1 "fits but looks wrong" guest, or a second decoy trap when no "fits but looks wrong" guest exists; owner decision 2026-10-04), and a 2–3 live-decoy target. They're stored as `difficultyTier: 'medium'` so the existing typed fields (`PuzzleDoc`, admin types, stats) keep working without a migration. The visual paths in scheduling, buffer health and the cron ignore the tier field.
 
 ### 3.5 Rule uniqueness (D6)
 A visual rule is **used** once any visual puzzle with that `ruleId` has status `approved`, `scheduled` or `live`.
 - **Generation** never drafts a used rule, nor a rule already in the `pending_approval` queue. Otherwise a reviewer could approve two boards for the same rule.
 - **Approval is the hard guarantee:** `admin-approve` (and `api/admin.ts`'s approve action) **refuses** a visual puzzle whose rule is already used, with 409 and a message naming the puzzle that holds it.
 - **Rejected** puzzles don't use up the rule, so it can be retried with a new board. **Unscheduling** returns a puzzle to `pending_approval`, which frees its rule again (consistent with the existing unschedule behavior).
-- **Rule ids are permanent.** Uniqueness is checked by `ruleId`, so renaming a rule would let its idea run twice. Rules are never renamed or deleted. A rule that's been dropped gets `retired: true` instead, which takes it out of generation while keeping its id reserved. This is enforced by convention and a comment at the top of `rules.ts`; nothing else is needed while one person edits the taxonomy.
+- **Rule ids are permanent.** Uniqueness is checked by `ruleId`, so renaming a rule would let its idea run twice. Rules are never renamed or deleted. A rule that's been dropped gets `retired: true` instead, which takes it out of generation while keeping its id reserved. A retired duplicate also names the rules it duplicated in `mergedInto`: it is not treated as a rival of those rules (it would otherwise block every board for them), but stays a rival of every other rule. This is enforced by convention and a comment at the top of `rules.ts`; nothing else is needed while one person edits the taxonomy.
 
 ---
 
@@ -200,7 +200,7 @@ Across the 12 board items (clues + pool) and their true labels, a rival rule R �
 4. **Decoy scan:** a rival R (either polarity) is a live decoy if it's definite on every clue *and* agrees with every clue label. Re-draft the clues (bounded, keeping the attempt closest to target, as `orchestrator.ts` does) until there are 2–3 decoys. **Zero decoys means try another rule** (same hard gate as the word engine).
 5. **Pool:** 6 guests, with the IN count drawn from the copied `IN_COUNT_WEIGHTS` (3:50, 4:20, 2:20, 5:5, 1:5):
    - **1 decoy trap** — the decoy says IN, T says OUT. It must be **definite on the decoy**, or it isn't really a trap.
-   - **1 "fits but looks wrong" guest** — T says IN, the decoy says OUT. Also definite on the decoy.
+   - **1 "fits but looks wrong" guest** — T says IN, the decoy says OUT. Also definite on the decoy. When no decoy has one (every decoy is a superset of T), a **second decoy trap** takes its place: the decoy trap is what catches the broader theory (owner decision 2026-10-04).
    - **Padding** fills the rest toward the drawn IN count.
    - Then shuffle and assign display order.
 6. **Validate (§4.4).** On a collision, swap one non-trap guest for an unused item that has T's label and **definitely contradicts** the rival. Up to 5 attempts, then move to the next rule.
@@ -356,7 +356,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
   - **Rule exclusion:** used rules and pending rules are never drafted.
   - **Determinism:** same seed → deep-equal candidate; different seed → different candidate.
   - **Placement:** family spacing; every day filled from the single visual queue.
-- **Exit:** **Yield ≥75%**, measured as one offline board attempt per eligible pilot rule (`content:generate-visual` writing to `content-engine/output/`, nothing queued), divided by the number of eligible rules. This yield number is the go/no-go signal for scaling content to ~600 items × ~500 rules. Each rule can be drafted only once per batch, so yield has to be measured per rule, not per attempt.
+- **Exit:** **Yield ≥75%**, measured offline per eligible pilot rule (`content:generate-visual` writing to `content-engine/output/`, nothing queued): 20 board attempts per rule on the fixed seeds 1..20, and yield is the mean per-attempt success, boards / (eligible rules × 20), so every run measures the same number. **Coverage** (rules with at least one board / eligible rules) is reported alongside it. This yield number is the go/no-go signal for scaling content to ~600 items × ~500 rules. Each rule can be drafted only once per batch, so yield has to be measured per rule, not across rules.
 
 ### Phase 4 — Backend contract, ops wiring, UI (light)
 **Implementation plans:** [`planning-visual-pivot-phase4.md`](planning-visual-pivot-phase4.md) (4a, 5 tasks) and [`planning-visual-pivot-phase4-ui.md`](planning-visual-pivot-phase4-ui.md) (4b/4c, 4 tasks).

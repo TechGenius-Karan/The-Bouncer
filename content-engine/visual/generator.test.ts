@@ -74,6 +74,23 @@ describe('rivalReadings', () => {
     expect(ids).toContain('visual-low')
     expect(ids).toContain('!visual-low')
   })
+
+  it('skips a retired rule merged into T, but keeps one merged into another rule', () => {
+    const merged = { ...rule('visual-merged'), retired: true, mergedInto: ['visual-t'] }
+    const elsewhere = { ...rule('visual-elsewhere'), retired: true, mergedInto: ['visual-low'] }
+    // Both are exact copies of T, so either one as a rival blocks every board.
+    const matrix = buildMatrix(
+      { ...TABLE, 'visual-merged': TABLE['visual-t'], 'visual-elsewhere': TABLE['visual-t'] },
+      {}
+    )
+    const both = worldInput({ rules: [...RULES, merged, elsewhere], matrix })
+    const ids = rivalReadings(T, both).map((r) => r.rule.id)
+    expect(ids).not.toContain('visual-merged')
+    expect(ids).toContain('visual-elsewhere')
+
+    const mergedOnly = worldInput({ rules: [...RULES, merged], matrix })
+    expect(SEEDS.slice(0, 20).some((s) => buildBoard(T, mergedOnly, s) !== null)).toBe(true)
+  })
 })
 
 describe('buildBoard', () => {
@@ -101,7 +118,7 @@ describe('buildBoard', () => {
     }
   })
 
-  it('has 2-3 live decoys, and traps that are definite on one of them', () => {
+  it('has at least one live decoy, and traps that are definite on a decoy', () => {
     const matrix = worldInput().matrix
     const placeOn = (itemId: string, d: VisualCandidate['liveDecoys'][number]) => {
       const v = matrix.valueOf(itemId, d.ruleId)
@@ -109,18 +126,64 @@ describe('buildBoard', () => {
     }
     for (const c of boards) {
       expect(c.liveDecoys.length).toBeGreaterThanOrEqual(1)
-      const decoyTrap = c.guests.find((g) => g.trapType === 'decoy')!
-      const looksWrong = c.guests.find((g) => g.trapType === 't-but-looks-wrong')!
-      expect(decoyTrap.trueLabel).toBe('OUT')
-      expect(looksWrong.trueLabel).toBe('IN')
-      expect(
-        c.liveDecoys.some(
-          (d) => placeOn(decoyTrap.wordId, d) === true && placeOn(looksWrong.wordId, d) === false
-        )
-      ).toBe(true)
+      const decoyTraps = c.guests.filter((g) => g.trapType === 'decoy')
+      const looksWrong = c.guests.find((g) => g.trapType === 't-but-looks-wrong')
+      for (const g of decoyTraps) expect(g.trueLabel).toBe('OUT')
+      if (looksWrong) {
+        expect(decoyTraps).toHaveLength(1)
+        expect(looksWrong.trueLabel).toBe('IN')
+        expect(
+          c.liveDecoys.some(
+            (d) =>
+              placeOn(decoyTraps[0].wordId, d) === true && placeOn(looksWrong.wordId, d) === false
+          )
+        ).toBe(true)
+        continue
+      }
+      // A second decoy trap only when no decoy could have had both traps.
+      expect(decoyTraps).toHaveLength(2)
+      expect(c.liveDecoys.some((d) => decoyTraps.every((g) => placeOn(g.wordId, d) === true))).toBe(
+        true
+      )
+      const free = ITEMS.filter((i) => !c.clues.some((x) => x.wordId === i.id))
+      const onT = (i: (typeof ITEMS)[number]) => matrix.valueOf(i.id, T.id)
+      for (const d of c.liveDecoys) {
+        const looksWrongExists = free.some((i) => onT(i) === true && placeOn(i.id, d) === false)
+        const decoyTrapExists = free.some((i) => onT(i) === false && placeOn(i.id, d) === true)
+        expect(looksWrongExists && decoyTrapExists).toBe(false)
+      }
     }
     const onTarget = boards.filter((c) => c.liveDecoys.length >= 2 && c.liveDecoys.length <= 3)
     expect(onTarget.length).toBeGreaterThan(boards.length / 2)
+  })
+
+  it('varies the number of IN guests, with 3 the most common', () => {
+    const tally = new Map<number, number>()
+    for (const c of boards) {
+      const n = c.guests.filter((g) => g.trueLabel === 'IN').length
+      tally.set(n, (tally.get(n) ?? 0) + 1)
+    }
+    expect(tally.size).toBeGreaterThanOrEqual(3)
+    expect([...tally].sort((a, b) => b[1] - a[1])[0][0]).toBe(3)
+  })
+
+  it('takes two decoy traps when the only decoy is a superset of T', () => {
+    // Every even item is IN on it too, so no guest can fit T and look wrong to it.
+    const superset = worldInput({
+      rules: [T, rule('visual-super')],
+      matrix: buildMatrix(
+        { 'visual-t': TABLE['visual-t'], 'visual-super': tags((n) => even(n) || n % 5 === 1) },
+        {}
+      ),
+    })
+    const built = SEEDS.slice(0, 50)
+      .map((s) => buildBoard(T, superset, s))
+      .filter((c): c is VisualCandidate => c !== null)
+    expect(built.length).toBeGreaterThan(25)
+    for (const c of built) {
+      expect(c.guests.filter((g) => g.isTrap).map((g) => g.trapType)).toEqual(['decoy', 'decoy'])
+      expect(c.guests).toHaveLength(6)
+    }
   })
 
   it('spreads the IN clues over at least two groups', () => {

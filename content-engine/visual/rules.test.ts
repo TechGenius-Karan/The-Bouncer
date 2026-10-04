@@ -23,6 +23,17 @@ describe('VISUAL_RULES', () => {
     for (const rule of VISUAL_RULES) expect(rule.reveal).toMatch(/^[A-Z][^.!?]*\.$/)
   })
 
+  it('only retired rules name mergedInto, and only other real rules', () => {
+    const ids = new Set(VISUAL_RULES.map((r) => r.id))
+    for (const rule of VISUAL_RULES.filter((r) => r.mergedInto)) {
+      expect(rule.retired).toBe(true)
+      for (const id of rule.mergedInto!) {
+        expect(ids.has(id)).toBe(true)
+        expect(id).not.toBe(rule.id)
+      }
+    }
+  })
+
   // Ids are permanent (§3.5): a mismatch here means one was removed or renamed
   // instead of retired, which orphans its tags. Regenerate with
   // `npx vitest run content-engine/visual/rules.test.ts -u` only after
