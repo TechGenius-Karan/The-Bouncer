@@ -17,20 +17,54 @@
 // (generate -> validate -> human-approve -> schedule).
 
 import { generateBatchCore } from '../content-engine/generator/batch.js'
+import { generateVisualDocs } from '../content-engine/visual/batch.js'
 import { RULES } from '../content-engine/rules/index.js'
 import { applyRuleOverrides } from '../content-engine/rules/ruleOverrides.js'
 import { getCollections } from '../lib/db.js'
+import { resolvePuzzleDateString } from '../lib/puzzleDate.js'
 import { resolveBufferHealth } from '../lib/puzzleStats.js'
 import { resolveRejectCounts } from '../lib/rejectStats.js'
 import { resolveRuleOverrides } from '../lib/ruleOverrides.js'
 import { resolveRecentRuleUsage } from '../lib/ruleUsage.js'
 import type { PuzzleDoc } from '../lib/types.js'
 import { jsonResponse } from '../lib/respond.js'
+import { puzzleKindFrom, splitVisualRuleUsage, VISUAL_RULE_USAGE_FILTER } from '../lib/visual.js'
 
 const MEDIUM_MIN_DAYS = 14
 const MEDIUM_TARGET_DAYS = 28
 const SPICY_MIN_WEEKS = 4
 const SPICY_TARGET_WEEKS = 6
+const VISUAL_MIN_DAYS = 14
+const VISUAL_TARGET_DAYS = 28
+
+/**
+ * planning-visual-pivot.md §5.4: one visual queue, topped up to 28 days when
+ * it drops under 14. Pending puzzles count toward the target: each one holds a
+ * rule (D6), so a slow review week must not draft rules nobody has looked at.
+ */
+async function topUpVisual(bufferDays: number): Promise<Response> {
+  if (bufferDays >= VISUAL_MIN_DAYS) {
+    console.log('Visual buffer healthy, nothing to generate.', { bufferDays })
+    return jsonResponse({ ok: true, generated: 0 })
+  }
+  const { puzzles } = await getCollections()
+  const [usageDocs, rejectCounts] = await Promise.all([
+    puzzles.find(VISUAL_RULE_USAGE_FILTER, { projection: { ruleId: 1, status: 1 } }).toArray(),
+    resolveRejectCounts(),
+  ])
+  const usage = splitVisualRuleUsage(usageDocs)
+  const count = VISUAL_TARGET_DAYS - bufferDays - usage.pendingRuleIds.size
+  if (count <= 0) {
+    console.log('Enough visual puzzles are waiting for review.', { bufferDays })
+    return jsonResponse({ ok: true, generated: 0 })
+  }
+
+  const docs = generateVisualDocs(count, { ...usage, rejectCounts }, resolvePuzzleDateString())
+  if (docs.length < count) console.warn(`Only generated ${docs.length}/${count} visual candidates.`)
+  if (docs.length > 0) await puzzles.insertMany(docs)
+  console.log(`Generated ${docs.length} visual candidate puzzle(s) as pending_approval.`)
+  return jsonResponse({ ok: true, generated: docs.length })
+}
 
 export default {
   fetch: async (req: Request): Promise<Response> => {
@@ -41,7 +75,9 @@ export default {
       return jsonResponse({ error: 'Unauthorized' }, 401)
     }
 
-    const health = await resolveBufferHealth()
+    const kind = puzzleKindFrom(process.env.PUZZLE_KIND)
+    const health = await resolveBufferHealth(new Date(), kind)
+    if (kind === 'visual') return topUpVisual(health.visualBufferDays)
 
     const tiersToGenerate: { tier: PuzzleDoc['difficultyTier']; count: number }[] = []
     if (health.mediumBufferDays < MEDIUM_MIN_DAYS) {

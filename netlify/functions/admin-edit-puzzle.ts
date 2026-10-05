@@ -65,6 +65,11 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'Puzzle not found or no longer pending approval' }, 409)
   }
 
+  // planning-visual-pivot.md D11: a bad visual board is rejected and regenerated, never patched.
+  if (doc.kind === 'visual') {
+    return jsonResponse({ error: 'Visual puzzles are not edited by hand. Reject it instead.' }, 400)
+  }
+
   // Structural checks only. None of these is a judgement about what a word
   // means — they are the things that make a puzzle playable at all, and the
   // reviewer overriding them would just produce a broken round.

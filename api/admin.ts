@@ -9,6 +9,7 @@
 
 import { ObjectId } from 'mongodb'
 import { generateBatchCore } from '../content-engine/generator/batch.js'
+import { generateVisualDocs, visualRunway } from '../content-engine/visual/batch.js'
 import { planAiReviewDispatch } from '../content-engine/generator/aiReviewDispatch.js'
 import { buildReviewMenus } from '../content-engine/generator/aiReviewMenu.js'
 import { buildWordBank } from '../content-engine/words/wordBank.js'
@@ -42,6 +43,12 @@ import { jsonResponse } from '../lib/respond.js'
 import { resolveRuleOverrides, writeRuleOverride } from '../lib/ruleOverrides.js'
 import { resolveRecentRuleUsage } from '../lib/ruleUsage.js'
 import type { AiReviewDoc, PuzzleDoc } from '../lib/types.js'
+import {
+  puzzleKindFrom,
+  ruleHolderFilter,
+  splitVisualRuleUsage,
+  VISUAL_RULE_USAGE_FILTER,
+} from '../lib/visual.js'
 
 // How many real, correctly-sided bank words to offer the AI as a menu for the
 // rewrite-puzzle action. IN is generous so skewed rules (e.g. hidden-number,
@@ -118,8 +125,30 @@ async function handleApprove(req: Request): Promise<Response> {
   }
 
   const { puzzles } = await getCollections()
+  const id = new ObjectId(puzzleId)
+
+  // planning-visual-pivot.md §3.5: a visual rule runs once ever, and this check
+  // is the hard guarantee. ponytail: check-then-write, so two approvals racing
+  // could both pass; there is one reviewer. A unique partial index on ruleId
+  // closes it if that changes.
+  const target = await puzzles.findOne({ _id: id }, { projection: { kind: 1, ruleId: 1 } })
+  if (target?.kind === 'visual') {
+    const holder = await puzzles.findOne(ruleHolderFilter(target.ruleId, id), {
+      projection: { number: 1, status: 1 },
+    })
+    if (holder) {
+      const name = holder.number ? `#${holder.number}` : holder._id.toString()
+      return jsonResponse(
+        {
+          error: `Rule ${target.ruleId} already belongs to puzzle ${name} (${holder.status}). A visual rule runs once ever: reject this one.`,
+        },
+        409
+      )
+    }
+  }
+
   const update = await puzzles.updateOne(
-    { _id: new ObjectId(puzzleId), status: 'pending_approval' },
+    { _id: id, status: 'pending_approval' },
     { $set: { status: 'approved' } }
   )
 
@@ -201,6 +230,11 @@ async function handleAiReview(req: Request): Promise<Response> {
   const doc = await puzzles.findOne({ _id: new ObjectId(puzzleId), status: 'pending_approval' })
   if (!doc) {
     return jsonResponse({ error: 'Puzzle not found or no longer pending approval' }, 409)
+  }
+
+  // planning-visual-pivot.md D11: a bad visual board is rejected and regenerated, never patched.
+  if (doc.kind === 'visual') {
+    return jsonResponse({ error: 'Visual puzzles are not AI-reviewed. Reject it instead.' }, 400)
   }
 
   const detail = await resolveFullPuzzleDetail(doc)
@@ -560,7 +594,15 @@ async function handleBufferHealth(req: Request): Promise<Response> {
   if (req.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405)
   if (!requireAdmin(req)) return jsonResponse({ error: 'Invalid access code' }, 401)
 
-  const response: AdminBufferHealthResponse = await resolveBufferHealth()
+  const kind = puzzleKindFrom(process.env.PUZZLE_KIND)
+  const response: AdminBufferHealthResponse = await resolveBufferHealth(new Date(), kind)
+  if (kind === 'visual') {
+    const { puzzles } = await getCollections()
+    const usage = await puzzles
+      .find(VISUAL_RULE_USAGE_FILTER, { projection: { ruleId: 1, status: 1 } })
+      .toArray()
+    response.runway = visualRunway(splitVisualRuleUsage(usage).usedRuleIds)
+  }
   return jsonResponse(response)
 }
 
@@ -646,6 +688,23 @@ async function handleGenerateBatch(req: Request): Promise<Response> {
       { error: `count must be an integer between 1 and ${MAX_GENERATE_COUNT}` },
       400
     )
+  }
+  if (body.kind !== undefined && body.kind !== 'word' && body.kind !== 'visual') {
+    return jsonResponse({ error: "kind must be 'word' or 'visual'" }, 400)
+  }
+  if ((body.kind ?? puzzleKindFrom(process.env.PUZZLE_KIND)) === 'visual') {
+    const { puzzles } = await getCollections()
+    const [usage, rejectCounts] = await Promise.all([
+      puzzles.find(VISUAL_RULE_USAGE_FILTER, { projection: { ruleId: 1, status: 1 } }).toArray(),
+      resolveRejectCounts(),
+    ])
+    const docs = generateVisualDocs(
+      count,
+      { ...splitVisualRuleUsage(usage), rejectCounts },
+      resolvePuzzleDateString()
+    )
+    if (docs.length > 0) await puzzles.insertMany(docs)
+    return jsonResponse({ ok: true, requested: count, generated: docs.length })
   }
   const tiers: ('medium' | 'spicy')[] =
     body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']
