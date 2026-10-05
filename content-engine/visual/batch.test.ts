@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { generateVisualBatch, toVisualPuzzleDoc } from './batch.js'
+import { generateVisualBatch, toVisualPuzzleDoc, visualRunway } from './batch.js'
+import { buildMatrixReport } from './report.js'
+import { VISUAL_RULES } from './rules.js'
+import { ITEMS } from './items.js'
+import { MATRIX } from './tags/index.js'
 import { worldInput } from './testWorld.js'
 
 describe('generateVisualBatch', () => {
@@ -51,5 +55,25 @@ describe('toVisualPuzzleDoc', () => {
       knobValues: candidate.knobValues,
       createdAt,
     })
+  })
+})
+
+describe('visualRunway', () => {
+  it('equals eligibleCount from buildMatrixReport and excludes unshippable rules', () => {
+    const report = buildMatrixReport(VISUAL_RULES, ITEMS, MATRIX)
+    expect(visualRunway(new Set())).toBe(report.eligibleCount)
+  })
+
+  it('lowers by exactly one when a shippable rule is used', () => {
+    const report = buildMatrixReport(VISUAL_RULES, ITEMS, MATRIX)
+    const shippableRuleId = report.counts.find(
+      (c) => c.eligible && !report.unshippable.some((u) => u.ruleId === c.ruleId)
+    )?.ruleId
+    if (!shippableRuleId) {
+      // If no rule is shippable, skip this test
+      expect(report.eligibleCount).toBe(0)
+      return
+    }
+    expect(visualRunway(new Set([shippableRuleId]))).toBe(report.eligibleCount - 1)
   })
 })

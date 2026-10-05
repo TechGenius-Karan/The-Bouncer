@@ -1,6 +1,7 @@
 import { eligibleRules, generateVisualCandidate, type GeneratorInput } from './generator.js'
 import { ITEMS } from './items.js'
 import { batchSeed } from './random.js'
+import { unavoidableRivals } from './report.js'
 import { VISUAL_RULES } from './rules.js'
 import { MATRIX } from './tags/index.js'
 import type { VisualCandidate } from './types.js'
@@ -64,5 +65,8 @@ export function generateVisualDocs(
 /** §4.7: usable rules not used yet, i.e. days of puzzles left. Pending rules still count: they have not run. */
 export function visualRunway(usedRuleIds: Set<string>): number {
   const input = { items: ITEMS, rules: VISUAL_RULES, matrix: MATRIX, usedRuleIds }
-  return eligibleRules({ ...input, pendingRuleIds: new Set(), rejectCounts: new Map() }).length
+  const eligible = eligibleRules({ ...input, pendingRuleIds: new Set(), rejectCounts: new Map() })
+  return eligible.filter(
+    (rule) => unavoidableRivals(rule, VISUAL_RULES, ITEMS, MATRIX).length === 0
+  ).length
 }
