@@ -13,6 +13,7 @@ import { isValidPuzzleDateString, resolvePuzzleDateString } from './_shared/puzz
 import { jsonResponse } from './_shared/respond'
 import { buildPool, resolveClueWords, resolveRuleText } from './_shared/roundView'
 import type { PuzzleDoc, ResultDoc } from './_shared/types'
+import { visualRoundFields } from './_shared/visual'
 
 // Lets us simulate a different "today" to manually walk through a
 // multi-day schedule without touching the system clock. Fails closed: only
@@ -96,6 +97,7 @@ export default async (req: Request): Promise<Response> => {
     livesRemaining: result.livesRemaining,
     roundComplete: result.roundComplete,
     ruleText,
+    ...visualRoundFields(puzzle),
   }
 
   return jsonResponse(response)
