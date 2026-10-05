@@ -54,6 +54,8 @@ export interface PuzzleGuestDoc {
 export interface DecoyResult {
   ruleId: string
   subtlety: number
+  /** Visual only: the rule fits read the other way round (planning-visual-pivot.md §4.4). */
+  negated?: true
 }
 
 export interface KnobValues {

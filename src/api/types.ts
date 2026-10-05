@@ -23,6 +23,10 @@ export interface GetRoundResponse {
   livesRemaining: number
   roundComplete: boolean
   ruleText: string | null
+  /** Absent for word puzzles. Old clients ignore it and render `clues`, which hold item names (planning-visual-pivot.md §5.3). */
+  kind?: 'visual'
+  /** Visual only: item ids in the same order as `clues.in` / `clues.out`. */
+  clueIds?: { in: string[]; out: string[] }
 }
 
 export interface CheckSwipeResponse {
