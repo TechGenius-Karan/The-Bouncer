@@ -69,11 +69,7 @@ describe('visualRunway', () => {
     const shippableRuleId = report.counts.find(
       (c) => c.eligible && !report.unshippable.some((u) => u.ruleId === c.ruleId)
     )?.ruleId
-    if (!shippableRuleId) {
-      // If no rule is shippable, skip this test
-      expect(report.eligibleCount).toBe(0)
-      return
-    }
-    expect(visualRunway(new Set([shippableRuleId]))).toBe(report.eligibleCount - 1)
+    expect(report.eligibleCount).toBeGreaterThan(0)
+    expect(visualRunway(new Set([shippableRuleId!]))).toBe(report.eligibleCount - 1)
   })
 })

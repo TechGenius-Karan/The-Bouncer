@@ -71,6 +71,9 @@ export default {
     if (req.method !== 'GET') {
       return jsonResponse({ error: 'Method not allowed' }, 405)
     }
+    if (!process.env.CRON_SECRET) {
+      return jsonResponse({ error: 'CRON_SECRET not set' }, 500)
+    }
     if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
       return jsonResponse({ error: 'Unauthorized' }, 401)
     }

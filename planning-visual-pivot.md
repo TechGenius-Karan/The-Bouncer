@@ -283,7 +283,7 @@ export interface GetRoundResponse {
   - `npm run content:seed-visual` **upserts only**, never deletes. `seedDatabase.ts` is untouched.
 - **Generation entry points, which must copy `kind` and `generatorSeed`:**
   - `api/scheduled-generate-puzzles.ts` reads `PUZZLE_KIND`
-  - `netlify/functions/admin-generate-batch.ts` takes `kind` from the request body (default `word`)
+  - `netlify/functions/admin-generate-batch.ts` takes `kind` from the request body (default `PUZZLE_KIND`)
   - `content-engine/scripts/queuePuzzles.ts` gets a `--visual` flag
   - `api/admin.ts` (not live, kept in sync)
 - **Approve:** the uniqueness refusal from §3.5.
