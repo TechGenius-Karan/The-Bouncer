@@ -367,6 +367,7 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
     - a **mapping test per generation entry point** (§2.7)
     - approve refuses a used rule, but allows one whose only previous use was rejected or unscheduled
     - buffer health ignores parked word puzzles
+  - **4a status:** done 2026-10-06. The local end-to-end check against Atlas passed: word path unchanged, 409 on a held rule, 400 on AI review, visual round served and revealed, test puzzles cleaned up.
 - **4b (player UI):** `ItemFace`, the four plug-in points, offline caching, credits screen. Verified by hand under `npm run dev:functions` at 360×640: play through, lose all 3 lives, resume after a reload, share, light/dark, screen-reader labels.
 - **4c (admin):** icons in review cards, kind badge, generate selector, edit/AI-review hidden for visual puzzles.
 
