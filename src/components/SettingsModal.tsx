@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { version } from '../../package.json'
 import { getPuzzleMeta } from '../api/client'
+import { NOUN_CREDITS, OPENMOJI_CREDIT } from '../game/iconCredits'
 // Dark mode is shelved for now — commented out, not removed, so it's a
 // quick re-enable later (see src/theme.ts).
 // import { getTheme, toggleTheme } from '../theme'
@@ -85,6 +86,27 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
             <span className="font-sans text-[15px] font-semibold">Reset stats & history</span>
             <span className="text-ink-soft">›</span>
           </button>
+
+          {/* Required by the icon licences before any visual puzzle goes live (planning-visual-pivot.md §5.5). */}
+          <details className="rounded-bin border border-line bg-slip px-4 py-3 font-sans text-[13px] text-ink-soft">
+            <summary className="cursor-pointer text-[15px] font-semibold text-ink">Icon credits</summary>
+            <p className="mt-2">
+              {OPENMOJI_CREDIT} (
+              <a href="https://openmoji.org" className="underline">
+                openmoji.org
+              </a>
+              )
+            </p>
+            {NOUN_CREDITS.map((c) => (
+              <p key={c.itemId} className="mt-1">
+                {c.itemId.replace(/-/g, ' ')}:{' '}
+                <a href={c.url} className="underline">
+                  {c.creator}
+                </a>
+                , Noun Project, CC BY 3.0
+              </p>
+            ))}
+          </details>
         </div>
 
         <div className="flex flex-col items-center gap-1 px-7 pb-2 pt-1 text-center">
