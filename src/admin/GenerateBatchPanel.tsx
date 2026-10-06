@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { generateBatch } from './adminClient'
 
-type TierChoice = 'both' | 'medium' | 'spicy'
+type TierChoice = 'both' | 'medium' | 'spicy' | 'visual'
 
 interface Props {
   code: string
@@ -27,8 +27,10 @@ export function GenerateBatchPanel({ code, onGenerated }: Props) {
     setError(null)
     setMessage(null)
     try {
-      const tiers = tierChoice === 'both' ? undefined : [tierChoice]
-      const result = await generateBatch(code, count, tiers)
+      const result =
+        tierChoice === 'visual'
+          ? await generateBatch(code, count, undefined, 'visual')
+          : await generateBatch(code, count, tierChoice === 'both' ? undefined : [tierChoice], 'word')
       setMessage(`Generated ${result.generated}/${result.requested} candidates — added to the review queue below.`)
       onGenerated()
     } catch (err) {
@@ -57,6 +59,7 @@ export function GenerateBatchPanel({ code, onGenerated }: Props) {
           <option value="both">Medium + Spicy</option>
           <option value="medium">Medium only</option>
           <option value="spicy">Spicy only</option>
+          <option value="visual">Visual</option>
         </select>
         <button
           type="submit"

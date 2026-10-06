@@ -4,6 +4,8 @@ import type { AdminBufferHealthResponse } from './types'
 // against, matching the plan's "healthy" bar for each tier.
 const MEDIUM_TARGET_DAYS = 14
 const SPICY_TARGET_WEEKS = 4
+// planning-visual-pivot.md §4.7: below this many unused rules, write more.
+const RUNWAY_WARN_DAYS = 60
 
 interface Props {
   health: AdminBufferHealthResponse
@@ -17,10 +19,25 @@ export function BufferHealthPanel({ health }: Props) {
     <div className="flex flex-col gap-3 rounded-bin border border-line bg-slip p-5">
       <div className="font-display text-lg font-bold">Content buffer</div>
 
-      <div className="grid grid-cols-2 gap-4 font-sans text-sm">
-        <BufferTile label="Medium buffer" value={`${health.mediumBufferDays} days`} low={mediumLow} />
-        <BufferTile label="Spicy buffer" value={`${health.spicyBufferWeeks} weeks`} low={spicyLow} />
-      </div>
+      {health.kind === 'visual' ? (
+        <div className="grid grid-cols-2 gap-4 font-sans text-sm">
+          <BufferTile
+            label="Visual buffer"
+            value={`${health.visualBufferDays} days`}
+            low={health.visualBufferDays < MEDIUM_TARGET_DAYS}
+          />
+          <BufferTile
+            label="Rule runway"
+            value={`${health.runway ?? 0} days`}
+            low={(health.runway ?? 0) < RUNWAY_WARN_DAYS}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 font-sans text-sm">
+          <BufferTile label="Medium buffer" value={`${health.mediumBufferDays} days`} low={mediumLow} />
+          <BufferTile label="Spicy buffer" value={`${health.spicyBufferWeeks} weeks`} low={spicyLow} />
+        </div>
+      )}
 
       {health.gapDates.length > 0 && (
         <div className="rounded-card border border-miss-border bg-miss-tint p-3 font-sans text-sm text-miss-text">
