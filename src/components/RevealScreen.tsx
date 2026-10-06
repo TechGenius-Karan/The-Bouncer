@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCrackRate } from '../api/client'
 import { derivedEndedEarly, type CardState, type RoundResult } from '../game/types'
+import { ItemFace } from './ItemFace'
 import { ShareCardModal } from './ShareCardModal'
 
 interface Props {
@@ -86,7 +87,7 @@ export function RevealScreen({ result, onHome }: Props) {
                   {mark}
                 </div>
                 <div className={`font-display text-lg font-bold tracking-wide ${textColor}`}>
-                  {card.word}
+                  <ItemFace id={card.id} name={card.word} visual={card.visual} size={26} />
                 </div>
                 <div className={`ml-auto font-sans text-[13px] ${noteColor}`}>{note}</div>
               </div>

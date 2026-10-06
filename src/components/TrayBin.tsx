@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import type { CardState, Label } from '../game/types'
+import { ItemFace } from './ItemFace'
 import { CARD_STEP, stackHeightFor, TOP_BASE } from './traySize'
 
 interface Props {
@@ -39,7 +40,7 @@ export const TrayBin = memo(function TrayBin({ side, cards, active, onClick }: P
             className={`absolute left-1/2 flex h-10 w-[92%] -translate-x-1/2 motion-safe:animate-settle items-center justify-center rounded-[11px] border font-display text-base font-bold tracking-wide ${isIn ? 'border-bin-in-chip text-bin-in-text' : 'border-bin-out-chip text-bin-out-text'} bg-slip`}
             style={{ top: `${TOP_BASE + n * CARD_STEP}px`, zIndex: n }}
           >
-            {c.word}
+            <ItemFace id={c.id} name={c.word} visual={c.visual} size={22} />
           </div>
         ))}
       </div>

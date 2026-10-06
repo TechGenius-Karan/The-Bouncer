@@ -1,6 +1,7 @@
 import { memo, useRef, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { CardState } from '../game/types'
+import { ItemFace } from './ItemFace'
 
 const DRAG_THRESHOLD = 64
 const TAP_THRESHOLD = 8
@@ -133,7 +134,7 @@ export const SlipCard = memo(function SlipCard({
         zIndex: dragging ? 30 : 1,
       }}
     >
-      {card.word}
+      <ItemFace id={card.id} name={card.word} visual={card.visual} size={36} />
       {card.result === 'correct' && (
         <div className="absolute -right-2 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-bin-in font-sans text-xs text-white">
           ✓

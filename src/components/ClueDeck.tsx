@@ -1,17 +1,21 @@
+import { ItemFace } from './ItemFace'
+
 interface Props {
   clueIn: string[]
   clueOut: string[]
+  /** Visual puzzles only: item ids in the same order as the clue names. */
+  clueIds?: { in: string[]; out: string[] }
 }
 
-export function ClueDeck({ clueIn, clueOut }: Props) {
+export function ClueDeck({ clueIn, clueOut, clueIds }: Props) {
   return (
     <div className="mx-5 flex flex-col gap-3 rounded-bin border border-line bg-slip p-4">
       <div className="font-sans text-[11px] font-semibold tracking-wider text-ink-soft">
         THE LIST SO FAR
       </div>
-      <ClueRow label="● IN" labelColor="text-bin-in" words={clueIn} chipBg="bg-bin-in-chip" chipText="text-bin-in-text" />
+      <ClueRow label="● IN" labelColor="text-bin-in" words={clueIn} ids={clueIds?.in} chipBg="bg-bin-in-chip" chipText="text-bin-in-text" />
       <div className="h-px bg-skip-chip" />
-      <ClueRow label="▲ OUT" labelColor="text-bin-out-label" words={clueOut} chipBg="bg-bin-out-chip" chipText="text-bin-out-text" />
+      <ClueRow label="▲ OUT" labelColor="text-bin-out-label" words={clueOut} ids={clueIds?.out} chipBg="bg-bin-out-chip" chipText="text-bin-out-text" />
     </div>
   )
 }
@@ -20,12 +24,14 @@ function ClueRow({
   label,
   labelColor,
   words,
+  ids,
   chipBg,
   chipText,
 }: {
   label: string
   labelColor: string
   words: string[]
+  ids?: string[]
   chipBg: string
   chipText: string
 }) {
@@ -43,7 +49,7 @@ function ClueRow({
           overflow-x-auto stays only as a last-resort safety net for a case
           these two steps can't fit; it should never engage in practice. */}
       <div className="flex min-w-0 flex-nowrap gap-1.5 overflow-x-auto">
-        {words.map((w) => {
+        {words.map((w, i) => {
           const compact = w.length > 7
           const small = w.length > 10
           return (
@@ -57,7 +63,7 @@ function ClueRow({
                     : 'px-2.5 py-1.5 text-sm tracking-wide'
               }`}
             >
-              {w}
+              <ItemFace id={ids?.[i] ?? w} name={w} visual={ids !== undefined} size={18} />
             </div>
           )
         })}
