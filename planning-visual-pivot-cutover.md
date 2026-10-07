@@ -55,7 +55,7 @@ Wait until the Netlify credits reset (around 2026-10-08), and until Phases 1–4
 - [ ] **B3.** Check the live site:
   - today's word puzzle plays
   - `/admin` buffer health shows the same numbers as before
-  - `https://<site>/icons/visual/anchor.svg` loads, with the `Content-Security-Policy` header from `netlify.toml`
+  - `curl -I https://<site>/icons/visual/anchor.svg` shows `200`, an `image/svg+xml` content type and the `Content-Security-Policy` header from `netlify.toml`. Use curl or a private window: a browser with the service worker installed gets `index.html` at that URL.
 - [ ] **B4.** Run `npm run content:seed-visual` against Atlas, in case it wasn't run after Part A's final batch.
 
 ## Part C — Production pilot (D13, no deploy)
@@ -74,6 +74,8 @@ Wait until the Netlify credits reset (around 2026-10-08), and until Phases 1–4
   - `src/components/LoadingDoor.tsx`: the demo words `TUXEDO / VELVET / SNEAKER` and "Six words · one rule"
 
   Bouncer and door copy is welcome (see the theming memory). The wording is the owner's call; open the PR and check it on its free deploy preview.
+
+  On the same branch, default the admin Generate panel to **Visual** (`tierChoice` in `src/admin/GenerateBatchPanel.tsx`). Its default today, "Medium + Spicy", sends `kind: 'word'`.
 - [ ] **D2.** Find the last scheduled word date: `/admin/schedule`, or Atlas `puzzles.find({ status: 'scheduled', kind: { $ne: 'visual' } }).sort({ date: -1 }).limit(1)`. Visual days start the day after.
 - [ ] **D3.** Generate and approve enough visual puzzles to cover at least 28 days from that date (C1, repeated). Then run `PUZZLE_KIND=visual npm run content:schedule -- 28 <first free date>`.
 - [ ] **D4.** Set `PUZZLE_KIND=visual` in all three places:

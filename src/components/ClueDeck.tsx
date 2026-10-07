@@ -35,6 +35,7 @@ function ClueRow({
   chipBg: string
   chipText: string
 }) {
+  const visual = ids !== undefined
   return (
     <div className="flex items-center gap-2.5">
       <div className={`w-[58px] flex-none whitespace-nowrap font-display text-sm font-extrabold tracking-wider ${labelColor}`}>
@@ -47,23 +48,38 @@ function ClueRow({
           padding/tracking, then a longer word drops font-size too — so a
           single long clue word never derails the whole row.
           overflow-x-auto stays only as a last-resort safety net for a case
-          these two steps can't fit; it should never engage in practice. */}
-      <div className="flex min-w-0 flex-nowrap gap-1.5 overflow-x-auto">
+          these two steps can't fit; it should never engage in practice.
+          A visual row can't fit three icon-and-caption chips side by side,
+          so it stacks each icon over its caption in three equal columns,
+          and a long caption wraps to a second line: the deck grows a
+          little rather than scrolling sideways. */}
+      <div
+        className={
+          visual
+            ? 'grid min-w-0 flex-1 grid-cols-3 gap-1.5'
+            : 'flex min-w-0 flex-nowrap gap-1.5 overflow-x-auto'
+        }
+      >
         {words.map((w, i) => {
+          const id = ids?.[i]
           const compact = w.length > 7
           const small = w.length > 10
           return (
             <div
               key={w}
-              className={`flex-none whitespace-nowrap rounded-[10px] font-display font-bold ${chipBg} ${chipText} ${
-                small
-                  ? 'px-1.5 py-1 text-xs tracking-normal'
-                  : compact
-                    ? 'px-2 py-1 text-sm tracking-normal'
-                    : 'px-2.5 py-1.5 text-sm tracking-wide'
-              }`}
+              className={
+                visual
+                  ? `rounded-[10px] px-1 py-1 font-display text-[11px] font-bold leading-tight ${chipBg} ${chipText}`
+                  : `flex-none whitespace-nowrap rounded-[10px] font-display font-bold ${chipBg} ${chipText} ${
+                      small
+                        ? 'px-1.5 py-1 text-xs tracking-normal'
+                        : compact
+                          ? 'px-2 py-1 text-sm tracking-normal'
+                          : 'px-2.5 py-1.5 text-sm tracking-wide'
+                    }`
+              }
             >
-              <ItemFace id={ids?.[i] ?? w} name={w} visual={ids !== undefined} size={18} />
+              <ItemFace id={id ?? w} name={w} visual={id !== undefined} size={18} stacked />
             </div>
           )
         })}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { version } from '../../package.json'
 import { getPuzzleMeta } from '../api/client'
-import { NOUN_CREDITS, OPENMOJI_CREDIT } from '../game/iconCredits'
+import { NOUN_CREDITS, NOUN_LICENCE_URL, OPENMOJI_CREDIT, OPENMOJI_LICENCE_URL } from '../game/iconCredits'
 // Dark mode is shelved for now — commented out, not removed, so it's a
 // quick re-enable later (see src/theme.ts).
 // import { getTheme, toggleTheme } from '../theme'
@@ -91,8 +91,12 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
           <details className="rounded-bin border border-line bg-slip px-4 py-3 font-sans text-[13px] text-ink-soft">
             <summary className="cursor-pointer text-[15px] font-semibold text-ink">Icon credits</summary>
             <p className="mt-2">
-              {OPENMOJI_CREDIT} (
-              <a href="https://openmoji.org" className="underline">
+              {OPENMOJI_CREDIT}{' '}
+              <a href={OPENMOJI_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                CC BY-SA 4.0
+              </a>{' '}
+              (
+              <a href="https://openmoji.org" target="_blank" rel="noopener noreferrer" className="underline">
                 openmoji.org
               </a>
               )
@@ -100,12 +104,17 @@ export function SettingsModal({ onClose, onHowToPlay, onShowStats }: Props) {
             {NOUN_CREDITS.map((c) => (
               <p key={c.itemId} className="mt-1">
                 {c.itemId.replace(/-/g, ' ')}:{' '}
-                <a href={c.url} className="underline">
+                <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline">
                   {c.creator}
                 </a>
-                , Noun Project, CC BY 3.0
+                , Noun Project,{' '}
+                <a href={NOUN_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                  CC BY 3.0
+                </a>
               </p>
             ))}
+            {/* CC BY-SA 4.0 §3(a)(1)(B): say that the icons were changed. */}
+            <p className="mt-1">Icons adapted (recoloured and resized).</p>
           </details>
         </div>
 
