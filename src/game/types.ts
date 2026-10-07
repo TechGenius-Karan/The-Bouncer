@@ -12,6 +12,8 @@ export interface CardState {
   result: CardResult
   /** Unknown (null) until this card resolves or the round ends — the server never reveals it early. */
   trueLabel: Label | null
+  /** Visual puzzles only: `id` is an item id and `word` its caption (planning-visual-pivot.md §5.5). */
+  visual?: true
 }
 
 export type Phase = 'loading' | 'play' | 'done' | 'error'
@@ -27,6 +29,8 @@ export interface GameState {
   /** Only known once the round is complete. */
   ruleText: string | null
   clues: { in: string[]; out: string[] }
+  /** Visual puzzles only: item ids in the same order as `clues`. */
+  clueIds?: { in: string[]; out: string[] }
   cards: CardState[]
   lives: number
   selected: string | null

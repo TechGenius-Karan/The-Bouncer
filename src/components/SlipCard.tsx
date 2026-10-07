@@ -1,6 +1,7 @@
 import { memo, useRef, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { CardState } from '../game/types'
+import { ItemFace } from './ItemFace'
 
 const DRAG_THRESHOLD = 64
 const TAP_THRESHOLD = 8
@@ -126,14 +127,15 @@ export const SlipCard = memo(function SlipCard({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      className={`relative flex h-[66px] w-full cursor-grab items-center justify-center rounded-card px-1 font-display text-[22px] font-bold tracking-wide max-[380px]:text-[18px] ${border} ${bg} ${color} ${shadow} ${extraAnim} select-none touch-none`}
+      className={`relative flex h-[66px] w-full cursor-grab items-center justify-center rounded-card px-1 font-display font-bold ${card.visual ? 'text-[15px]' : 'text-[22px] tracking-wide max-[380px]:text-[18px]'} ${border} ${bg} ${color} ${shadow} ${extraAnim} select-none touch-none`}
       style={{
         transform,
         transition: dragging || prefersReducedMotion ? 'none' : 'transform .28s cubic-bezier(.2,1.5,.4,1), box-shadow .2s',
         zIndex: dragging ? 30 : 1,
       }}
     >
-      {card.word}
+      {/* Stacked: the longer captions don't fit beside the icon on a 360 px phone's card. */}
+      <ItemFace id={card.id} name={card.word} visual={card.visual} size={30} stacked />
       {card.result === 'correct' && (
         <div className="absolute -right-2 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-bin-in font-sans text-xs text-white">
           ✓

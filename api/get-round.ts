@@ -14,6 +14,7 @@ import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleD
 import { jsonResponse } from '../lib/respond.js'
 import { buildPool, resolveClueWords, resolveRuleText } from '../lib/roundView.js'
 import type { PuzzleDoc, ResultDoc } from '../lib/types.js'
+import { visualRoundFields } from '../lib/visual.js'
 
 // Lets us simulate a different "today" to manually walk through a
 // multi-day schedule without touching the system clock. Fails closed: local
@@ -94,6 +95,7 @@ export default {
       livesRemaining: result.livesRemaining,
       roundComplete: result.roundComplete,
       ruleText,
+      ...visualRoundFields(puzzle),
     }
 
     return jsonResponse(response)

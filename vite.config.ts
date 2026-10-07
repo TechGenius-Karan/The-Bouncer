@@ -91,6 +91,14 @@ export default defineConfig({
             handler: 'NetworkOnly',
             method: 'GET',
           },
+          {
+            // Visual puzzle icons (planning-visual-pivot.md §5.5). The precache
+            // only takes js/css/html, so these are cached as they're used;
+            // StaleWhileRevalidate so a redrawn icon still reaches players.
+            urlPattern: /\/icons\/visual\/[a-z0-9-]+\.svg$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'visual-icons', expiration: { maxEntries: 800 } },
+          },
         ],
       },
     }),

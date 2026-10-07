@@ -61,7 +61,7 @@ function ScheduleRow({
     >
       <div className="flex items-baseline justify-between">
         <div className="font-display text-base font-bold">
-          {puzzle.date} · #{puzzle.number} · {puzzle.difficultyTier}
+          {puzzle.date} · #{puzzle.number} · {puzzle.kind === 'visual' ? 'Visual' : puzzle.difficultyTier}
         </div>
         {isToday ? (
           <span className="rounded-card bg-ink px-2 py-0.5 font-sans text-xs font-semibold text-screen">

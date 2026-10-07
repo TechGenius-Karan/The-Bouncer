@@ -14,8 +14,10 @@
 
 import 'dotenv/config'
 import {
+  approvedQueueFilter,
   isFillerRule,
   MAX_FILLER_PER_WEEK,
+  puzzleKindFrom,
   selectForDate,
   type Placement,
 } from '../scheduling/placement.js'
@@ -29,6 +31,9 @@ import type { PuzzleDoc } from '../../netlify/functions/_shared/types.js'
 
 const COUNT = Number(process.argv[2]) || 5
 const START_DATE = process.argv[3] || resolvePuzzleDateString()
+
+// Under PUZZLE_KIND=visual every date fills from one visual queue (planning-visual-pivot.md §5.4).
+const KIND = puzzleKindFrom(process.env.PUZZLE_KIND)
 
 // Safety valve: with either tier's pool exhausted, walking forward to find
 // enough correctly-tiered days for the other tier is still bounded (at most
@@ -51,13 +56,13 @@ async function main() {
   // FIFO by generation time — `number` doesn't exist pre-schedule anymore,
   // so it can't be the pull-order.
   const mediumQueue = await puzzles
-    .find({ status: 'approved', date: null, difficultyTier: 'medium' })
+    .find(approvedQueueFilter(KIND, 'medium'))
     .sort({ createdAt: 1 })
     .toArray()
-  const spicyQueue = await puzzles
-    .find({ status: 'approved', date: null, difficultyTier: 'spicy' })
-    .sort({ createdAt: 1 })
-    .toArray()
+  const spicyQueue =
+    KIND === 'visual'
+      ? []
+      : await puzzles.find(approvedQueueFilter(KIND, 'spicy')).sort({ createdAt: 1 }).toArray()
 
   const totalAvailable = mediumQueue.length + spicyQueue.length
   if (totalAvailable === 0) {
@@ -105,7 +110,8 @@ async function main() {
       continue
     }
 
-    const tier: PuzzleDoc['difficultyTier'] = isSaturday(cursor) ? 'spicy' : 'medium'
+    const tier: PuzzleDoc['difficultyTier'] =
+      KIND === 'word' && isSaturday(cursor) ? 'spicy' : 'medium'
     const queue = tier === 'spicy' ? spicyQueue : mediumQueue
     // Strict FIFO used to place whatever came next, never looking at ruleId —
     // so a batch that happened to produce the same rule several times landed
@@ -121,7 +127,7 @@ async function main() {
 
     if (!candidate) {
       console.warn(
-        `No approved ${tier} puzzle available for ${cursor}${tier === 'spicy' ? ' (Spicy Saturday)' : ''} — skipping, left unscheduled.`
+        `No approved ${KIND === 'visual' ? 'visual' : tier} puzzle available for ${cursor}${tier === 'spicy' ? ' (Spicy Saturday)' : ''} — skipping, left unscheduled.`
       )
       skippedDates += 1
       cursor = addDaysToDateString(cursor, 1)
@@ -155,7 +161,7 @@ async function main() {
     scheduled += 1
     if (isFillerRule(candidate.ruleId)) placed.filler += 1
     else placed.quality += 1
-    console.log(`Puzzle #${number} (${candidate.difficultyTier}) -> ${date}`)
+    console.log(`Puzzle #${number} (${candidate.kind ?? candidate.difficultyTier}) -> ${date}`)
   }
 
   if (daysWalked >= MAX_DAYS_WALKED) {

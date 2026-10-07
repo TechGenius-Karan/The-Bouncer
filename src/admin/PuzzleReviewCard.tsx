@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { ItemFace } from '../components/ItemFace'
+import { ClueList } from './ClueList'
 import { ManualEditPanel } from './ManualEditPanel'
 import type { AdminPuzzleDetail, Label } from './types'
 
@@ -31,9 +33,6 @@ export function PuzzleReviewCard({
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(false)
-
-  const clueIn = puzzle.clues.filter((c) => c.label === 'IN').map((c) => c.word)
-  const clueOut = puzzle.clues.filter((c) => c.label === 'OUT').map((c) => c.word)
 
   const handleApprove = async () => {
     setBusy(true)
@@ -70,7 +69,9 @@ export function PuzzleReviewCard({
   return (
     <div className="flex flex-col gap-4 rounded-bin border border-line bg-slip p-5">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-lg font-bold capitalize">{puzzle.difficultyTier}</div>
+        <div className="font-display text-lg font-bold capitalize">
+          {puzzle.kind === 'visual' ? 'Visual' : puzzle.difficultyTier}
+        </div>
         <div className="font-sans text-xs uppercase tracking-wide text-ink-soft">
           {puzzle.ruleId}
         </div>
@@ -89,11 +90,11 @@ export function PuzzleReviewCard({
       <div className="grid grid-cols-2 gap-4 font-sans text-sm">
         <div>
           <div className="mb-1 font-semibold text-bin-in-text">IN clues</div>
-          <div>{clueIn.join(', ')}</div>
+          <ClueList puzzle={puzzle} label="IN" />
         </div>
         <div>
           <div className="mb-1 font-semibold text-bin-out-label">OUT clues</div>
-          <div>{clueOut.join(', ')}</div>
+          <ClueList puzzle={puzzle} label="OUT" />
         </div>
       </div>
 
@@ -109,7 +110,7 @@ export function PuzzleReviewCard({
                   : 'border-bin-out bg-bin-out-chip text-bin-out-text'
               }`}
             >
-              {g.word}
+              <ItemFace id={g.wordId} name={g.word} visual={puzzle.kind === 'visual'} size={16} />
               {g.isTrap && <span className="ml-1 opacity-70">({g.trapType})</span>}
             </div>
           ))}
@@ -119,7 +120,13 @@ export function PuzzleReviewCard({
       <div className="font-sans text-sm text-ink-soft">
         Live decoys:{' '}
         {puzzle.liveDecoys.length > 0
-          ? puzzle.liveDecoys.map((d) => `${d.ruleName} (subtlety ${d.subtlety})`).join(', ')
+          ? puzzle.liveDecoys
+              .map((d) =>
+                puzzle.kind === 'visual'
+                  ? `${d.negated ? 'NOT ' : ''}${d.ruleName}`
+                  : `${d.ruleName} (subtlety ${d.subtlety})`
+              )
+              .join(', ')
           : 'none'}
       </div>
 
@@ -141,9 +148,15 @@ export function PuzzleReviewCard({
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="What should change? The AI reads this and rewrites the puzzle…"
+            placeholder={
+              puzzle.kind === 'visual'
+                ? 'Why reject it? Kept for tuning the rules and tags.'
+                : 'What should change? The AI reads this and rewrites the puzzle…'
+            }
             className="min-w-[180px] flex-1 rounded-card border border-line bg-screen px-3 py-2 font-sans text-sm"
           />
+          {/* planning-visual-pivot.md D11: a bad visual board is rejected and regenerated, never patched. */}
+          {puzzle.kind !== 'visual' && (
           <button
             onClick={handleRefine}
             disabled={busy || !reason.trim()}
@@ -152,6 +165,7 @@ export function PuzzleReviewCard({
           >
             Refine
           </button>
+          )}
           <button
             onClick={handleReject}
             disabled={busy}
@@ -160,6 +174,7 @@ export function PuzzleReviewCard({
           >
             Reject
           </button>
+          {puzzle.kind !== 'visual' && (
           <button
             onClick={() => setEditing((v) => !v)}
             disabled={busy}
@@ -168,6 +183,7 @@ export function PuzzleReviewCard({
           >
             {editing ? 'Close editor' : 'Edit manually'}
           </button>
+          )}
         </div>
 
         {editing && (

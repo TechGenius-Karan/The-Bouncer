@@ -4,7 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"The Bouncer" is a daily word puzzle game (Wordle-style): the player is shown pre-sorted example words (IN/OUT), infers the hidden rule, then sorts a fresh pool of guest words one swipe at a time with immediate feedback and a 3-life limit. Full design spec lives in `planning.md`; build sequencing/phase history lives in `build-plan.md`. Both are worth reading before large changes — `planning.md` in particular locks a lot of exact game-mechanic and data-handling decisions (🔒 markers) that should not be casually changed.
+"The Bouncer" is a daily word puzzle game (Wordle-style): the player is shown pre-sorted example words (IN/OUT), infers the hidden rule, then sorts a fresh pool of guest words one swipe at a time with immediate feedback and a 3-life limit. Full design spec lives in `planning/planning.md`; build sequencing/phase history lives in `planning/build-plan.md`. Both are worth reading before large changes — `planning.md` in particular locks a lot of exact game-mechanic and data-handling decisions (🔒 markers) that should not be casually changed.
+
+## Planning docs
+
+Every design spec and implementation plan lives in `planning/`. When a code comment cites a doc by bare name (e.g. `planning-visual-pivot.md §4.5`), it means the file of that name in `planning/`. New plans go there too.
+- `planning.md`, `build-plan.md` — the original word-game spec and its phase history.
+- `ai-feedback-plan.md`, `planning-pipeline-upgrades.md`, `planning-longevity.md`, `planning-lexical-depth.md` — shipped word-engine subsystem plans, kept as the record of their decisions.
+- `planning-visual-pivot.md` — **the active spec**: the switch from words to icons. Its §6 lists phase status and the agreed order of the remaining work.
+- `planning-visual-pivot-phase1.md` … `phase4.md`, `phase4-ui.md` — its per-phase implementation plans (all done).
+- `planning-visual-pivot-cutover.md` — the runbook for the content build-out and the two production deploys still to come.
 
 ## Commands
 

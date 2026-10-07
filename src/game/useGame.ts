@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkSwipe, getRound } from '../api/client'
-import type { ApiLabel, PoolItem } from '../api/types'
+import type { ApiLabel, GetRoundResponse, PoolItem } from '../api/types'
+import { warmIcons } from './icons'
 import { loadResultId, saveResultId } from './resultStorage'
 import type { CardResult, CardState, GameState, Label } from './types'
 
@@ -22,6 +23,12 @@ function opposite(label: ApiLabel): ApiLabel {
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+}
+
+/** Cards for a round. A visual round marks every card, so each one renders its icon. */
+function toCards(round: GetRoundResponse): CardState[] {
+  const cards = round.pool.map(cardFromPoolItem)
+  return round.kind === 'visual' ? cards.map((c) => ({ ...c, visual: true })) : cards
 }
 
 const OFFLINE_MESSAGE = "You're offline — reconnect to keep playing."
@@ -94,6 +101,10 @@ export function useGame() {
       .then((round) => {
         if (cancelled) return
         saveResultId(round.resultId)
+        if (round.kind === 'visual') {
+          const clueIds = round.clueIds ?? { in: [], out: [] }
+          warmIcons([...clueIds.in, ...clueIds.out, ...round.pool.map((p) => p.wordId)])
+        }
         setState({
           phase: round.roundComplete ? 'done' : 'play',
           error: null,
@@ -103,7 +114,8 @@ export function useGame() {
           date: round.date,
           ruleText: round.ruleText,
           clues: round.clues,
-          cards: round.pool.map(cardFromPoolItem),
+          clueIds: round.clueIds,
+          cards: toCards(round),
           lives: round.livesRemaining,
           selected: null,
           pendingIds: [],
@@ -136,7 +148,7 @@ export function useGame() {
             ...s,
             phase: round.roundComplete ? 'done' : 'play',
             ruleText: round.ruleText,
-            cards: round.pool.map(cardFromPoolItem),
+            cards: toCards(round),
             lives: round.livesRemaining,
           }))
         })

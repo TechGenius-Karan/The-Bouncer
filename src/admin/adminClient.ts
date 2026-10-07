@@ -153,11 +153,12 @@ export async function generateBatch(
   code: string,
   count: number,
   tiers?: ('medium' | 'spicy')[],
+  kind?: 'word' | 'visual',
 ): Promise<AdminGenerateBatchResponse> {
   const res = await adminFetch('/api/admin-generate-batch', code, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ count, tiers }),
+    body: JSON.stringify({ count, tiers, kind }),
   })
   if (!res.ok) throw new Error(`Failed to generate batch (${res.status})`)
   return res.json() as Promise<AdminGenerateBatchResponse>

@@ -23,10 +23,14 @@ export interface AdminLiveDecoyDetail {
   ruleId: string
   ruleName: string
   subtlety: number
+  /** Visual only: the decoy is this rule read the other way round, "NOT …". */
+  negated?: true
 }
 
 export interface AdminPuzzleDetail {
   puzzleId: string
+  /** Absent for word puzzles (planning-visual-pivot.md §3.3). */
+  kind?: 'visual'
   /** Null for a still-pending/rejected/approved-but-unscheduled puzzle — only assigned once actually scheduled. */
   number: number | null
   difficultyTier: 'medium' | 'spicy'
@@ -99,8 +103,14 @@ export interface AdminAiReviewResponse {
 }
 
 export interface AdminBufferHealthResponse {
+  /** What PUZZLE_KIND says generation and scheduling are on (planning-visual-pivot.md §3.3). */
+  kind: 'word' | 'visual'
   mediumBufferDays: number
   spicyBufferWeeks: number
+  /** Approved or scheduled-ahead visual puzzles. Word puzzles never count toward it (§5.4). */
+  visualBufferDays: number
+  /** Visual only: usable rules not used yet, i.e. days of puzzles left (§4.7). */
+  runway?: number
   gapDates: string[]
 }
 
@@ -148,6 +158,8 @@ export interface AdminBatchStatsResponse {
 export interface AdminGenerateBatchRequest {
   count: number
   tiers?: ('medium' | 'spicy')[]
+  /** Defaults to PUZZLE_KIND. `tiers` is ignored for visual (planning-visual-pivot.md D7). */
+  kind?: 'word' | 'visual'
 }
 
 export interface AdminGenerateBatchResponse {

@@ -55,6 +55,11 @@ export default async (req: Request): Promise<Response> => {
     return jsonResponse({ error: 'Puzzle not found or no longer pending approval' }, 409)
   }
 
+  // planning-visual-pivot.md D11: a bad visual board is rejected and regenerated, never patched.
+  if (doc.kind === 'visual') {
+    return jsonResponse({ error: 'Visual puzzles are not AI-reviewed. Reject it instead.' }, 400)
+  }
+
   const detail = await resolveFullPuzzleDetail(doc)
   const wordBank = buildWordBank()
 

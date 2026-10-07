@@ -18,6 +18,12 @@ export interface WordDoc {
   safety: { blocked: boolean; needsReview: boolean }
 }
 
+/** A visual item's caption (planning-visual-pivot.md §5.3). `_id` is the item id, which is also its icon's filename. */
+export interface VisualItemDoc {
+  _id: string
+  name: string
+}
+
 export interface RuleDoc {
   _id: string // rule id, e.g. "doubled-letter"
   name: string
@@ -29,12 +35,14 @@ export interface RuleDoc {
 }
 
 export interface PuzzleClueDoc {
+  /** A word id, or an item id when the puzzle is visual (planning-visual-pivot.md §3.3). */
   wordId: string
   label: Label
   displayOrder: number
 }
 
 export interface PuzzleGuestDoc {
+  /** A word id, or an item id when the puzzle is visual (planning-visual-pivot.md §3.3). */
   wordId: string
   trueLabel: Label
   displayOrder: number
@@ -46,6 +54,8 @@ export interface PuzzleGuestDoc {
 export interface DecoyResult {
   ruleId: string
   subtlety: number
+  /** Visual only: the rule fits read the other way round (planning-visual-pivot.md §4.4). */
+  negated?: true
 }
 
 export interface KnobValues {
@@ -64,6 +74,10 @@ export interface PuzzleDoc {
   /** Assigned only once the puzzle is actually scheduled (content-engine/scripts/schedulePuzzles.ts) — null before that, so a rejected/pending candidate never burns a number that would otherwise leave a gap in what's shown. */
   number: number | null
   difficultyTier: 'medium' | 'spicy'
+  /** Absent on every existing document, and absent means 'word', so nothing needs a backfill (planning-visual-pivot.md §3.3). */
+  kind?: 'word' | 'visual'
+  /** Visual only: the seed that reproduces this exact board (§4.6). */
+  generatorSeed?: number
   ruleId: string
   /** The rule's template family, when it came from one — used for scheduling cooldown. */
   templateId?: string

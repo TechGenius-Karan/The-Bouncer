@@ -1,4 +1,5 @@
 import { RULES } from '../rules/index.js'
+import { VISUAL_RULES } from '../visual/rules.js'
 
 // The pure half of content-engine/scripts/schedulePuzzles.ts: everything that
 // decides WHICH approved puzzle may go on a given date, with no Mongo and no
@@ -122,8 +123,15 @@ const AHA_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.aha ?? 3]))
  * means every puzzle already in the database gets mechanic spacing with no
  * backfill. A retired or renamed rule resolves to undefined and is simply not
  * spaced, the same fail-open `isFillerRule` already takes.
+ *
+ * A visual rule's family plays the same part: "has a handle" and "has wheels"
+ * are one trick to a player (planning-visual-pivot.md §5.4). Visual rules never
+ * trip rule spacing, since each one runs once ever.
  */
-const MECHANIC_BY_RULE_ID = new Map(RULES.map((rule) => [rule.id, rule.mechanic]))
+const MECHANIC_BY_RULE_ID = new Map<string, string>([
+  ...RULES.map((rule): [string, string] => [rule.id, rule.mechanic]),
+  ...VISUAL_RULES.map((rule): [string, string] => [rule.id, `visual:${rule.family}`]),
+])
 
 /**
  * A rule id no longer in the taxonomy (an older puzzle, a renamed rule) counts
@@ -225,4 +233,24 @@ export function selectForDate(
 
   // Whole queue is in cooldown — take the head, the long-standing behaviour.
   return { index: 0, overCap: !fillerCapAllows(date, queue[0], placements), repeat: true }
+}
+
+export type PuzzleKind = 'word' | 'visual'
+
+/** `PUZZLE_KIND` (planning-visual-pivot.md §3.3). Unset means word, so deploying changes nothing. */
+export function puzzleKindFrom(value: string | undefined): PuzzleKind {
+  return value === 'visual' ? 'visual' : 'word'
+}
+
+/**
+ * The approved, unscheduled queue a date draws from. Word days keep the
+ * medium / Spicy Saturday calendar. Visual has one difficulty (D7), so every
+ * date takes from the single visual queue. Visual puzzles are stored as medium
+ * (§3.4), so the word queues must exclude them, or an approved visual puzzle
+ * would be scheduled onto a word day.
+ */
+export function approvedQueueFilter(kind: PuzzleKind, tier: 'medium' | 'spicy') {
+  return kind === 'visual'
+    ? ({ status: 'approved', date: null, kind: 'visual' } as const)
+    : ({ status: 'approved', date: null, difficultyTier: tier, kind: { $ne: 'visual' } } as const)
 }

@@ -20,6 +20,7 @@ import {
 } from '../lib/archiveView.js'
 import { pastPuzzleFilter } from '../lib/archiveQuery.js'
 import { getCollections } from '../lib/db.js'
+import { resolveNames } from '../lib/names.js'
 import { isValidPuzzleDateString, resolvePuzzleDateString } from '../lib/puzzleDate.js'
 
 // A past puzzle never changes, so these are safe to cache hard. Keeps crawler
@@ -44,7 +45,7 @@ export default {
     const wantsDetail = requested !== undefined && requested !== 'archive'
 
     const today = resolvePuzzleDateString()
-    const { puzzles, words, rules } = await getCollections()
+    const { puzzles, rules } = await getCollections()
 
     if (!wantsDetail) {
       const docs = await puzzles
@@ -76,12 +77,8 @@ export default {
     const doc = await puzzles.findOne(pastPuzzleFilter(today, { date: requested }))
     if (!doc) return html(renderNotFound(), 404)
 
-    const [wordDocs, rule, previousDoc, nextDoc] = await Promise.all([
-      words
-        .find({
-          _id: { $in: [...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)] },
-        })
-        .toArray(),
+    const [nameOf, rule, previousDoc, nextDoc] = await Promise.all([
+      resolveNames(doc, [...doc.clues.map((c) => c.wordId), ...doc.guests.map((g) => g.wordId)]),
       rules.findOne({ _id: doc.revealRuleId ?? doc.ruleId }),
       puzzles.findOne(pastPuzzleFilter(today, { date: { $lt: requested } }), {
         projection: { date: 1 },
@@ -92,16 +89,14 @@ export default {
         sort: { date: 1 },
       }),
     ])
-
-    const spellingOf = new Map(wordDocs.map((w) => [w._id, w.spelling]))
     const puzzle: ArchivePuzzle = {
       date: doc.date as string,
       number: doc.number,
       ruleName: rule?.name ?? doc.ruleId,
       ruleDescription: doc.manualRuleText ?? rule?.descriptionTemplate ?? '',
-      clues: doc.clues.map((c) => ({ word: spellingOf.get(c.wordId) ?? c.wordId, label: c.label })),
+      clues: doc.clues.map((c) => ({ word: nameOf(c.wordId), label: c.label })),
       guests: doc.guests.map((g) => ({
-        word: spellingOf.get(g.wordId) ?? g.wordId,
+        word: nameOf(g.wordId),
         trueLabel: g.trueLabel,
       })),
     }

@@ -153,7 +153,7 @@ export function PlayScreen({ game, onDone, onHowToPlay, onShowStats, onShowSetti
       </div>
 
       <div className="mt-4">
-        <ClueDeck clueIn={state.clues.in} clueOut={state.clues.out} />
+        <ClueDeck clueIn={state.clues.in} clueOut={state.clues.out} clueIds={state.clueIds} />
       </div>
 
       {state.offlineNotice && (

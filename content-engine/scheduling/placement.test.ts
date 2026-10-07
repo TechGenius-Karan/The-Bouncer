@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { MEDIUM_KNOBS } from '../generator/difficulty.js'
 import { RULES } from '../rules/index.js'
 import {
+  approvedQueueFilter,
   daysBetween,
   isFreshFor,
   isFillerRule,
   fillerCapAllows,
   MAX_FILLER_PER_WEEK,
+  puzzleKindFrom,
   RULE_SPACING_DAYS,
   selectForDate,
   type Placement,
@@ -276,5 +278,40 @@ describe('supply supports the cap', () => {
         `${mediumSemantic} medium-eligible semantic rules sustain ${sustainablePerWeek.toFixed(1)}. ` +
         `Either lower MEDIUM_SEMANTIC_WEIGHT or grow the taxonomy to ~${rulesForCleanCap} semantic rules.`
     ).toBeGreaterThan(semanticNeededPerWeek)
+  })
+})
+
+// planning-visual-pivot.md §5.4
+describe('visual scheduling', () => {
+  const at = (date: string, ruleId: string): Placement => ({ date, ruleId, isFiller: false })
+
+  it('keeps two rules from one visual family at least 3 days apart', () => {
+    const placed = [at('2026-11-01', 'visual-has-a-handle')]
+    expect(isFreshFor('2026-11-03', { ruleId: 'visual-has-legs' }, placed)).toBe(false)
+    expect(isFreshFor('2026-11-04', { ruleId: 'visual-has-legs' }, placed)).toBe(true)
+  })
+
+  it('does not space rules from different visual families', () => {
+    const placed = [at('2026-11-01', 'visual-has-a-handle')]
+    expect(isFreshFor('2026-11-02', { ruleId: 'visual-floats' }, placed)).toBe(true)
+  })
+
+  it('never treats a visual rule as filler', () => {
+    expect(isFillerRule('visual-has-a-handle')).toBe(false)
+  })
+
+  it('reads PUZZLE_KIND, defaulting to word', () => {
+    expect(puzzleKindFrom('visual')).toBe('visual')
+    expect(puzzleKindFrom(undefined)).toBe('word')
+    expect(puzzleKindFrom('Visual')).toBe('word')
+  })
+
+  it('fills every visual date from one queue, and keeps visual puzzles out of the word queues', () => {
+    expect(approvedQueueFilter('visual', 'spicy')).toEqual(approvedQueueFilter('visual', 'medium'))
+    expect(approvedQueueFilter('visual', 'medium')).toMatchObject({ kind: 'visual' })
+    expect(approvedQueueFilter('word', 'medium')).toMatchObject({
+      difficultyTier: 'medium',
+      kind: { $ne: 'visual' },
+    })
   })
 })

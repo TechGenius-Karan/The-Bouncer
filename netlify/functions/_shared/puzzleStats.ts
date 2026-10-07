@@ -1,8 +1,10 @@
 import type { Filter } from 'mongodb'
 import type { AdminBatchStatsResponse, AdminBufferHealthResponse, AdminPuzzleStatsResponse } from './adminApi'
 import { getCollections } from './db'
+import { resolveNames } from './names'
 import { addDaysToDateString, isSaturday, resolvePuzzleDateString } from './puzzleDate'
 import type { PuzzleDoc } from './types'
+import type { PuzzleKind } from './visual'
 
 // planning.md §4's target average (~4-5/6) — a puzzle only gets flagged
 // once it has a real completed attempt to judge; see resolveBatchStats.
@@ -24,21 +26,29 @@ const GAP_SCAN_DAYS = 28
  * missing their correctly-tiered puzzle, so a healthy-looking count can't
  * hide a real hole inside the window.
  */
-export async function resolveBufferHealth(now: Date = new Date()): Promise<AdminBufferHealthResponse> {
+export async function resolveBufferHealth(
+  now: Date = new Date(),
+  kind: PuzzleKind = 'word'
+): Promise<AdminBufferHealthResponse> {
   const { puzzles } = await getCollections()
   const today = resolvePuzzleDateString(now)
 
-  const readyOrScheduledAhead = (tier: PuzzleDoc['difficultyTier']): Filter<PuzzleDoc> => ({
-    difficultyTier: tier,
+  const readyOrScheduledAhead = (filter: Filter<PuzzleDoc>): Filter<PuzzleDoc> => ({
+    ...filter,
     $or: [
       { status: 'approved', date: null },
       { status: { $in: ['scheduled', 'live'] }, date: { $gte: today } },
     ],
   })
 
-  const [mediumBufferDays, spicyBufferWeeks, scheduledAheadDocs] = await Promise.all([
-    puzzles.countDocuments(readyOrScheduledAhead('medium')),
-    puzzles.countDocuments(readyOrScheduledAhead('spicy')),
+  // Visual puzzles are stored as medium (planning-visual-pivot.md §3.4), so the
+  // word counts exclude them explicitly.
+  const word = (tier: PuzzleDoc['difficultyTier']) =>
+    readyOrScheduledAhead({ difficultyTier: tier, kind: { $ne: 'visual' } })
+  const [mediumBufferDays, spicyBufferWeeks, visualBufferDays, scheduledAheadDocs] = await Promise.all([
+    puzzles.countDocuments(word('medium')),
+    puzzles.countDocuments(word('spicy')),
+    puzzles.countDocuments(readyOrScheduledAhead({ kind: 'visual' })),
     puzzles
       .find(
         { status: { $in: ['scheduled', 'live'] }, date: { $gte: today } },
@@ -53,13 +63,16 @@ export async function resolveBufferHealth(now: Date = new Date()): Promise<Admin
   let cursor = today
   for (let i = 0; i < GAP_SCAN_DAYS; i++) {
     const expectedTier: PuzzleDoc['difficultyTier'] = isSaturday(cursor) ? 'spicy' : 'medium'
-    if (tierByDate.get(cursor) !== expectedTier) {
+    // Under visual any puzzle fills a day: word puzzles scheduled before the
+    // cutover still play out (planning-visual-pivot.md §5.6).
+    const scheduled = tierByDate.get(cursor)
+    if (kind === 'visual' ? scheduled === undefined : scheduled !== expectedTier) {
       gapDates.push(cursor)
     }
     cursor = addDaysToDateString(cursor, 1)
   }
 
-  return { mediumBufferDays, spicyBufferWeeks, gapDates }
+  return { kind, mediumBufferDays, spicyBufferWeeks, visualBufferDays, gapDates }
 }
 
 /**
@@ -71,7 +84,7 @@ export async function resolveBufferHealth(now: Date = new Date()): Promise<Admin
  * given guest a decoy — see build-plan.md Phase 8 notes.
  */
 export async function resolvePuzzleStats(puzzle: PuzzleDoc): Promise<AdminPuzzleStatsResponse> {
-  const { results, words } = await getCollections()
+  const { results } = await getCollections()
   const puzzleId = puzzle._id!.toString() // ResultDoc.puzzleId is a plain string, not an ObjectId
 
   const [missRateDocs, scoreStatsDocs] = await Promise.all([
@@ -97,8 +110,10 @@ export async function resolvePuzzleStats(puzzle: PuzzleDoc): Promise<AdminPuzzle
   ])
 
   const missStatsByWordId = new Map(missRateDocs.map((d) => [d._id, d]))
-  const wordDocs = await words.find({ _id: { $in: puzzle.guests.map((g) => g.wordId) } }).toArray()
-  const spellingOf = new Map(wordDocs.map((w) => [w._id, w.spelling]))
+  const nameOf = await resolveNames(
+    puzzle,
+    puzzle.guests.map((g) => g.wordId)
+  )
 
   const guestMissRates = puzzle.guests
     .map((guest) => {
@@ -107,7 +122,7 @@ export async function resolvePuzzleStats(puzzle: PuzzleDoc): Promise<AdminPuzzle
       const misses = stats?.misses ?? 0
       return {
         wordId: guest.wordId,
-        word: spellingOf.get(guest.wordId) ?? guest.wordId,
+        word: nameOf(guest.wordId),
         trueLabel: guest.trueLabel,
         isTrap: guest.isTrap,
         trapType: guest.trapType,

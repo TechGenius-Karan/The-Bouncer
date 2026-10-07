@@ -111,7 +111,10 @@ function ApprovedRow({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const tierMismatch = date !== '' && isSaturday(date) !== (puzzle.difficultyTier === 'spicy')
+  const isVisual = puzzle.kind === 'visual'
+  // D7: visual puzzles have no Medium/Spicy tier, so the Spicy Saturday check doesn't apply.
+  const tierMismatch =
+    !isVisual && date !== '' && isSaturday(date) !== (puzzle.difficultyTier === 'spicy')
 
   const handleSchedule = async () => {
     if (!date) return
@@ -139,7 +142,9 @@ function ApprovedRow({
   return (
     <div className="flex flex-col gap-3 rounded-card border border-line bg-screen p-4">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-base font-bold capitalize">{puzzle.difficultyTier}</div>
+        <div className="font-display text-base font-bold capitalize">
+          {isVisual ? 'Visual' : puzzle.difficultyTier}
+        </div>
         <span className="font-sans text-xs uppercase tracking-wide text-ink-soft">
           {puzzle.ruleId}
         </span>

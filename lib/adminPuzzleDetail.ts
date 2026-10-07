@@ -1,5 +1,6 @@
 import type { AdminPuzzleDetail } from './adminApi.js'
 import { getCollections } from './db.js'
+import { resolveNames } from './names.js'
 import type { PuzzleDoc } from './types.js'
 
 /**
@@ -10,18 +11,17 @@ import type { PuzzleDoc } from './types.js'
  * resolvers, which are gated the opposite way on purpose.
  */
 export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminPuzzleDetail> {
-  const { words, rules } = await getCollections()
+  const { rules } = await getCollections()
 
   const wordIds = [...puzzle.clues.map((c) => c.wordId), ...puzzle.guests.map((g) => g.wordId)]
   const ruleIds = [puzzle.ruleId, ...puzzle.liveDecoys.map((d) => d.ruleId)]
   if (puzzle.revealRuleId) ruleIds.push(puzzle.revealRuleId)
 
-  const [wordDocs, ruleDocs] = await Promise.all([
-    words.find({ _id: { $in: wordIds } }).toArray(),
+  const [nameOf, ruleDocs] = await Promise.all([
+    resolveNames(puzzle, wordIds),
     rules.find({ _id: { $in: ruleIds } }).toArray(),
   ])
 
-  const spellingOf = new Map(wordDocs.map((w) => [w._id, w.spelling]))
   const ruleById = new Map(ruleDocs.map((r) => [r._id, r]))
   // The reviewer must be shown the text the PLAYER will get, which is the
   // reveal rule where the validator accepted a collision and swapped it —
@@ -31,6 +31,7 @@ export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminP
 
   return {
     puzzleId: puzzle._id!.toString(),
+    ...(puzzle.kind === 'visual' ? { kind: 'visual' as const } : {}),
     number: puzzle.number,
     difficultyTier: puzzle.difficultyTier,
     status: puzzle.status,
@@ -51,12 +52,12 @@ export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminP
       `(No description found for rule "${puzzle.ruleId}" — run "npm run content:seed-db" to sync the rules collection.)`,
     clues: puzzle.clues.map((c) => ({
       wordId: c.wordId,
-      word: spellingOf.get(c.wordId) ?? c.wordId,
+      word: nameOf(c.wordId),
       label: c.label,
     })),
     guests: puzzle.guests.map((g) => ({
       wordId: g.wordId,
-      word: spellingOf.get(g.wordId) ?? g.wordId,
+      word: nameOf(g.wordId),
       trueLabel: g.trueLabel,
       isTrap: g.isTrap,
       trapType: g.trapType,
@@ -65,6 +66,7 @@ export async function resolveFullPuzzleDetail(puzzle: PuzzleDoc): Promise<AdminP
       ruleId: d.ruleId,
       ruleName: ruleById.get(d.ruleId)?.name ?? d.ruleId,
       subtlety: d.subtlety,
+      ...(d.negated ? { negated: true as const } : {}),
     })),
     knobValues: puzzle.knobValues,
     createdAt: puzzle.createdAt.toISOString(),

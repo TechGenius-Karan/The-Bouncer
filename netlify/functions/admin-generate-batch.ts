@@ -11,13 +11,16 @@ import { requireAdmin } from './_shared/adminAuth'
 import type { AdminGenerateBatchRequest } from './_shared/adminApi'
 import { getCollections } from './_shared/db'
 import { generateBatchCore } from '../../content-engine/generator/batch'
+import { generateVisualDocs } from '../../content-engine/visual/batch'
 import { RULES } from '../../content-engine/rules'
 import { applyRuleOverrides } from '../../content-engine/rules/ruleOverrides'
+import { resolvePuzzleDateString } from './_shared/puzzleDate'
 import { resolveRejectCounts } from './_shared/rejectStats'
 import { resolveRuleOverrides } from './_shared/ruleOverrides'
 import { resolveRecentRuleUsage } from './_shared/ruleUsage'
 import type { PuzzleDoc } from './_shared/types'
 import { jsonResponse } from './_shared/respond'
+import { puzzleKindFrom, splitVisualRuleUsage, VISUAL_RULE_USAGE_FILTER } from './_shared/visual'
 
 const MAX_COUNT = 20
 
@@ -39,6 +42,23 @@ export default async (req: Request): Promise<Response> => {
   const count = Number(body.count)
   if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
     return jsonResponse({ error: `count must be an integer between 1 and ${MAX_COUNT}` }, 400)
+  }
+  if (body.kind !== undefined && body.kind !== 'word' && body.kind !== 'visual') {
+    return jsonResponse({ error: "kind must be 'word' or 'visual'" }, 400)
+  }
+  if ((body.kind ?? puzzleKindFrom(process.env.PUZZLE_KIND)) === 'visual') {
+    const { puzzles } = await getCollections()
+    const [usage, rejectCounts] = await Promise.all([
+      puzzles.find(VISUAL_RULE_USAGE_FILTER, { projection: { ruleId: 1, status: 1 } }).toArray(),
+      resolveRejectCounts(),
+    ])
+    const docs = generateVisualDocs(
+      count,
+      { ...splitVisualRuleUsage(usage), rejectCounts },
+      resolvePuzzleDateString()
+    )
+    if (docs.length > 0) await puzzles.insertMany(docs)
+    return jsonResponse({ ok: true, requested: count, generated: docs.length })
   }
   const tiers: ('medium' | 'spicy')[] =
     body.tiers && body.tiers.length > 0 ? body.tiers : ['medium', 'spicy']

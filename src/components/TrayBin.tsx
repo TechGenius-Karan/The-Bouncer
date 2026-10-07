@@ -1,6 +1,11 @@
 import { memo } from 'react'
 import type { CardState, Label } from '../game/types'
+import { ItemFace } from './ItemFace'
 import { CARD_STEP, stackHeightFor, TOP_BASE } from './traySize'
+
+// A visual caption can wrap to two lines. The next filed chip covers this one's
+// bottom 8 px (CARD_HEIGHT - CARD_STEP), so pb-2 centres the text in what still shows.
+const VISUAL_CHIP_TEXT = 'pb-2 text-center text-sm leading-none'
 
 interface Props {
   side: Label
@@ -36,10 +41,10 @@ export const TrayBin = memo(function TrayBin({ side, cards, active, onClick }: P
         {cards.map((c, n) => (
           <div
             key={c.id}
-            className={`absolute left-1/2 flex h-10 w-[92%] -translate-x-1/2 motion-safe:animate-settle items-center justify-center rounded-[11px] border font-display text-base font-bold tracking-wide ${isIn ? 'border-bin-in-chip text-bin-in-text' : 'border-bin-out-chip text-bin-out-text'} bg-slip`}
+            className={`absolute left-1/2 flex h-10 w-[92%] -translate-x-1/2 motion-safe:animate-settle items-center justify-center rounded-[11px] border font-display font-bold ${c.visual ? VISUAL_CHIP_TEXT : 'text-base tracking-wide'} ${isIn ? 'border-bin-in-chip text-bin-in-text' : 'border-bin-out-chip text-bin-out-text'} bg-slip`}
             style={{ top: `${TOP_BASE + n * CARD_STEP}px`, zIndex: n }}
           >
-            {c.word}
+            <ItemFace id={c.id} name={c.word} visual={c.visual} size={18} />
           </div>
         ))}
       </div>
