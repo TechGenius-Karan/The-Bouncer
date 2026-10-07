@@ -370,10 +370,32 @@ Every phase is test-first (TDD): for each behavior listed under *Tests*, the tes
   - **4a status:** done 2026-10-06. The local end-to-end check against Atlas passed: word path unchanged, 409 on a held rule, 400 on AI review, visual round served and revealed, test puzzles cleaned up.
 - **4b (player UI):** `ItemFace`, the four plug-in points, offline caching, credits screen. Verified by hand under `npm run dev:functions` at 360×640: play through, lose all 3 lives, resume after a reload, share, light/dark, screen-reader labels.
 - **4c (admin):** icons in review cards, kind badge, generate selector, edit/AI-review hidden for visual puzzles.
+  - **4b/4c status:** functionally done 2026-10-07 (commits bd84b53..51065ba). After the final review, the layout was refitted for 360 px: the icon sits over the caption on the card and in the clue grid, and the licence links are in. **The visual design is deferred.** The owner finds the icons too secondary, reading as an add-on rather than the main thing, and wants them bigger, with captions small. That's a v2 redesign, possibly with Claude Design, done last, before the cutover deploy.
 
 ### After Phase 4 — content build-out and cutover
 **Runbook:** [`planning-visual-pivot-cutover.md`](planning-visual-pivot-cutover.md) (two production deploys in total).
 Scale to ~600 items and ~500 rules, run the full AI tagging pass, re-run `matrixReport` until the runway reads ≥400 with no near-duplicates or oversize families, then follow §5.6.
+
+**Order of work, agreed 2026-10-07:**
+
+| # | Step | Where |
+|---|---|---|
+| 1 | **Content build-out:** items, rules, tagging, report, yield | Runbook Part A |
+| 2 | **Admin and review run-through**, no deploy: generate through `/admin`, review end to end, approve, schedule on a test date, and fix reviewing friction found at scale | Runbook Part C, run early on a deploy preview or `dev:functions` |
+| 3 | **v2 UI redesign:** icon-first, bigger icons | Its own brainstorm and spec |
+| 4 | **Cutover:** two production deploys | Runbook Parts B and D |
+
+Decisions for the build-out:
+- **Captions stay (D2 holds) as the safety net.** Items are still picked to be recognisable from the icon alone, so the redesign can shrink captions.
+- **Claude drafts each batch of about 100 items** from `npm run visual:candidates`. Each item must be familiar worldwide, with one clear name for an India-heavy audience, and have no lookalike at card size. Doubtful ones are flagged. The owner reviews the contact sheet.
+- **Item ceiling.** There are 753 in-scope OpenMoji entries, 165 already used, leaving about 590. Many of them are variants or lookalikes, so a realistic usable count is about 350–450.
+  - Measure this on the first batch.
+  - Then either fill gaps from the Noun Project (CC BY 3.0, credited in `src/game/iconCredits.ts`), or lower the ≥400-rule runway target with the owner.
+- **Clearing the old review queue.** Reject pending word puzzles rather than deleting them: `updateMany({status:'pending_approval', kind:{$ne:'visual'}}, {$set:{status:'rejected', rejectionReason:'Parked: visual pivot'}})`. To undo, filter on that reason. The live cron keeps drafting word puzzles until cutover.
+- **Housekeeping still open:**
+  - `generator.ts`'s docstring "one call per eligible rule" is stale.
+  - Spec §6 Phase 3 Exit's last sentence is stale.
+  - Phase 3 Task 5 Step 4: record the gate result here (yield 365/460 = 79%, coverage 23/23).
 
 ---
 
