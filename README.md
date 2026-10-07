@@ -39,7 +39,7 @@ None of the above changes the core rules of the game — 3 lives, no partial cre
 
 ## Under the hood
 
-For anyone poking around the code: this is a Vite + React frontend and MongoDB for storage, with the backend split across two serverless platforms — the core gameplay endpoints run on Vercel (region-pinned next to the database), while the admin tooling and a few static-ish pages stay on Netlify Functions, both served under the same player-facing domain. A completely separate offline content-engine (word bank, rule taxonomy, generator, validator) produces puzzles ahead of time rather than on the fly. See [`CLAUDE.md`](./CLAUDE.md) for the full architecture breakdown, [`planning.md`](./planning.md) for the full game design spec, and [`build-plan.md`](./build-plan.md) for how it was built in phases.
+For anyone poking around the code: this is a Vite + React frontend and MongoDB for storage, with the backend split across two serverless platforms — the core gameplay endpoints run on Vercel (region-pinned next to the database), while the admin tooling and a few static-ish pages stay on Netlify Functions, both served under the same player-facing domain. A completely separate offline content-engine (word bank, rule taxonomy, generator, validator) produces puzzles ahead of time rather than on the fly. See [`CLAUDE.md`](./CLAUDE.md) for the full architecture breakdown, [`planning/planning.md`](./planning/planning.md) for the full game design spec, and [`planning/build-plan.md`](./planning/build-plan.md) for how it was built in phases.
 
 ### Running it locally
 
